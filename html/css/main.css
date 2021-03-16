@@ -1,0 +1,1415 @@
+@page{
+    size: 148mm 94mm;
+    margin: 0mm;
+}
+@media print {
+
+    div#headerMenu, div.main, .noPrint{
+        display:none !important;
+    }
+
+    /* Zettel */
+    .zettel:not(:first-child){
+        page-break-before: always;
+    }
+    .zettel{
+        position: relative;
+        width: 100%;
+        height: 94mm;
+        /* 148 x 105 */
+        /*
+        width: 138mm; 
+        height: 94mm;
+        */
+        background-color: red;
+        page-break-inside: avoid;
+    }
+    .zettel img{
+        width: 100%;
+        height: 100%;
+    }
+    .digitalZettelLemma{
+        position: relative;
+        top: 20px;
+        left: 30px;
+    }
+    .digitalZettelDate{
+        position: absolute;
+        top: 20px;
+        right: 30px;
+    }
+    .digitalZettelWork{
+        position: relative;
+        top: 80px;
+        left: 10px;
+        right: 10px;
+        text-align: center;
+    }
+    .digitalZettelText{
+        position: relative;
+        top: 140px;
+        left: 30px;
+        right: 30px;
+        text-align: left;
+    }
+    .digitalZettelAuthor{
+        position: absolute;
+        bottom: 0px;
+        right: 20px;
+    }
+}
+@media screen {
+    .print{display:none !important}
+    /* ARGOS */
+    .selMarked{
+        background-color: var(--minorBG);
+        transition: background 0.5s ease-out;
+    }
+    .selEditable{
+        cursor: pointer;
+        -webkit-user-select:none;
+        -webkit-touch-callout:none;
+        -moz-user-select:none;
+        -ms-user-select:none;
+        user-select:none;
+        outline: none;
+    }
+    .argSys{
+        display: none;
+    }
+    /* ####################################################
+       -I- general
+       ####################################################*/
+    /* CSS */
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: var(--mainTxtFont);
+        font-size: var(--mainTxtSize);
+        margin: 0;
+        background: var(--minorBG); 
+        color: var(--mainTxtColor);
+    }
+
+    h1, h2, h3, h4 {
+        color: var(--mainColor);
+    }
+
+    .minorTxt {
+        font-size: var(--minorTxtSize);
+    }
+
+    #abbr{
+        font-variant:small-caps;
+    }
+
+    aut{font-variant:small-caps}
+
+    .highlight{
+        background-color: yellow;
+    }
+
+    rot{
+        color: red;
+    }
+
+    gelb{
+        color: yellow;
+    }
+
+    gruen{
+        color: green;
+    }
+
+    blau{
+        color: blue;
+    }
+
+    .header h1 {
+        font-size: 50px;
+    }
+
+    /* main body */
+    .card {
+        background-color: var(--mainBG);
+        padding: 20px;
+        margin: 20px;
+        overflow: auto;
+        border-radius: 7px;
+    }
+
+    /* buttons and search fields */
+    input[type=text], input[type=password] {
+        color: var(--mainTxtColor);
+        width: 100%;
+        border: none;
+        background-color: transparent;
+        font-family: var(--mainTxtFont);
+        font-size: var(--mainTxtSize);
+        border-bottom: solid 1px var(--mainColor);
+        outline: none;
+        transition: border-color 1s ease-out;
+    }
+
+    input[type=text]:focus, input[type=password]:focus {
+        border-bottom: solid 1px var(--contraColor);
+    }
+
+    input[type=text].inlineText{
+        color: inherit;/*var(--mainTxtColor);*/
+        width: auto;
+        border: none;
+        text-align: center;
+        padding: 0;
+    }
+
+
+    textarea {
+        font-family: var(--mainTxtFont);
+        font-size: var(--mainTxtSize);
+        width: 100%;
+        height: 150px;
+        padding: 5px 10px;
+        box-sizing: border-box;
+        border: 1px solid var(--mainColor);
+        background-color: var(--mainBG);
+        resize: none;
+        outline: none;
+        transition: border-color 1s ease-out;
+    }
+
+    textarea:focus {
+        border: 1px solid var(--contraColor);
+    }
+
+    input[type=button], input[type=submit], input[type=reset] {
+        background-color: var(--mainColor);
+        color: var(--mainBG);
+        font-size: var(--mainTxtSize);
+        border: none;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        transition: background-color 1s ease-out;
+        outline: none;
+        border-radius: 7px;
+    }
+
+    input[type=button]:hover, input[type=submit]:hover, input[type=reset]:hover, input[type=button]:focus, input[type=submit]:focus, input[type=reset]:focus {
+        background-color: var(--contraColor);
+    }
+    select{
+        -moz-appearance: none;
+        -webkit-appearance: none;
+        appearance: none;
+        outline: none;
+        border: none;
+        border: 1px solid var(--mainColor);
+        background-color: var(--mainBG);
+        width: 100%;
+        font-family: var(--mainTxtFont);
+        font-size: var(--mainTxtSize);
+        color: var(--mainTxtColor);
+        -moz-padding-start: calc(10px - 3px);
+        padding: 5px 10px;
+        transition: border-color 1s ease-out;
+    }
+    select:focus{
+        border: solid 1px var(--contraColor);
+    }
+    select option{
+        background-color: var(--mainBG);
+    }
+
+    /* checkbox */
+    input[type="checkbox"]{
+        display: none;
+    }
+    input[type="checkbox"] + label::before{
+        position: relative;
+        top: 3px;
+        width: 15px;
+        height: 15px;
+        border: 1px solid var(--mainColor);
+        border-radius: 7px;
+        background-color: none;
+        color: transparent;
+        content: "";
+        display: inline-block;
+        margin-right: 8px;
+        transition: background-color 1s ease-out, border 1s ease-out;
+    }
+    input[type="checkbox"]:checked + label::before{
+        background-color: var(--mainColor);
+        border: 1px solid transparent;
+    }
+    /* radiobox */
+    input[type="radio"]{
+        display: none;
+    }
+    input[type="radio"] + label::before{
+        position: relative;
+        top: 3px;
+        width: 15px;
+        height: 15px;
+        border: 1px solid var(--mainColor);
+        border-radius: 7px;
+        background-color: none;
+        color: transparent;
+        content: "";
+        display: inline-block;
+        margin-right: 8px;
+        transition: background-color 1s ease-out, border 1s ease-out;
+    }
+    input[type="radio"]:checked + label::before{
+        background-color: var(--mainColor);
+        border: 1px solid transparent;
+    }
+
+    /* input range */
+    input[type=range]{
+        -webkit-appearance: none;
+        appearance: none;
+        width: 200px;
+        height: 5px;
+        background: var(--contraColor);
+        outline: none;
+        opacity: 0.7;
+        -webkit-transition: .2s;
+        transition: opacity .2s;
+    }
+
+    input[type=range]::hover{
+        opacity: 1;
+    }
+
+    input[type=range]::-webkit-slider-thumb{
+        -webkit-appearance: none;
+        appearance: none;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: var(--mainColor);
+        cursor: pointer;
+    }
+
+    input[type=range]::-moz-range-thumb{
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: var(--mainColor);
+        cursor: pointer;
+    }
+
+    /* links */
+    a {
+        text-decoration: none;
+        color: var(--contraColor);
+        transition: color 1s ease-out;
+    }
+
+    a:hover {
+        color: var(--mainColor);
+        cursor: pointer;
+    }
+
+    /* other form elements */
+    fieldset {
+        border: 1px solid var(--mainTxtColor);
+        padding: 0px 40px 40px 40px;
+        border-radius: 7px;
+    }
+
+    /* table */
+    table {
+        width: 100%;
+        padding: 10px 5px;
+        border-collapse: collapse;
+        border-radius: 7px;
+    }
+
+    /*
+    table.alt > tbody > tr{
+        border-bottom: 2px solid var(--minorBG);
+    }
+    */
+
+    tr > th:first-child, tr > td:first-child{
+        border-radius: 7px 0 0 7px;
+    }
+    tr > th:last-child, tr > td:last-child{
+        border-radius: 0 7px 7px 0;
+    }
+
+    td {
+        padding: 5px 20px;
+    }
+
+
+    th {
+        background-color: var(--minorColor);
+        color: var(--mainTxtColor);
+        text-align: center;
+        font-weight: bold;
+        font-size: 120%;
+        padding: 10px 0; 
+    }
+
+    /* ####################################################
+       -II- index page
+       ####################################################*/
+    div#headerMenu{
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: 42px;
+        background-color: var(--minorColor);
+        -webkit-user-select:none;
+        -webkit-touch-callout:none;
+        -moz-user-select:none;
+        -ms-user-select:none;
+        user-select:none;
+        display: none;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        box-shadow: 0px 0px 4px var(--shadowBG);
+        transition: height 0.7s ease-out;
+        z-index: 900000;
+    }
+    div.main{
+        position: absolute;
+        overflow: scroll;
+        left: 0px;
+        right: 0px;
+        top: 40px;
+        bottom: 0px;
+    }
+    
+    .editLabel{
+        -webkit-user-select: text;
+        user-select: text;
+    }
+    #loadLabel{
+        text-align: center;
+        color: var(--contraColor);
+        padding: 80px;
+        filter: opacity(20%);
+        -webkit-animation: 3s ease-in 0s infinite alternate loadMoveOpacity, 5s ease-in 0s infinite alternate loadMoveScale;
+        animation: 3s ease-in 0s infinite alternate loadMoveOpacity, 5s ease-in 0s infinite alternate loadMoveScale;
+        z-index: 1000000;
+    }
+    @keyframes loadMoveOpacity{
+        from {filter: opacity(20%);}
+        to {filter: opacity(100%);}
+    }
+    @keyframes loadMoveScale{
+        from {transform: scale(1, 1);}
+        to {transform: scale(1.2, 1.2);}
+    }
+    @-webkit-keyframes loadMoveOpacity{
+        from {filter: opacity(20%);}
+        to {filter: opacity(100%);}
+    }
+    @-webkit-keyframes loadMoveScale{
+        from {transform: scale(1, 1);}
+        to {transform: scale(1.2, 1.2);}
+    }
+
+    #putLabel{
+        position: absolute;
+        left: 0px;
+        bottom: 0px;
+        right: 0px;
+        background-color: var(--mainBG);
+        text-align: left;
+        color: var(--mainColor);
+        border-radius: 0px;
+        box-shadow: 0px 0px 3px var(--shadowBG);
+        overflow: hidden;
+        transition: filter 0.5s ease-in;
+        z-index: 1000000;
+    }
+    #putLabel > *{
+        font-size: var(--minorTxtSize);
+        padding: 10px 20px;
+        filter: opacity(20%);
+        /*-webkit-animation: 3s ease-in 0s infinite alternate loadMoveOpacity, 5s ease-in 0s infinite alternate loadMoveScale;
+        animation: 3s ease-in 0s infinite alternate loadMoveOpacity, 5s ease-in 0s infinite alternate loadMoveScale;*/
+    }
+
+    .msgLabel{
+        text-align: center;
+        color: var(--mainColor);
+        padding: 50px;
+    }
+    .closeLabel{
+        color: var(--contraColor);
+        cursor: pointer;
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        height: 10px;
+        width: 10px;
+        font-size: 22px;
+        font-family: 'Helvetica', sans-serif;
+        font-weight: 200;
+        transform: scaleX(1.3);
+        transition: color 1s ease-out;
+    }
+    .closeLabel:hover{
+        color: var(--mainColor);
+    }
+
+    .mainMenuButton{
+        padding: 10px 50px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background-color 0.7s ease-out, color 0.7s ease-out;
+        color: var(--contraColor);
+        font-weight: bold;
+        z-index: 1000010;
+    }
+    .mainMenuContent{
+        display: none;
+        position: absolute;
+        top: 40px;
+        padding: 0 10px 10px 10px;
+        box-shadow: 0px 0px 4px var(--shadowBG);
+        border-radius: 3px;
+        background-color: var(--minorColor);
+        z-index: 1000000;
+        min-width: 200px;
+    }
+    .mainMenuContent > div{
+        padding-top: 10px;
+        text-align: center;
+    }
+    .mainMenuEntry:hover .mainMenuContent{
+        display: block;
+    }
+    .mainMenuEntry:hover .mainMenuButton{
+        background-color: var(--mainColor);
+        color: var(--minorColor);
+    }
+
+    div#footer{
+        display: none;
+        position: fixed;
+        right: 0;
+        bottom: 0px;
+        left: 0;
+        height: 50px;
+        background-color: var(--minorColor);
+        text-align: right;
+        padding: 3px 10px;
+        box-shadow: 0 0 4px var(--shadowBG);
+    }
+    div#login{
+        display: none;
+        position: relative;
+        top: 230px;
+        margin-bottom: 300px;
+        width: 100%;
+        padding: 0;
+        background-color: var(--mainBG);
+        padding: 20px;
+    }
+    div#header{
+        display: none;
+        position: absolute;
+        top: 10px;
+        right: 0;
+        left: 0;
+        height: 200px;
+        background-color: var(--minorColor);
+        text-align: center;
+        padding: 20px;
+        box-shadow: 0 0 4px var(--shadowBG);
+    }
+
+    /* ####################################################
+       -III- lemma page 
+       ####################################################*/
+    table#lemma_loadmore > tbody > tr:hover {
+        background-color: var(--minorBG);
+    }
+
+    div#lemma_edit, div#lemma_add{
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        height: 350px;
+        background-color: var(--mainBG);
+        border-radius: 7px;
+        box-shadow: 0px 0px 3px var(--shadowBG);
+        overflow: scroll;
+        padding: 0 10px;
+    }
+
+    div#lemma_comment, div#lemma_addToProject{
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        max-height: 500px;
+        width: 450px;
+        background-color: var(--mainBG);
+        border-radius: 7px;
+        box-shadow: 0px 0px 3px var(--shadowBG);
+        overflow: scroll;
+        padding: 0 10px;
+    }
+
+    /* ####################################################
+       -IV- zettel db 
+       ####################################################*/
+    #zettel_import,#zettel_export{
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        width: 600px;
+        background-color: var(--mainBG);
+        border-radius: 7px;
+        box-shadow: 0 0 3px var(--shadowBG);
+        padding: 20px 30px;
+    }
+
+
+    .zettel_box {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+    }
+
+    .zettel {
+        padding: 0px 0px;
+        margin: 10px 10px;
+        position: relative;
+        background: none;
+        transition: box-shadow 0.5s ease-out;
+        border-radius: 7px;
+    }
+    div.zettel.selMarked{
+        box-shadow: 0px 0px 18px var(--shadowBG);
+    }
+    .zettel_img{
+        width: 100%;
+    }
+
+    div.zettel > img{
+        border-radius: 7px;
+    }
+
+    .zettel_menu{
+        position: absolute;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        font-size: 18px;
+        padding: 15px 12px;
+        text-align: center;
+        background: rgba(300,300,300,0.5);
+        border-radius: 7px;
+    }
+
+    .zettel_msg{
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        padding: 10px 10px;
+        font-size: 30px;
+        font-weight: bold;
+        cursor: normal;
+    }
+
+    .no_use {
+        background-color: var(--mainBG);
+    }
+
+    img.no_use {
+        filter: grayscale(100%);
+    }
+
+    /* Style preview Window */
+    .prev_footer_left {
+        position: absolute;
+        left: 5px;
+        right: 500px;
+        bottom: 2px;
+        padding: 5px 20px;
+        text-align: left;
+        background: none;
+    }
+    .prev_footer_right {
+        position: absolute;
+        width: 500px;
+        right: 5px;
+        bottom: 2px;
+        padding: 0 0;
+        text-align: center;
+        background: none;
+    }
+
+    .prev_left_header{
+        position: absolute;
+        top: 5px;
+        height: 50px;
+        left: 5px;
+        right: 505px;
+        padding: 5px 5px 10px 15px;
+        background-color: var(--mainBG);
+    }
+
+    .prev_left {
+        position: absolute;
+        top: 50px;
+        bottom: 35px;
+        right: 505px;
+        left: 5px;
+        background-color: var(--mainBG);
+        padding: 0 5px 0px 15px;
+    }
+
+    .imgBox{
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        transform-origin: top left;
+    }
+
+    .prev_right_header{
+        position: absolute;
+        top: 5px;
+        height: 50px;
+        right: 5px;
+        width: 500px;
+        padding: 10px 20px 10px 10px;
+        background-color: var(--mainBG);
+    }
+    .prev_right {
+        position: absolute;
+        top: 50px;
+        bottom: 35px;
+        right: 5px;
+        width: 500px;
+        padding: 0 20px 0px 10px;
+        background-color: var(--mainBG);
+    }
+
+    /* popover windows */
+    div#zettel_lemma_add{
+        position: absolute;
+        background-color: var(--mainBG);
+        top: 50px;
+        right: 20px;
+        bottom: 20px;
+        width: 500px;
+        padding: 10px;
+        box-shadow: 0 0 3px var(--shadowBG);
+        border-radius: 7px;
+        overflow: scroll;
+        z-index: 90010;
+    }
+    #zettel_batch{
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: var(--mainBG);
+        width: 700px;
+        height: 195px;
+        overflow: hidden;
+        box-shadow: 0px 0px 3px var(--shadowBG);
+        border-radius: 7px;
+    }
+    #zettel_detail{
+        position: fixed;
+        top: 50px;
+        right: 20px;
+        bottom: 20px;
+        left: 20px;
+        background-color: var(--mainBG);
+        border-radius: 7px;
+        box-shadow: 0 0 3px var(--shadowBG);
+        padding: 50px;
+        z-index: 90000;
+    }
+    .detailZettel table{
+        font-size: 90%;
+    }
+
+    .detailZettel table input, select, textarea{
+        font-size: 95%;
+        border-radius: 7px;
+    }
+
+
+    /* popover add zettel */
+    #zettel_add{
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        width: 800px;
+        background-color: var(--mainBG);
+        border-radius: 7px;
+        box-shadow: 0 0 3px var(--shadowBG);
+        padding: 20px 30px;
+    }
+
+    /* used in digitalZettel.tpl */
+    .digitalZettel{
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        bottom: 0px;
+        right: 0px;
+        background-image: url('/zettel/default/0/0.jpg');
+        background-size: contain;
+        /*background: linear-gradient(45deg, #ffba66,#ffe6b3,#e4c381);*/
+        border-radius: 7px;
+        overflow: hidden;
+    }
+    .digitalZettel > div{
+        -webkit-user-select:auto;
+        -webkit-touch-callout:auto;
+        -moz-user-select:auto;
+        -ms-user-select:auto;
+        user-select:auto;
+    }
+    .digitalZettelLemma{
+        position: absolute;
+        top: 20px;
+        left: 30px;
+    }
+    .digitalZettelDate{
+        position: absolute;
+        top: 20px;
+        right: 30px;
+    }
+    .digitalZettelWork{
+        position: absolute;
+        top: 80px;
+        left: 10px;
+        right: 10px;
+        text-align: center;
+    }
+    .digitalZettelText{
+        position: absolute;
+        top: 140px;
+        left: 30px;
+        right: 30px;
+        text-align: left;
+    }
+    .addZettel .addZettelText{
+        position: absolute;
+        top: 10px;
+        bottom: 10px;
+        left: 520px;
+        right: 10px;
+        background-color: var(--mainBG);
+        padding: 0 10px 0 10px;
+    }
+
+    /* ####################################################
+       -V- library
+       ####################################################*/
+    #library_edit,#library_add{
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        height: 450px;
+        width: 800px;
+        background-color: var(--mainBG);
+        border-radius: 7px;
+        box-shadow: 0px 0px 3px var(--shadowBG);
+        overflow: scroll;
+        padding: 0 20px;
+    }
+
+    #library_update,#opera_update{
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        height: 220px;
+        width: 500px;
+        background-color: var(--mainBG);
+        border-radius: 7px;
+        box-shadow: 0px 0px 3px var(--shadowBG);
+        overflow: scroll;
+        padding: 5px 30px;
+        font-size: 90%;
+    }
+
+    #library_selector{
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        bottom: 20px;
+        left: 20px;
+        background-color: var(--mainBG);
+        border-radius: 7px;
+        box-shadow: 0px 0px 3px var(--shadowBG);
+        overflow: scroll;
+        padding: 0 20px;
+        z-index: 1000000;
+    }
+
+    #library_selector .lPart{
+        position: absolute;
+        top: 40px;
+        left: 10px;
+        bottom: 40px;
+        right: 370px;
+        padding: 0px;
+        overflow: scroll;
+        border-radius: 7px;
+        border: 1px solid var(--minorColor);
+    }
+    #library_selector .lPartBottom{
+        position: absolute;
+        left: 10px;
+        bottom: 0px;
+        right: 370px;
+        height: 35px;
+        padding: 0px;
+        text-align: center;
+        font-size: 90%;
+        -webkit-user-select:none;
+        -webkit-touch-callout:none;
+        -moz-user-select:none;
+        -ms-user-select:none;
+        user-select:none;
+    }
+    #library_selector .rPart{
+        position: absolute;
+        top: 20px;
+        right: 10px;
+        bottom: 10px;
+        width: 350px;
+        padding: 0px;
+        overflow: scroll;
+    }
+    #library_selector .imgOverview{
+        position:absolute;
+        top: 60px;
+        left: 0px;
+        right: 10px;
+        bottom: 70px;
+        border: 1px solid var(--minorColor);
+        border-radius: 7px;
+        padding: 10px 20px;
+        overflow: scroll;
+    }
+    #library_selector input{
+        position: absolute;
+        left: 0px;
+        right: 10px;
+        bottom: 10px;
+    }
+    .imgOverview > div{
+        padding: 10px 20px;
+        border-radius: 7px;
+        margin: 5px;
+        cursor: pointer;
+        -webkit-user-select:none;
+        -webkit-touch-callout:none;
+        -moz-user-select:none;
+        -ms-user-select:none;
+        user-select:none;
+    }
+    #library_selector img{
+        width: 100%;
+    }
+
+    /* ####################################################
+       -VI- opera
+       ####################################################*/
+    div.operaBox{
+        padding: 0 20px 0 20px;
+        display: flex;
+        overflow: auto;
+        flex: none;
+        width: 100%;
+        height: 100%;
+        flex-flow: column nowrap;
+        scroll-snap-type: y proximity;
+    }
+    div.operaBox > div{
+        text-align: center;
+        scroll-snap-align: start;
+        flex: none;
+        font-size: 128px;
+        width: 100%;
+        border-top: 1px dotted var(--contraColor);
+    }
+    div.operaBox:first-child{
+        border-top: none;
+    }
+
+    div.operaBox > div > table{
+        font-size: 13pt;
+        background-color: var(--mainBG);
+        margin: 15px 0;
+    }
+
+    div.operaBox > div > table > tbody > tr > td{
+        padding: 5px 10px;
+        vertical-align: top;
+        text-align: left;
+    }
+    .c1{
+        width: 11%;
+    }
+    .c2{
+        border-left: 1px solid black;
+        width: 11%;
+    }
+    .c3{
+        border-left: 1px solid black;
+        width: 26%;
+    }
+    .c4{
+        border-left: 1px solid black;
+        width: 26%;
+        font-style: italic;
+    }
+    .c5{
+        border-left: double;
+        width: 26%;
+        font-size: 80%;
+    }
+
+    .c1_min{
+        width: 15%;
+    }
+    .c2_min{
+        border-left: 1px solid black;
+        width: 55%;
+    }
+    .c5_min{
+        border-left: double;
+        width: 30%;
+        font-size: 80%;
+    }
+
+    div.controller{
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        height: 40px;
+        background-color: var(--minorColor);
+        font-size: 80%;
+        padding: 0 10px;
+        text-align: right;
+        box-shadow: 0 0 4px var(--shadowBG);
+    }
+
+    /* popovers */
+    #opera_author_edit,#opera_author_add,#opera_work_edit,#opera_work_add{
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        height: 350px;
+        background-color: var(--mainBG);
+        border-radius: 7px;
+        box-shadow: 0px 0px 3px var(--shadowBG);
+        overflow: scroll;
+        padding: 0 10px;
+    }
+    #opera_export{
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        width: 400px;
+        background-color: var(--mainBG);
+        border-radius: 7px;
+        box-shadow: 0 0 3px var(--shadowBG);
+        padding: 20px 30px;
+    }
+
+    /* ####################################################
+       -VII- project
+       ####################################################*/
+    .dragOverArticle{
+        background-color: var(--mainBG);
+    }
+    .dragOverArticle.artInsert{
+        filter: opacity(100%);
+    }
+    .artBoxDragged{
+        background-color: var(--mainBG);
+        border: none !important;
+    }
+    #project_export{
+        position: fixed;
+        top: 50px;
+        right: 20px;
+        bottom: 20px;
+        left: 20px;
+        background-color: var(--mainBG);
+        border-radius: 7px;
+        box-shadow: 0 0 3px var(--shadowBG);
+    }
+    .errMarked{
+        text-decoration-line: underline;
+        text-decoration-color: red;
+        text-decoration-style: wavy;
+    }
+    .artLvlMark{
+        color: var(--mainColor);
+    }
+    .isComment{
+        filter: opacity(50%);
+    }
+    .projectItems{
+        padding: 10px 20px;
+        border-radius: 7px;
+    }
+    .artBox { margin-left: 15px;
+        padding: 3px;
+        border-radius: 7px;
+    }
+    .artBoxDelete{
+        float: right;
+    }
+    .artInsert {
+        margin-left: 15px;
+        margin-top: 2px;
+        width: 200px;
+        border: 1px solid var(--contraColor);
+        color: var(--contraColor);
+        border-radius: 7px;
+        text-align: center;
+        font-size: 80%;
+        padding: 3px;
+        filter: opacity(40%);
+    }
+    .artInsert:hover{
+        filter: none;
+        background-color: var(--mainBG);
+    }
+    .artBoxZettelCount{
+        color: var(--mainColor);
+        font-size: 80%;
+        padding-left: 10px;
+    }
+
+    .saved{
+        color: var(--contraColor);
+    }
+
+    span{
+        transition: color 0.1s ease-out;
+    }
+
+
+    /* Menu */
+    .project_menu_container{
+        position: fixed;
+        top: 42px;
+        left: 0px;
+        bottom: -10px;
+        width: 370px;
+        padding: 15px 0 30px 15px;
+        box-shadow: 0px 0px 3px var(--shadowBG);
+        border-radius: 0px;
+        background-color: var(--minorBG);
+        cursor: default;
+    }
+
+    .project_menu{
+        width: 100%;
+        height: 100%;
+        padding-bottom: 40px;
+        overflow: scroll;
+    }
+
+    .editMode{
+        /*display: none;*/
+        cursor: pointer;
+    }
+    .editModeOff{
+        display: none;
+    }
+    .editModeArticle{
+        border-left: 1px solid var(--mainTxtColor);
+    }
+
+    /* Zettel Detail */
+    .project_detail{
+        position: absolute;
+        top: 0px;
+        left: 370px;
+        right: 0px;
+        padding: 10px 20px 600px 20px;
+        background-color: var(--mainBG);
+    }
+
+    .detail_article{
+        padding: 10px 20px 10px 10px;
+        width: 100%;
+        border-radius: 7px;
+    }
+
+    .selected{
+        background-color: var(--contraColor);
+        filter: opacity(10%);
+    }
+    .selected span div{
+        background-color: var(--contraColor);
+    }
+    .daKeyWord{
+        color: var(--mainColor);
+        font-size: 80%;
+        cursor: default;
+    }
+
+
+    .detail_zettel{
+        width: 100%;
+        padding: 5px 10px 5px 20px;
+        -webkit-user-select:none;
+        -webkit-touch-callout:none;
+        -moz-user-select:none;
+        -ms-user-select:none;
+        user-select:none;
+    }
+    .detail_zettel *{
+        filter: opacity(50%);
+    }
+    .detail_zettel.zettelExported *{
+        filter: opacity(100%);
+    }
+    .stelle, .exportText, .opus{
+        padding: 2px 5px;
+        border-radius: 7px;
+    }
+    .stelle.selMarked, .exportText.selMarked, .opus.selMarked{
+        background-color: var(--mainBG);
+    }
+
+    #project_zettel_preview{
+        position: fixed;
+        display: flex;
+        right: 0;
+        bottom: 0px;
+        left: 0;
+        height: 31px;
+        background-color: var(--mainBG);
+        -webkit-user-select:none;
+        -webkit-touch-callout:none;
+        -moz-user-select:none;
+        -ms-user-select:none;
+        user-select:none;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        box-shadow: 0px 0px 3px var(--shadowBG);
+    }
+
+    /*.projectMenuEntry:hover .projectMenuContent{
+        display: block;
+    }*/
+
+    .projectMenuEntry:hover .projectMenuButton{
+        color: var(--mainColor);
+    }
+    .projectMenuButton{
+        padding: 5px 50px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background-color 0.7s ease-out, color 0.7s ease-out;
+        color: var(--minorColor);
+        font-weight: bold;
+        z-index: 1000010;
+    }
+    .projectMenuContent{
+        display: none;
+        position: absolute;
+        bottom: 42px;
+        right: 10px;
+        padding: 10px 10px 10px 10px;
+        box-shadow: 0px 0px 3px var(--shadowBG);
+        border-radius: 3px;
+        background-color: var(--mainBG);
+        z-index: 1000000;
+        min-width: 200px;
+        max-height: 500px;
+        overflow: scroll;
+    }
+    .projectMenuContent > div{
+        padding-top: 10px;
+        text-align: center;
+    }
+
+    .projectMenuContent .projectMenuDigitalImg{
+        position: absolute;
+        top: 5px;
+        bottom: 5px;
+        right: 5px;
+        left: 5px;
+    }
+
+
+    /* ####################################################
+       -VIII- account, help etc.
+       ####################################################*/
+    /* css help page */
+    video {
+        width: 700px;
+    }
+    .video_container {
+        text-align: center;
+    }
+
+    /* ####################################################
+       -IX- server (account, server)
+       ####################################################*/
+    #user_access_detail{
+        position: fixed;
+        top: 120px;
+        left: 45px;
+        right: 45px;
+        bottom: 45px;
+        background-color: var(--mainBG);
+        overflow: scroll;
+        border-radius: 7px;
+        box-shadow: 0 0 6px var(--shadowBG);
+        padding: 0 20px;
+    }
+    div#userAgentTxt{
+        border: 1px solid var(--mainTxtColor);
+        border-radius: 7px;
+        padding: 10px 20px;
+    }
+    div#userAccessBox{
+        border: 1px solid var(--mainTxtColor);
+        border-radius: 7px;
+        padding: 10px 20px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+    }
+    div.userAccessItem{
+        padding: 10px;
+        margin: 2px;
+        border-radius: 7px;
+        border: 1px solid var(--mainTxtColor);
+    }
+    div.userAccessItem.selMarked{
+        box-shadow: 0 0 2px var(--shadowBG);
+        color: var(--mainColor);
+    }
+    /* ####################################################
+       -IX- view tools
+       ####################################################*/
+    /* context menu */
+    div#conTextMenu{
+        position: absolute;
+        padding: 6px;
+        background-color: var(--minorBG);
+        border-radius: 7px;
+        box-shadow: 2px 2px 4px var(--shadowBG);
+        font-size: var(--minorTxtSize);
+    }
+
+    div#conTextMenu > div{
+        text-align: center;
+        width: 100%;
+        padding: 4px 8px;
+    }
+
+    /* Tabs */
+    div.tab {
+        cursor: pointer;
+        float: left;
+        margin: 0;
+        font-size: 100%;
+        background: none;
+        color: var(--contraColor);
+        box-shadow: none;
+        padding: 10px 20px;
+        border-radius: 7px 7px 0 0;
+    }
+    div.tab_container{
+        display: none;
+    }
+    div.tab_content{
+        position: relative;
+        border: 2px solid var(--minorColor);
+        border-top-width: 10px;
+        padding: 5px 10px;
+        overflow: auto;
+        box-shadow: 3px 3px 3px var(--shadowBG);
+    }
+
+    div.tab_scroll{
+        overflow: scroll;
+        height: 100%;
+    }
+
+    div.tab_header{
+        display: flex;
+    }
+
+    hr.hr_tab {
+        border-top: 2px solid var(--minorColor);
+    }
+
+    div.tab.tabActive{
+        background-color: var(--minorColor);
+        color: var(--mainColor);
+        box-shadow: 3px 3px 3px var(--shadowBG);
+    }
+
+    div.tab_container.tabActive{
+        display: block;
+    }
+
+    /* status popups */
+    div.showStatus{
+        position: fixed;
+        right: 10px;
+        top: 10px;
+        background-color: var(--minorColor);
+        color: var(--contraColor);
+        font-weight: bold;
+        text-align:center;
+        padding: 20px 30px;
+        overflow:hidden;
+        box-shadow: 0 0 3px var(--shadowBG);
+        border-radius: 7px;
+        z-index: 1000100;
+    }
+
+    /* popover windows */
+    .popOver{
+        position: absolute;
+        z-index: 80000;
+    }
+
+    .popOverContent{
+        display: none;
+        position: absoute;
+        background-color: var(--mainBG);
+        min-width: 200px;
+        max-width: 800px;
+        overflow: scroll;
+        box-shadow: 0 0 3px var(--shadowBG);
+        border-radius: 7px;
+        padding: 10px;
+        z-index: 1;
+    }
+
+    .popOver:hover .popOverContent{
+        display: block;
+    }
+}
