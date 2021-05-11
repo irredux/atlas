@@ -372,11 +372,13 @@
         -moz-user-select:none;
         -ms-user-select:none;
         user-select:none;
-        display: none;
+        display: flex;
+        opacity: 1;
         flex-wrap: wrap;
         justify-content: space-around;
         box-shadow: 0px 0px 4px var(--shadowBG);
-        transition: height 0.7s ease-out;
+        transition: opacity 0.5s ease-out;
+        /*transition: display 0.7s ease-out;*/
         z-index: 900000;
     }
     div.main{
@@ -391,6 +393,12 @@
     .editLabel{
         -webkit-user-select: text;
         user-select: text;
+    }
+    #loadLog p{
+        color: var(--mainColor);
+        margin: 0;
+        padding: 0;
+        margin-left: 40px;
     }
     #loadLabel{
         text-align: center;
@@ -418,7 +426,7 @@
         to {transform: scale(1.2, 1.2);}
     }
 
-    #putLabel{
+    .statusLabel{
         position: absolute;
         left: 0px;
         bottom: 0px;
@@ -431,8 +439,9 @@
         overflow: hidden;
         transition: filter 0.5s ease-in;
         z-index: 1000000;
+        padding: 5px 10px;
     }
-    #putLabel > *{
+    #statusLabel > *{
         font-size: var(--minorTxtSize);
         padding: 10px 20px;
         filter: opacity(20%);
@@ -496,7 +505,6 @@
     }
 
     div#footer{
-        display: none;
         position: fixed;
         right: 0;
         bottom: 0px;
@@ -508,7 +516,6 @@
         box-shadow: 0 0 4px var(--shadowBG);
     }
     div#login{
-        display: none;
         position: relative;
         top: 230px;
         margin-bottom: 300px;
@@ -518,7 +525,6 @@
         padding: 20px;
     }
     div#header{
-        display: none;
         position: absolute;
         top: 10px;
         right: 0;
@@ -533,6 +539,28 @@
     /* ####################################################
        -III- lemma page 
        ####################################################*/
+    div#searchBar{
+        height: 100px;
+    }
+    div#searchBar #inputBox{
+        position: absolute;
+        top: 70px;
+        right: 240px;
+        left: 40px;
+    }
+    div#searchBar input[type=button]{
+        position: absolute;
+        width: 180px;
+        right: 40px;
+        top: 60px;
+    }
+    div#searchBar div.popOver{
+        top: 30px;
+        right: 50px;
+        font-size: 90%;
+        text-align: right;
+    }
+
     table#lemma_loadmore > tbody > tr:hover {
         background-color: var(--minorBG);
     }
@@ -761,6 +789,12 @@
         border-radius: 7px;
         box-shadow: 0 0 3px var(--shadowBG);
         padding: 20px 30px;
+    }
+    #zettel_add td{
+        width: 75%;
+    }
+    #zettel_add td:first-child{
+        width: 25%;
     }
 
     /* used in digitalZettel.tpl */
@@ -1412,4 +1446,112 @@
     .popOver:hover .popOverContent{
         display: block;
     }
+/*************************************************** */
+/* autocomplete */
+	.autocomplete-items{
+		position: absolute;
+		/*border: 1px solid #d4d4d4;*/
+		background-color: var(--mainBG);
+        box-shadow: 0px 0px 4px var(--shadowBG);
+        border-radius: 7px;
+		border-bottom: none;
+		border-top: none;
+		z-index: 99;
+		top: 100%;
+		left: 0;
+		right: 0;
+        /*max-height: 400px;*/
+        overflow: hidden;
+	}
+	.autocomplete-items div{
+		padding: 10px;
+		cursor: pointer;
+		background-color: var(--mainBG);
+		/*border-bottom: 1px solid #d4d4d4;*/
+        border-radius: 7px;
+	}
+	.autocomplete-items div:hover{
+		background-color: var(--minorBG);
+	}
+	.autocomplete-active{
+		background-color: var(--mainColor) !important;
+        color: var(--mainBG);
+	}
+
+.menu_top{
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 50px;
+    bottom: 0px;
+    padding: 5px 5px;
+    background: var(--minorColor);
 }
+.footer{
+    height: 50px;
+    width: 100%;
+    background: none;
+}
+.display_img{
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 10px;
+    bottom: 10px;
+}
+.fullText{
+    position: fixed;
+    width: 47%;
+    right: 60px;
+    top: 10px;
+    bottom: 60px;
+}
+.fullText textarea{
+    height: 95%;
+    width: 100%;
+}
+
+#saveFullTxtLabel {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    padding: 5px 10px;
+    color: var(--mainColor);
+    background-color: var(--mainBG);
+    border-radius: 7px;
+    box-shadow: 0px 0px 3px var(--shadowBG);
+    z-index: 1000000000000000000;
+}
+
+img{
+    display: block;
+    width: 80%;
+    margin: auto;
+}
+
+.menu_side{
+    position: fixed;
+    top: 40%;
+    height: 50px;
+    width: 50px;
+    border: solid var(--minorColor);
+    border-width: 10px 10px 0 0;
+    transition: border 1s ease-out;
+}
+.menu_side:hover{
+    border: solid var(--contraColor);
+    border-width: 10px 10px 0 0;
+}
+.menu_left{
+    left: 30px;
+    transform: rotate(-135deg);
+}
+
+.menu_right{
+    right: 30px;
+    transform: rotate(45deg);
+}
+}
+
+
+

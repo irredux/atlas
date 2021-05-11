@@ -120,13 +120,17 @@ class Buticula(Bottle):
         with open(self.p + "/config/mainMenu.JSON") as menu_file:
             self.main_menu = json.load(menu_file)
 
-        self.Tiro.log(f"\t load dockers")
-        with open(self.p + "/config/dockerPage.JSON") as docker_file:
-            self.dockerPage = json.load(docker_file)
-        with open(self.p + "/config/dockerData.JSON") as docker_file:
-            self.dockerData = json.load(docker_file)
-        with open(self.p + "/config/dockerDataDelete.JSON") as docker_file:
-            self.dockerDataDelete = json.load(docker_file)
+        self.Tiro.log(f"\t load access files")
+        with open(self.p + "/config/accessCREATE.JSON") as access_file:
+            self.accessCREATE = json.load(access_file)
+        with open(self.p + "/config/accessREAD.JSON") as access_file:
+            self.accessREAD = json.load(access_file)
+        with open(self.p + "/config/accessUPDATE.JSON") as access_file:
+            self.accessUPDATE = json.load(access_file)
+        with open(self.p + "/config/accessDELETE.JSON") as access_file:
+            self.accessDELETE = json.load(access_file)
+        with open(self.p + "/config/objectStores.JSON") as config_file:
+            self.oStores = json.load(config_file)
 
         # write opera sheets
         self.create_opera()
@@ -142,35 +146,36 @@ class Buticula(Bottle):
     # ################################################################
     # -I- routes
     # ################################################################
-        # files
-        self.route("/content/videos/<video_file>", callback=self.f_video)
-        self.route("/css/<css_file>", callback=self.f_css)
-        self.route("/js/<js_file>", callback=self.f_js)
-        self.route("/export_project/<mlw_file>", callback=self.f_mlw)
-        self.route("/zettel/<letter>/<dir_nr>/<img>", callback=self.f_zettel)
-
         # login and account
-        self.route("/", callback=self.index)
-        self.route("/", callback=self.index, method="POST")
+        self.route("/", callback=self.site)
         self.route("/logout", callback=self.logout)
         self.route("/account_create", callback=self.account_create)
         self.route("/account_create", callback=self.account_create, method="POST")
 
+        # open argos 
+        self.route("/site", callback=self.site)
+        self.route("/site/<res>", callback=self.site)
+        self.route("/site/<res>/<res_id>", callback=self.site)
+
         # system routes
-        self.route("/batch", callback=self.data_batch, method="POST")
-        self.route("/data/<res>", callback=self.data_get, method="GET") # GET JSON 
-        self.route("/data/<res>/<res_id:int>", callback=self.data_get, method="GET") # GET JSON
+        self.route("/config/<res>", callback=self.config_read, method="GET")
         self.route("/data/<res>", callback=self.data_create, method="POST")
-        self.route("/data/<res>", callback=self.data_update, method="PUT") # not used to create
-        self.route("/data/<res>/<res_id:int>", callback=self.data_update, method="PUT") # not used to create
+        self.route("/data/<res>", callback=self.data_read, method="GET")
+        self.route("/data/<res>/<res_id:int>", callback=self.data_read, method="GET")
+        self.route("/data/<res>/<res_id:int>", callback=self.data_update, method="PATCH")
         self.route("/data/<res>/<res_id:int>", callback=self.data_delete, method="DELETE")
-        self.route("/page/<res>", callback=self.page, method="GET")
-        self.route("/page/<res>/<res_id:int>", callback=self.page, method="GET")
+
+        # files
+        self.route("/file/<res>/<res_id>", callback=self.file_read)
+        # OLD FILES!
+        self.route("/export_project/<mlw_file>", callback=self.f_mlw)
+        self.route("/zettel/<letter>/<dir_nr>/<img>", callback=self.f_zettel)
+
+        self.route("/session", callback=self.session, method="POST");
 
         # OLD ROUTES!
         self.route("/module", callback=self.module, method="POST")
         self.route("/library_viewer", callback=self.library_viewer)
-        self.route("/library_edition/<page_id:int>", callback=self.library_edition)
         #self.route("/opera/export/<lst_type>", callback=self.opera_export)
     # ################################################################
     # -II- assorted methods
@@ -180,7 +185,10 @@ class Buticula(Bottle):
         TEMPLATE_PATH.insert(0, path)
 
     def auth(self, access = ["auth"], start = False, logout = False):
-        c_session = request.get_cookie("mlw_session", "-1")
+        c_session = request.headers.get("Authorization")
+        if c_session == "" or c_session == None: return HTTPResponse(status=401) # unauthorized
+        c_session = c_session[7:]
+
         reset_route = True
         usr_o = None
         usr_i = self.db.search("user", {"session": c_session}, ["id", "first_name",
@@ -297,7 +305,7 @@ class Buticula(Bottle):
                         sheet_file.write(f' v. {opus.get("work_reference", "")}')
                     sheet_file.write('</td><td class="c4">')
                     sheet_file.write(f'{opus.get("work_bibliography", "")}')
-                    if opus.get('editions', '') != '':
+                    if opus.get('editions', None) != None:
                         editions = json.loads(opus['editions'])
                         for edition in editions:
                             sheet_file.write(f'<br /><a href="{edition["url"]}" target="_blank">{edition["label"]}</a>')
@@ -328,7 +336,7 @@ class Buticula(Bottle):
                 sheet_file.write(f'<td class="c1_min">{opus.get("work_date_display", "")}</td>')
                 sheet_file.write(f'<td class="c2_min">{opus.get("opus", "").replace(" <cit></cit> ( <cit_bib></cit_bib>)", "")}</td>')
                 sheet_file.write(f'<td class="c5_min">{opus.get("work_txt_info", "")}')
-                if opus.get('editions', '') != '':
+                if opus.get('editions', None) != None:
                     editions = json.loads(opus['editions'])
                     for edition in editions:
                         sheet_file.write(f'<br /><a href="{edition["url"]}" target="_blank">{edition["label"]}</a>')
@@ -503,216 +511,169 @@ class Buticula(Bottle):
     # ################################################################
     # -III- REST requests
     # ################################################################
-    def data_batch(self):
-        user = self.auth()
-        res = request.json["res"]
-        items = request.json["items"]
-        mode = request.json["mode"]
-        if res == None or items == None: HTTPResponse(status=404)
-        if mode == "create":
-            for item in items:
-                self.data_create(res, item["data"])
-        elif mode == "update":
-            for item in items:
-                self.data_update(res, item["res_id"], item["data"])
-        elif mode == "delete":
-            # items is array with object: [{"res_id": x}, {"res_id": y}, ...]
-            for item in items:
-                self.data_delete(res, item["res_id"])
-        else:
-            HTTPResponse(status=404)
+    def session(self):
+        email = request.json.get("user", "")
+        password = request.json.get("password", "")
+        if email != "" and password != "":
+            user_login = self.login_check(email, password)
+            if user_login != None:
+                new_key = str(uuid4())
+                data = {"session": new_key,
+                        "session_last_active": str(datetime.now()),
+                        "agent":request.headers.get('User-Agent')
+                        }
+                self.db.save("user", data, user_login["id"])
+                return data["session"]
+            else: return HTTPResponse(status=401) # unauthorized
+        else: return HTTPResponse(status=401) # unauthorized
 
-    def data_create(self, res, inData=None):
+    def config_read(self, res):
+        if res=="oStores": return json.dumps(self.oStores)
+        else:
+            user = self.auth()
+            if res == "access": return json.dumps(user["access"])
+            elif res == "menu":
+                user_menu = []
+                for key, menu in self.main_menu.items():
+                    if menu["access"] == "*" or menu["access"] in user["access"]:
+                        nItems = []
+                        for subMenu in menu["items"]:
+                            if subMenu.get("access", "*") == "*" or subMenu.get("access") in user["access"]:
+                                nItems.append(subMenu);
+                        if len(nItems) != 0: user_menu.append([key, nItems])
+                return json.dumps(user_menu);
+            else: return HTTPResponse(status=404) # not found
+
+    def data_create(self, res):
         user = self.auth()
-        if inData ==None: inData = request.json
-        if res == "":
-            return HTTPResponse(status=400)
-        elif res in self.dockerData.keys():
-            dock = self.dockerData[res]
-            if dock['access'] in user['access']:
-                if inData == None:
-                    # file-import
-                    if res == "zettel":
-                        if self.zettel_import(request, user):
-                            return HTTPResponse(status=201) # created 
-                        else:
-                            return HTTPResponse(status=400)
+        if res not in self.accessCREATE.keys(): return HTTPResponse(status=404) # not found
+        for permission in self.accessCREATE[res]:
+            if permission["access"] in user["access"]:
+                inData = request.json
+                if permission.get("restricted", "") == "user_id":
+                    inData["user_id"] = user["id"]
+                break
+        else:
+            return HTTPResponse(status=403) # forbidden
+
+        r_id = self.db.save(res, inData)
+        return HTTPResponse(status=201, body=str(r_id)) # created 
+
+    def data_read(self, res, res_id=None):
+        user = self.auth()
+        if res not in self.accessREAD.keys(): return HTTPResponse(status=404) # not found
+        r_cols = "";
+        v_cols = [];
+        user_id = "";
+        for permission in self.accessREAD[res]:
+            if permission["access"] in user["access"]:
+                if permission.get("restricted", "") == "user_id":
+                    if res != "user": user_id = f" user_id = %s AND"
+                    else: user_id = f" id = %s AND"
+                    v_cols.append(user['id'])
+                r_cols = permission["r_cols"]
+                break
+        else:
+            return HTTPResponse(status=403) # forbidden
+        if res_id == None:
+            u_date = request.query.get("u_date", "2020-01-01 01:00:00")
+            v_cols.append(u_date);
+            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s", v_cols);
+            return json.dumps(results, default=str)
+        else:
+            v_cols.append(res_id);
+            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} id = %s", v_cols);
+            return json.dumps(results, default=str)
+
+    def data_update(self, res, res_id):
+        user = self.auth()
+        if res not in self.accessUPDATE.keys(): return HTTPResponse(status=404) # not found
+        for permission in self.accessUPDATE[res]:
+            if permission["access"] in user["access"]:
+                inData = request.json
+                if permission.get("restricted", "") == "user_id":
+                    if user["id"] == self.db.search(res, {"id": res_id}, ["user_id"])[0]["user_id"]:
+                        break
                 else:
-                    if dock.get("restricted", None) == "user_id":
-                        inData["user_id"] = user["id"]
-                    elif dock.get("restricted", None) == "password":
-                        if self.pw_check(self.db.search("user", {"id": user["id"]}, ["password"])[0]["password"], inData["c_password"]) == False:
-                            return HTTPResponse(status=403)
-                        else:
-                            del inData["c_password"]
-                    self.db.save(dock['table'], inData)
-                    return HTTPResponse(status=201) # created 
-            else:
-                return HTTPResponse(status=403)
+                    break
         else:
-            return HTTPResponse(status=404)
-
-    def data_get(self, res, res_id=None):
-        user = self.auth()
-        if res == "":
-            return HTTPResponse(status=400)
-        elif res in self.dockerData.keys():
-            dock = self.dockerData[res]
-            if dock['access'] in user['access']:
-                query = json.loads(request.query.get("qJSON", "{}"))
-                if dock.get("restricted", None) == "user_id":
-                    if query == "{}":
-                        query = {"user_id", user["id"]}
-                    else:
-                        query["user_id"] = user["id"]
-                elif dock.get("restricted", None) == "password":
-                        if self.pw_check(self.db.search("user", {"id": user["id"]}, ["password"])[0]["password"], query["c_password"]) == False:
-                            return HTTPResponse(status=403)
-                        else:
-                            del query["c_password"] # ONLY WORKS WITH JSON QUERY!!
-                if dock.get("table") != None:
-                    o_cols = dock.get("o_cols", [])
-                    if dock.get("allowUserOrder", None) != None and user.get("order_by_id", 0) != 0:
-                        o_cols = ["id"]
-                    limit = dock.get("limit", 10001)
-                    return json.dumps(self.db.search(dock["table"], query, dock["r_cols"], o_cols, limit), default=str)
-                elif dock.get("function") != None:
-                    # external function needs to return data directly
-                    dock["res"] = res
-                    dock["res_id"] = res_id
-                    request.dock = dock
-                    self.dataFunctions[dock["function"]]()
-                else:
-                    return HTTPResponse(status=404)
-            else:
-                return HTTPResponse(status=403)
-        else:
-            return HTTPResponse(status=404)
-
-    def data_update(self, res, res_id=None, inData=None):
-        user = self.auth()
-        if inData == None: inData = request.json
-        if res == "":
-            return HTTPResponse(status=400)
-        elif res in self.dockerData.keys():
-            dock = self.dockerData[res]
-            if dock['access'] in user['access']:
-                if dock.get("restricted", None) == "user_id":
-                    if(len(self.db.search(dock['table'], {"id": res_id, "user_id": user["id"]})) == 0):
-                        return HTTPResponse(status=403)
-                elif dock.get("restricted", None) == "password":
-                    if self.pw_check(self.db.search("user", {"id": user["id"]}, ["password"])[0]["password"], inData["c_password"]) == False:
-                        return HTTPResponse(status=403)
-                    else:
-                        del inData["c_password"]
-                if dock.get("table") != None:
-                    self.db.save(dock['table'], inData, res_id)
-                if dock.get("command") != None:
-                    self.db.command(f"CALL {dock['command']}();", [], True)
-                if dock.get("function") != None:
-                    self.dataFunctions[dock["function"]](user)
-                return HTTPResponse(status=200) # OK
-            else:
-                return HTTPResponse(status=403)
-        else:
-            return HTTPResponse(status=404)
+            return HTTPResponse(status=403) # forbidden
+        r_id = self.db.save(res, inData, res_id)
+        return HTTPResponse(status=200) # ok 
 
     def data_delete(self, res, res_id):
-        # DELETE METHOD, no body
         user = self.auth()
-        if res == "" or res_id == None:
-            return HTTPResponse(status=400)
-        elif res in self.dockerDataDelete.keys():
-            dock = self.dockerDataDelete[res]
-            if dock['access'] in user['access']:
-                query = {"id": res_id}
-                if dock.get("restricted", None) == "user_id": query[dock["restricted"]] = user["id"]
-                # remove files from directory?
-                if "zettel" == dock['table']:
-                    self.zettel_delete(self.db.search("zettel", {"id": res_id})[0])
-                self.db.delete(dock['table'], query)
-                return HTTPResponse(status=204) # OK NO BODY
-            else:
-                return HTTPResponse(status=403)
-        else:
-            return HTTPResponse(status=404)
-
-    def page(self, res, res_id = None):
-        user = self.auth()
-        if request.query.get("query") != None:
-            query = request.query.get("query")
-            if res_id != None: query += " ID:" + res_id
-        elif request.query.get("qJSON") != None:
-            query = json.loads(request.query.get("qJSON"))
-            if res_id != None: query["id"] = res_id
-        else:
-            query = ""
-            if res_id != None: query = {"id": res_id}
-        offset = request.query.get("offset") if request.query.get("offset") != None else 0
-
-        if res == "":
-            return HTTPResponse(status=400)
-        elif res in self.dockerPage.keys():
-            dock = self.dockerPage[res]
-            if dock['access'] in user['access']:
-                if dock.get("items") != None:
-                    o_cols = dock["items"].get("o_cols", [])
-                    if dock.get("allowUserOrder", None) != None and user.get("order_by_id", 0) != 0:
-                        o_cols = ["id"]
-                    items = self.db.search(dock["items"]["table"], query,
-                            dock["items"]["r_cols"], o_cols,
-                            dock["items"]["limit"], offset)
-                    cHelper = dock["items"]["table"]
+        if res not in self.accessDELETE.keys(): return HTTPResponse(status=404) # not found
+        for permission in self.accessDELETE[res]:
+            if permission["access"] in user["access"]:
+                if permission.get("restricted", "") == "user_id":
+                    if user["id"] == self.db.search(res, {"id": res_id}, ["user_id"])[0]["user_id"]:
+                        break
                 else:
-                    items = [{}]
-                    cHelper = None
-                if len(items) == 0 and dock.get("notNull", False):
-                    return HTTPResponse(status=204)
-                elif dock.get("function") != None:
-                    # external function needs to return data directly
-                    dock["res"] = res
-                    dock["res_id"] = res_id
-                    return self.dataFunctions[dock["function"]](dock)
-                else:
-                    return template(dock["template"], items=items, user=user, res=res,
-                            query=query, help_lst=self.db.search_helper.get(cHelper),
-                            c_date=str(datetime.now())[:19], doublesided=self.doublesided,
-                            captions=self.captions, main_version=self.main_version,
-                            sub_version=self.sub_version)
-            else:
-                return HTTPResponse(status=403)
+                    break
         else:
-            return HTTPResponse(status=404)
+            return HTTPResponse(status=403) # forbidden
+        r_id = self.db.save(res, {"deleted": 1}, res_id)
+        return HTTPResponse(status=200) # ok 
+
+#    def data_batch(self):
+#        user = self.auth()
+#        res = request.json["res"]
+#        items = request.json["items"]
+#        mode = request.json["mode"]
+#        if res == None or items == None: return HTTPResponse(status=404)
+#        if mode == "create":
+#            for item in items:
+#                self.data_create(res, item["data"])
+#        elif mode == "update":
+#            for item in items:
+#                self.data_update(res, item["res_id"], item["data"])
+#        elif mode == "delete":
+#            # items is array with object: [{"res_id": x}, {"res_id": y}, ...]
+#            for item in items:
+#                self.data_delete(res, item["res_id"])
+#        else:
+#            return HTTPResponse(status=404)
+#
+    def file_read(self, res, res_id):
+        if res == "css":
+            return static_file(res_id, root=self.p_html + "/css/")
+        if res == "js":
+            print("here we go!", res_id)
+            return static_file(res_id, root=self.p_html + "/js/")
+        if res == "scan":
+            user = self.auth()
+            if "library" in user["access"]:
+                page = self.db.search("scan", {"id": res_id}, ["path", "filename"])[0]
+                return static_file(page["filename"]+".png", root=self.p + "/content/scans/" + page["path"])
+            else: return HTTPResponse(status=401)
+
+
+
+    def site(self, res = None, res_id = None):
+        if res == "opera":
+            #user = self.auth()
+            if res_id == "mai":
+                return template("opera/opera_mai_sheet")
+            elif res_id == "min":
+                return template("opera/opera_min_sheet")
+        else:
+            return template("index", captions=self.captions["index"],
+                    colors=self.color_scheme, user=None,
+                    main_menu=self.main_menu)
 
     # ################################################################
     # -IV- file requests
     # ################################################################
-    def f_css(self, css_file):
-        return static_file(css_file, root=self.p_html + "/css/")
-
-    def f_js(self, js_file):
-        self.auth()
-        return static_file(js_file, root=self.p_html + "/js/")
-
     def f_mlw(self, mlw_file):
         user = self.auth()
         if "editor" in user["access"]:
             # CHECK HERE, IF USER IS ALLOWED TO DOWNLOAD PROJECT
             return static_file(mlw_file, root=self.p + "/export_project/")
 
-    def f_video(self, video_file):
-        user = self.auth()
-        return static_file(video_file, root=self.p + "/content/videos/")
-
     def f_zettel(self, letter, dir_nr, img):
         self.auth()
         return static_file(img, root=self.p + f"/zettel/{letter}/{dir_nr}")
-
-    def library_edition(self, page_id):
-        user = self.auth()
-        if "library" in user["access"]:
-            page = self.db.search("scan", {"id": page_id}, ["path", "filename"])[0]
-            return static_file(page["filename"]+".png", root=self.p + "/content/scans/" + page["path"])
 
     # ################################################################
     # -IV- file requests
@@ -876,7 +837,37 @@ class Buticula(Bottle):
                 #        dump = re.sub(key, value, dump)
                 return json.dumps(dump)
 
-    def index(self):
+
+    def library_viewer(self):
+        user = self.auth()
+        if "library" in user["access"]:
+            scan = {}
+            scan["c_page"] = request.query.page
+            edition = self.db.search("edition_view", {"id": int(request.query.edition)},
+                    ["id", "opus", "path"])[0]
+            pages = self.db.search("scan_lnk_view",
+                    {"edition_id": int(request.query.edition)}, ["id", "filename", "full_text"])
+
+            for nr, page in enumerate(pages):
+                if page["filename"] == scan["c_page"]:
+                    scan["c_page_id"] = page["id"]
+                    scan["full_text"] = page.get("full_text", "")
+                    c_page_id = page["id"]
+                    if nr > 0:
+                        scan["l_page"] = pages[nr-1]["filename"]
+                    if nr < (len(pages)-1):
+                        scan["n_page"] = pages[nr+1]["filename"]
+                    break
+            else:
+                scan["l_page"] = pages[-2]["filename"]
+                scan["c_page"] = pages[-1]["filename"]
+                scan["c_page_id"] = pages[-1]["id"]
+
+            return template("library/viewer", edition=edition, pages=pages,
+                    scan=scan, colors=self.color_scheme, user=user)
+
+
+    def login(self):
         # process login request
         if request.method == "POST":
             login = request.forms.login
@@ -892,45 +883,14 @@ class Buticula(Bottle):
                             }
                     self.db.save("user", data, user_login.get("id"))
                     response.set_cookie("mlw_session", new_key, secure = self.cookie_secure)
-            if request.query.href != "":
-                redirect(request.query.href)
-            else:
-                redirect("/?animate=true")
-        # after login
-        user = self.auth(start = True)
+                    redirect("/site")
+        # load page
         if len(self.sub_version) == 0:
             c_date = self.main_version[0]['date']
         else:
             c_date = self.sub_version[0]['date']
-        return template('index', user=user, c_date=c_date,
-                captions=self.captions["index"], main_menu = self.main_menu,
-                colors=self.color_scheme)
-
-    def library_viewer(self):
-        user = self.auth()
-        if "library" in user["access"]:
-            scan = {}
-            scan["c_page"] = request.query.page
-            edition = self.db.search("edition_view", {"id": int(request.query.edition)},
-                    ["id", "opus", "path"])[0]
-            pages = self.db.search("scan_lnk_view",
-                    {"edition_id": int(request.query.edition)}, ["id", "filename"])
-
-            for nr, page in enumerate(pages):
-                if page["filename"] == scan["c_page"]:
-                    scan["c_page_id"] = page["id"]
-                    c_page_id = page["id"]
-                    if nr > 0:
-                        scan["l_page"] = pages[nr-1]["filename"]
-                    if nr < (len(pages)-1):
-                        scan["n_page"] = pages[nr+1]["filename"]
-                    break
-            else:
-                scan["l_page"] = pages[-2]["filename"]
-                scan["c_page"] = pages[-1]["filename"]
-                scan["c_page_id"] = pages[-1]["id"]
-
-            return template("library/viewer", edition=edition, pages=pages, scan=scan, colors=self.color_scheme)
+        return template('login', c_date=c_date,
+                captions=self.captions["index"], colors=self.color_scheme)
 
     def logout(self):
         self.auth(logout = True)

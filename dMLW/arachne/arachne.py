@@ -148,12 +148,13 @@ class Arachne(object):
             where_txt = " WHERE " + where_txt
         self.command(f"DELETE FROM {tbl}{where_txt};", values, True)
 
-    def save(self, table, op, id = None, save_stat = True):
+    def save(self, table, op, id = None, save_stat = True, return_row=False):
         """Saves new values into row. Returns id of row.
 
                 table: name of table
                 op: dict with col/value pairs
                 id: if omitted new row is created
+                return_row: if true not only id but whole row will be returned
         """
         #prepare field, values and value types
         cols = []
@@ -195,9 +196,13 @@ class Arachne(object):
 
         # lastrowid returns  0 on "UPDATE"
         if id == None:
-            return r_id
+            return_id=r_id
         else:
-            return id
+            return_id = id
+        if return_row:
+            return self.search(table, {"id": return_id})
+        else:
+            return return_id
 
     def clean(self, i_lst):
         o_lst = []
@@ -208,8 +213,8 @@ class Arachne(object):
                     # NOT POSSIBLE TO ESCAPE HERE, BECAUSE OF LST CONTENT IN DB!
                     #o_dict[key] = html.escape(val)
                     o_dict[key] = self.simple_html(val)
-                elif val == None:
-                    pass
+                #elif val == None:
+                #    pass
                 else:
                     o_dict[key] = val
 

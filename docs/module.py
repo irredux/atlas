@@ -1,5 +1,4 @@
 #!/user/bin/env python3
-
 from csv import DictWriter
 import json
 import requests
