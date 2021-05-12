@@ -1,6 +1,7 @@
 import { Zettel, ZettelAdd, ZettelBatch, ZettelDetail } from "/file/js/zettel.js";
 import { Lemma, LemmaComment, LemmaEdit, LemmaToProject } from "/file/js/lemma.js";
 import { Library, OperaMaiora, OperaMinora } from "/file/js/opera.js";
+import { Project, ProjectOverview } from "/file/js/project.js";
 import { Account, Help, Version } from "/file/js/settings.js";
 import { Administration, Statistics, Tests } from "/file/js/server.js";
 import { Login } from "/file/js/account.js";
@@ -21,6 +22,8 @@ export class Docker{
             "library": Library,
             "opera_mai": OperaMaiora,
             "opera_min": OperaMinora,
+            "project_overview": ProjectOverview,
+            "project": Project,
             "login": Login,
             "account": Account,
             "help": Help,

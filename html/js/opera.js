@@ -265,6 +265,28 @@ class OperaMaiora extends Oculus{
         ctl.appendChild(iMax);
         mainBody.appendChild(ctl);
         this.ctn.appendChild(mainBody);
+
+        this.setSelection("main", "tr.opera", false);
+        
+        // contextmenu
+        let cContext = new ContextMenu();
+        if(argos.access.includes("o_edit")){
+            cContext.addEntry('tr.opera.author', 'a', 'Autor bearbeiten', function(){
+            argos.loadEye("opera_author_edit", me.ctn.querySelector("tr#"+me.selMarker["main"]["lastRow"]).dataset.author_id);
+        });
+            cContext.addEntry('tr.opera.work', 'a', 'Werk bearbeiten', function(){
+            argos.loadEye("opera_work_edit", me.ctn.querySelector("tr#"+me.selMarker["main"]["lastRow"]).dataset.work_id);
+            });
+            cContext.addEntry('tr.opera', 'hr', '', null);
+            cContext.addEntry('tr.opera', 'a', 'Neuer Autor erstellen', function(){argos.loadEye("opera_author_add")});
+            cContext.addEntry('tr.opera', 'a', 'Neues Werk erstellen', function(){argos.loadEye("opera_work_add")});
+            cContext.addEntry('tr.opera', 'hr', '', null);
+            cContext.addEntry('*', 'a', 'Opera-Listen aktualisieren', function(){argos.loadEye("opera_update")});
+        }
+        cContext.addEntry('*', 'hr', '', null);
+        cContext.addEntry('*', 'a', 'Opera-Listen exportieren', function(){argos.loadEye("opera_export")});
+        this.setContext = cContext.menu;
+
         await fetch("/site/opera/mai", {
             headers: {"Authorization": `Bearer ${this.token}`}
         })
@@ -295,27 +317,6 @@ class OperaMaiora extends Oculus{
 }
 /*
         }, "opera_mai": function(me){
-            me.setSelection("main", "tr.opera", false);
-
-            // contextmenu
-            var cContext = new ContextMenu();
-            % if "o_edit" in user["access"]:
-                cContext.addEntry('tr.opera.author', 'a', 'Autor bearbeiten', function(){
-                argos.load("opera_author_edit", me.ctn.querySelector("tr#"+me.selMarker["main"]["lastRow"]).dataset.author_id);
-            });
-                cContext.addEntry('tr.opera.work', 'a', 'Werk bearbeiten', function(){
-                argos.load("opera_work_edit", me.ctn.querySelector("tr#"+me.selMarker["main"]["lastRow"]).dataset.work_id);
-                });
-                cContext.addEntry('tr.opera', 'hr', '', null);
-                cContext.addEntry('tr.opera', 'a', 'Neuer Autor erstellen', function(){argos.load("opera_author_add")});
-                cContext.addEntry('tr.opera', 'a', 'Neues Werk erstellen', function(){argos.load("opera_work_add")});
-                //cContext.addEntry('tr.opera', 'a', 'Verwaiste Einträge', function(){argos.load("opera_orphan")});
-                cContext.addEntry('tr.opera', 'hr', '', null);
-                cContext.addEntry('*', 'a', 'Opera-Listen aktualisieren', function(){argos.load("opera_update")});
-            % end
-            cContext.addEntry('*', 'hr', '', null);
-            cContext.addEntry('*', 'a', 'Opera-Listen exportieren', function(){argos.load("opera_export")});
-            me.setContext = cContext.menu;
 
             // scroll
         }, "opera_min": function(me){
@@ -369,3 +370,75 @@ class OperaMinora extends Oculus{
     async load(query="*"){
     }
 }
+
+
+/*
+        }, "opera_author_add": function(me){
+            me.ctn.querySelector("input#submitAuthor").addEventListener("click", function(){me.createData()});
+        }, "opera_author_edit": function(me){
+            me.ctn.querySelector("input#submitAuthor").addEventListener("click", function(){me.updateData()});
+            me.ctn.querySelector("input#deleteAuthor").addEventListener("click", function(){if(confirm("Soll der Autor wirklich gelöscht werden? Dieser Schritt kann nicht rückgängig gemacht werden!")){me.deleteData()}});
+        }, "opera_export": function(me){
+            me.ctn.querySelector("input#preparePrint").addEventListener("click", function(){
+                const cDigi = me.ctn.querySelector("input[name='digital']").checked;
+                const cCmnt = me.ctn.querySelector("input[name='comments']").checked;
+                let tBody = document.createElement("TBODY");
+                me.ctn.innerHTML="<div id='loadLabel'>Liste wird vorbereitet...</div>";
+                document.querySelector("div.operaBox").querySelectorAll("tr").forEach(function(e){
+                    let eCopy = e.cloneNode(true);
+                    if (cDigi != true){eCopy.querySelectorAll("a").forEach(function(f){f.remove()})}
+                if (cCmnt != true){
+                    eCopy.querySelectorAll("td.c5").forEach(function(f){f.remove()})
+                    eCopy.querySelectorAll("td.c5_min").forEach(function(f){f.remove()})
+                }
+                    tBody.appendChild(eCopy);
+                });
+                if (cCmnt != true){tBody.querySelector("th:last-child").remove()}
+                let exTable = document.createElement("TABLE");
+                exTable.classList.add("exportTable");
+                exTable.appendChild(tBody);
+                me.ctn.textContent = "";
+                me.ctn.appendChild(exTable);
+                window.print();
+                me.close();
+            });
+        }, "opera_work_add": function(me){
+            // set author-selection
+            var cSelect = me.ctn.querySelector("select[name=author_id]");
+            var cAuthorId = cSelect.dataset.startvalue;
+            for(var author of argos.dataList.author_data.filter()){
+                let nOption = document.createElement("OPTION");
+                nOption.value = author.id;
+                if(author.id==cAuthorId){nOption.selected=true}
+                nOption.textContent = author.abbr;
+                cSelect.appendChild(nOption);
+            }
+            // set buttons
+            me.ctn.querySelector("input#submitWork").addEventListener("click", function(){me.createData()});
+        }, "opera_work_edit": function(me){
+            // set author-selection
+            var cSelect = me.ctn.querySelector("select[name=author_id]");
+            var cAuthorId = cSelect.dataset.startvalue;
+            for(var author of argos.dataList.author_data.filter()){
+                let nOption = document.createElement("OPTION");
+                nOption.value = author.id;
+                if(author.id==cAuthorId){nOption.selected=true}
+                nOption.textContent = author.abbr;
+                cSelect.appendChild(nOption);
+            }
+            // set buttons
+            me.ctn.querySelector("select[name='is_maior']").addEventListener("change", function(){
+                if(this.value==="1"){
+                    me.ctn.querySelectorAll(".minorCit").forEach(function(e){e.style.visibility = "hidden"});
+                } else {
+                    me.ctn.querySelectorAll(".minorCit").forEach(function(e){e.style.visibility = "visible"});
+                }
+            });
+            me.ctn.querySelector("input#submitWork").addEventListener("click", function(){me.updateData()});
+            me.ctn.querySelector("input#deleteWork").addEventListener("click", function(){if(confirm("Soll das Werk wirklich gelöscht werden? Dieser Schritt kann nicht rückgängig gemacht werden!")){me.deleteData()}});
+
+
+
+        }, "opera_update": function(me){
+            me.ctn.querySelector("input#updateOpera").addEventListener("click", function(){me.updateData()});
+ */
