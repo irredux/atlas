@@ -1,7 +1,7 @@
 import { Oculus } from "/file/js/oculus.js";
 import { ContextMenu } from "/file/js/contextmenu.js";
 import { html } from "/file/js/elements.js";
-export { Library, OperaMaiora, OperaMinora };
+export { Library, Opera };
 
 class Library extends Oculus{
     constructor(res, resId=null, access=[], main=false){
@@ -246,11 +246,14 @@ class Library extends Oculus{
             me.ctn.querySelector("input#updateLibrary").addEventListener("click", function(){me.updateData();});
  */
 
-class OperaMaiora extends Oculus{
+class Opera extends Oculus{
     constructor(res, resId=null, access=[], main=false){
         super(res, resId, access, main);
     }
     async load(){
+        let list = "mai";
+        if(this.res.endsWith("min")){list = "min"}
+
         let mainBody = document.createDocumentFragment();
         let operaBox = document.createElement("DIV");
         operaBox.classList.add("operaBox");
@@ -287,7 +290,7 @@ class OperaMaiora extends Oculus{
         cContext.addEntry('*', 'a', 'Opera-Listen exportieren', function(){argos.loadEye("opera_export")});
         this.setContext = cContext.menu;
 
-        await fetch("/site/opera/mai", {
+        await fetch(`/site/opera/${list}`, {
             headers: {"Authorization": `Bearer ${this.token}`}
         })
             .then(response => response.text())
@@ -315,63 +318,6 @@ class OperaMaiora extends Oculus{
             .catch(e => {throw e});
     }
 }
-/*
-        }, "opera_mai": function(me){
-
-            // scroll
-        }, "opera_min": function(me){
-            me.setSelection("main", "tr.opera", false);
-
-            // contextmenu
-            var cContext = new ContextMenu();
-            % if "o_edit" in user["access"]:
-                cContext.addEntry('tr.opera.author', 'a', 'Autor bearbeiten', function(){
-                argos.load("opera_author_edit", me.ctn.querySelector("tr#"+me.selMarker["main"]["lastRow"]).dataset.author_id);
-            });
-                cContext.addEntry('tr.opera.work', 'a', 'Werk bearbeiten', function(){
-                argos.load("opera_work_edit", me.ctn.querySelector("tr#"+me.selMarker["main"]["lastRow"]).dataset.work_id);
-                });
-                cContext.addEntry('tr.opera', 'hr', '', null);
-                cContext.addEntry('tr.opera', 'a', 'Neuer Autor erstellen', function(){argos.load("opera_author_add")});
-                cContext.addEntry('tr.opera', 'a', 'Neues Werk erstellen', function(){argos.load("opera_work_add")});
-                //cContext.addEntry('tr.opera', 'a', 'Verwaiste Einträge', function(){argos.load("opera_orphan")});
-                cContext.addEntry('tr.opera', 'hr', '', null);
-                cContext.addEntry('*', 'a', 'Opera-Listen aktualisieren', function(){argos.load("opera_update")});
-            % end
-            cContext.addEntry('*', 'hr', '', null);
-            cContext.addEntry('*', 'a', 'Opera-Listen exportieren', function(){argos.load("opera_export")});
-            me.setContext = cContext.menu;
-
-            // scroll
-            me.ctn.querySelector("input#current_sheet").value = "1";
-            me.ctn.querySelector("span#total_sheet").textContent = me.ctn.querySelectorAll("div.operaBox > div").length;
-            me.ctn.querySelector("input#current_sheet").addEventListener("change", function(){});
-            me.ctn.querySelector("div.operaBox").addEventListener("scroll", function(){
-                var nearestElement = null;
-                var toFar = false; 
-                me.ctn.querySelectorAll("div.operaBox > div").forEach(function(e){
-                    if (toFar == false && e.getBoundingClientRect().top <= 260){
-                        nearestElement = e;
-                    } else {toFar = true};
-                });
-                me.ctn.querySelector("input#current_sheet").value = nearestElement.id.substring(6);
-            });
-            me.ctn.querySelector("input#current_sheet").addEventListener("change", function(){
-                if(!isNaN(event.target.value)){
-                    me.ctn.querySelector("div#opera_"+event.target.value).scrollIntoView();
-                }
-            });
- */
-
-class OperaMinora extends Oculus{
-    constructor(res, resId=null, access=[], main=false){
-        super(res, resId, access, main);
-    }
-    async load(query="*"){
-    }
-}
-
-
 /*
         }, "opera_author_add": function(me){
             me.ctn.querySelector("input#submitAuthor").addEventListener("click", function(){me.createData()});

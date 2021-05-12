@@ -136,12 +136,6 @@ class Project extends Oculus{
          */
         let mainFrame = document.createElement("DIV");
         mainFrame.classList.add("project_mainFrame");
-        /*
-        mainFrame.ondragstart = startDrag();
-        mainFrame.ondrop = onDragDrop("drop");
-        mainFrame.ondragover = onDragDrop();
-        mainFrame.ondragend = stopDrag();
-        */
 
         let detailView = document.createElement("DIV"); //me.ctn.querySelector("div.project_detail");
         detailView.classList.add("project_detail");
@@ -156,7 +150,7 @@ class Project extends Oculus{
         // onProjectLoad
         //argos.o.project.defaultGroupId = null;
         let keyWords = new KeyWordSetter();
-        let articles = await arachne.article.is(this.resId, "default", false);
+        let articles = await arachne.article.bound([this.resId, "000"], [this.resId, "?"], "default", false);
         
         if(articles.length > 0){detailView.textContent = ""}
         // set max depth of article groups
@@ -179,7 +173,7 @@ class Project extends Oculus{
             var cType = keyWords.word(article.type, cDepth)+" ";
             if(article.position=="000"){
                 cType = "";
-                argos.o.project.defaultGroupId = article.id;
+                //argos.o.project.defaultGroupId = article.id;
             }
             var cNumber = -1;
             if(cDepth>0){
@@ -216,7 +210,7 @@ class Project extends Oculus{
             cAppendDetail.id = "da_"+article.id;
             cAppendDetail.appendChild(daKeyWord);
             cAppendDetail.appendChild(cDisplayTextDetail);
-            let cParent = me.ctn.querySelector("div.detail_article[data-position='"+cPath+"']");
+            let cParent = this.ctn.querySelector("div.detail_article[data-position='"+cPath+"']");
             if(cParent != null){cParent.appendChild(cAppendDetail)}
             else{detailView.appendChild(cAppendDetail)}
 
@@ -299,87 +293,88 @@ class Project extends Oculus{
             }
 
             // add to DOM
-            cParent = me.ctn.querySelector("div.artBox[data-position='"+cPath+"']");
+            cParent = this.ctn.querySelector("div.artBox[data-position='"+cPath+"']");
             if(cParent != null){cParent.appendChild(cAppend);cParent.appendChild(insertAfter)}
             else{menuView.appendChild(cAppend);menuView.appendChild(insertAfter)}
+
+
+            // load and display zettel
+            let zettel_lnks = await arachne.zettel_lnk.is(article.id, "article", false);
+            // CHECK FOR ERRORS HERE: NO DATE_SORT; TOO MANY ACTIVE ELEMENTS ETC.
+            for(const zettel_lnk of zettel_lnks){
+                let zettel = await arachne.zettel.is(zettel_lnk.zettel_id);
+                //argos.o.project.resultIds.push(zettel.id);
+                let nZettel = document.createElement("DIV");
+                nZettel.classList.add("detail_zettel");
+                if(zettel.include_export==1){nZettel.classList.add("zettelExported")}
+                nZettel.id = zettel.id;
+                nZettel.dataset.lnk_id = zettel.lnk_id;
+                nZettel.draggable = true;
+                if(zettel.type != 4){
+                    let nOpus = document.createElement("INPUT");
+                    nOpus.classList.add("opus", "inlineText");
+                    nOpus.type="TEXT";
+                    //nOpus.setAttribute("disabled", true);
+                    nOpus.id = "opus";
+                    nOpus.dataset.zettelId = zettel.id;
+                    if(zettel.example_plain!=null){nOpus.value=zettel.example_plain}
+                    else{
+                        if(zettel.include_export==1){
+                            nOpus.classList.add("errMarked");
+                            nOpus.title = "* Zettel wird exportiert: Eintrag ergänzen.";
+                        }
+                        nOpus.value = "Werk";
+                        nOpus.style.fontStyle="italic";
+                    };
+                    nOpus.size = nOpus.value.length;
+                    let nStelle = document.createElement("SPAN");
+                    nStelle.classList.add("stelle");
+                    nStelle.id = zettel.id;
+                    if(zettel.stellenangabe==null||zettel.stellenangabe===""){
+                        if(zettel.include_export==1){
+                            nStelle.classList.add("errMarked");
+                            nStelle.title = "* Zettel wird exportiert: Eintrag ergänzen.";
+                        }
+                        nStelle.textContent = "Stelle";
+                        nStelle.style.fontStyle="italic";
+                    }else{nStelle.textContent=zettel.stellenangabe}
+                    let nExportText = document.createElement("SPAN");
+                        nExportText.classList.add("exportText");
+                        nExportText.id = zettel.id;
+                        nExportText.dataset.lnk_id = zettel.lnk_id;
+                    if(zettel.display_text==null||zettel.display_text===""){
+                        if(zettel.include_export==1){
+                            nExportText.classList.add("errMarked");
+                            nExportText.title = "* Zettel wird exportiert: Eintrag ergänzen.";
+                        }
+                        nExportText.textContent = "...";
+                        nExportText.style.fontStyle="italic";
+                    }else{nExportText.textContent=zettel.display_text}
+                    nZettel.appendChild(newEl("&lowast; "));
+                    nZettel.appendChild(nOpus);
+                    nZettel.appendChild(newEl("; "));
+                    nZettel.appendChild(nStelle);
+                    nZettel.appendChild(newEl(" &ldquo;"));
+                    nZettel.appendChild(nExportText);
+                    nZettel.appendChild(newEl(" &rdquo;"));
+                    //this.bindAutoComplete(nOpus, "work_data");
+                } else {
+                    nZettel.innerHTML = `&lowast; <i>Literaturzettel</i>`;
+                }
+                nZettel.addEventListener("click", function(){
+                    let cEvent = event.target.closest("div.detail_zettel");
+                    if(argos.o.project.o["project_zettel_preview"]!=null){
+                        argos.o.project.o["project_zettel_preview"].close();
+                    }
+                    argos.load("project_zettel_preview", cEvent.id)
+                });
+                let cParent = this.ctn.querySelector("div.detail_article[data-position='"+zettel.position+"']");
+                if(cParent != null){cParent.appendChild(nZettel)}
+                else{detailView.appendChild(nZettel)}
+            }
         }
         
-        // load and display zettel
-        let zettels = await arachne.zettel_lnk.is(0, null, false);
-        //argos.o.project.resultIds = [];
-        for(const zettel of zettels){
-            argos.o.project.resultIds.push(zettel.id);
-            let nZettel = document.createElement("DIV");
-            nZettel.classList.add("detail_zettel");
-            if(zettel.include_export==1){nZettel.classList.add("zettelExported")}
-            nZettel.id = zettel.id;
-            nZettel.dataset.lnk_id = zettel.lnk_id;
-            nZettel.draggable = true;
-            if(zettel.type != 4){
-                let nOpus = document.createElement("INPUT");
-                nOpus.classList.add("opus", "inlineText");
-                nOpus.type="TEXT";
-                //nOpus.setAttribute("disabled", true);
-                nOpus.id = "opus";
-                nOpus.dataset.zettelId = zettel.id;
-                if(zettel.example_plain!=null){nOpus.value=zettel.example_plain}
-                else{
-                    if(zettel.include_export==1){
-                        nOpus.classList.add("errMarked");
-                        nOpus.title = "* Zettel wird exportiert: Eintrag ergänzen.";
-                    }
-                    nOpus.value = "Werk";
-                    nOpus.style.fontStyle="italic";
-                };
-                nOpus.size = nOpus.value.length;
-                let nStelle = document.createElement("SPAN");
-                nStelle.classList.add("stelle");
-                nStelle.id = zettel.id;
-                if(zettel.stellenangabe==null||zettel.stellenangabe===""){
-                    if(zettel.include_export==1){
-                        nStelle.classList.add("errMarked");
-                        nStelle.title = "* Zettel wird exportiert: Eintrag ergänzen.";
-                    }
-                    nStelle.textContent = "Stelle";
-                    nStelle.style.fontStyle="italic";
-                }else{nStelle.textContent=zettel.stellenangabe}
-                let nExportText = document.createElement("SPAN");
-                    nExportText.classList.add("exportText");
-                    nExportText.id = zettel.id;
-                    nExportText.dataset.lnk_id = zettel.lnk_id;
-                if(zettel.display_text==null||zettel.display_text===""){
-                    if(zettel.include_export==1){
-                        nExportText.classList.add("errMarked");
-                        nExportText.title = "* Zettel wird exportiert: Eintrag ergänzen.";
-                    }
-                    nExportText.textContent = "...";
-                    nExportText.style.fontStyle="italic";
-                }else{nExportText.textContent=zettel.display_text}
-                nZettel.appendChild(newEl("&lowast; "));
-                nZettel.appendChild(nOpus);
-                nZettel.appendChild(newEl("; "));
-                nZettel.appendChild(nStelle);
-                nZettel.appendChild(newEl(" &ldquo;"));
-                nZettel.appendChild(nExportText);
-                nZettel.appendChild(newEl(" &rdquo;"));
-                me.bindAutoComplete(nOpus, "work_data");
-            } else {
-                nZettel.innerHTML = `&lowast; <i>Literaturzettel</i>`;
-            }
-            nZettel.addEventListener("click", function(){
-                let cEvent = event.target.closest("div.detail_zettel");
-                if(argos.o.project.o["project_zettel_preview"]!=null){
-                    argos.o.project.o["project_zettel_preview"].close();
-                }
-                argos.load("project_zettel_preview", cEvent.id)
-            });
-            let cParent = me.ctn.querySelector("div.detail_article[data-position='"+zettel.position+"']");
-            if(cParent != null){cParent.appendChild(nZettel)}
-            else{detailView.appendChild(nZettel)}
 
-        }
-
-        // CHECK FOR ERRORS HERE: NO DATE_SORT; TOO MANY ACTIVE ELEMENTS ETC.
         // check if there are zettels in the project, if not display warning.
         // set selection etc.
         /*
@@ -416,14 +411,15 @@ class Project extends Oculus{
         }
         */
 
-        document.body.addEventListener("dragstart", startDrag);
-        document.body.addEventListener("dragend", stopDrag);
-        document.body.addEventListener("dragend", stopDrag);
-        document.body.addEventListener("dragover", function(){onDragDrop("over")});
-        document.body.addEventListener("drop", function(){onDragDrop("drop")});
+        /*
+        mainFrame.ondragstart = startDrag();
+        mainFrame.ondrop = onDragDrop("drop");
+        mainFrame.ondragover = onDragDrop();
+        mainFrame.ondragend = stopDrag();
+        */
+
         const rule = new Rules();
-        //rule.check(this.ctn);
-        // end of  onProjectLoad()
+        rule.check(this.ctn);
 
         mainFrame.appendChild(detailView);
         menuProjectBox.appendChild(menuView);
@@ -431,31 +427,26 @@ class Project extends Oculus{
         mainFrame.appendChild(menuBox);
         mainBody.appendChild(mainFrame);
         this.ctn.appendChild(mainBody);
-        //
-        /*
-            // start external onload function
-            // context menu
-            var cContext = new ContextMenu();
-            cContext.addEntry('div.detail_zettel', 'a', 'Detailansicht', function(){argos.load("zettel_detail", me.selMarker["main"]["lastRow"])});
-            cContext.addEntry('div.detail_zettel', 'hr', '', null);
-            cContext.addEntry('div.detail_zettel:not(.zettelExported)', 'a', 'In Export aufnehmen', function(){includeInExport(me)});
-            cContext.addEntry('div.detail_zettel.zettelExported', 'a', 'Aus Export entfernen', function(){includeInExport(me)});
-            cContext.addEntry('div.detail_zettel', 'a', 'Zettel aus dem Projekt entfernen', function(){
-                if(confirm("Soll der Zettel wirklich aus dem Projekt entfernt werden? Der Zettel bleibt allerdings in der Zettel-Datenbank erhalten.")){
-                    let cLnkId = me.ctn.querySelector("div.detail_zettel[id='"+me.selMarker["main"]["lastRow"]+"']").dataset.lnk_id;
-                    me._delete("/data/zettel_lnk/"+cLnkId, function(){me.refresh()});
-                }
-            });
-            cContext.addEntry('div.detail_zettel', 'a', 'Neuer Zettel erstellen', function(){argos.load("zettel_add")});
-            cContext.addEntry('div.detail_zettel', 'hr', '', null);
-            cContext.addEntry('*', 'a', 'Artikelstruktur bearbeiten', function(){editArticleStructure(me)});
-            cContext.addEntry('*', 'hr', '', null);
-            cContext.addEntry('*', 'a', 'Projekt exportieren', function(){argos.load("project_export", me.resId)});
 
-            me.setContext = cContext.menu;
-         */
+        // context menu
+        let cContext = new ContextMenu();
+        cContext.addEntry('div.detail_zettel', 'a', 'Detailansicht', function(){argos.load("zettel_detail", me.selMarker["main"]["lastRow"])});
+        cContext.addEntry('div.detail_zettel', 'hr', '', null);
+        cContext.addEntry('div.detail_zettel:not(.zettelExported)', 'a', 'In Export aufnehmen', function(){includeInExport(me)});
+        cContext.addEntry('div.detail_zettel.zettelExported', 'a', 'Aus Export entfernen', function(){includeInExport(me)});
+        cContext.addEntry('div.detail_zettel', 'a', 'Zettel aus dem Projekt entfernen', function(){
+            if(confirm("Soll der Zettel wirklich aus dem Projekt entfernt werden? Der Zettel bleibt allerdings in der Zettel-Datenbank erhalten.")){
+                let cLnkId = me.ctn.querySelector("div.detail_zettel[id='"+me.selMarker["main"]["lastRow"]+"']").dataset.lnk_id;
+                me._delete("/data/zettel_lnk/"+cLnkId, function(){me.refresh()});
+            }
+        });
+        cContext.addEntry('div.detail_zettel', 'a', 'Neuer Zettel erstellen', function(){argos.load("zettel_add")});
+        cContext.addEntry('div.detail_zettel', 'hr', '', null);
+        cContext.addEntry('*', 'a', 'Artikelstruktur bearbeiten', function(){editArticleStructure(me)});
+        cContext.addEntry('*', 'hr', '', null);
+        cContext.addEntry('*', 'a', 'Projekt exportieren', function(){argos.load("project_export", me.resId)});
+        this.setContext = cContext.menu;
     }
-
 }
 
 class Rules{

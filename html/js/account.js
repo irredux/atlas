@@ -1,6 +1,6 @@
 import { Oculus } from "/file/js/oculus.js";
 import { Arachne } from "/file/js/arachne.js";
-export { Login };
+export { Login, Logout };
 
 class Login extends Oculus{
     constructor(res, resId=null, access=[], main=false){
@@ -63,5 +63,16 @@ class Login extends Oculus{
         mainBody.appendChild(footer);
 
         document.body.appendChild(mainBody);
+    }
+}
+
+class Logout extends Oculus{
+    constructor(res, resId=null, access=[], main=false){
+        super(res, resId, access, main);
+    }
+    async load(){
+        sessionStorage.removeItem("token");
+        // remove token from server
+        location.href = "/";
     }
 }

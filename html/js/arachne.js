@@ -119,6 +119,31 @@ class ArachneDatabase{
         });
     }
 
+    bound(lowerSearch, upperSearch, index=null, removeArray = false){
+        return this.getStore(index).then((oStore) => {
+            return new Promise((resolve, reject) => {
+                let cursorRequest  = oStore.openCursor(IDBKeyRange.bound(lowerSearch, upperSearch));
+                let cursorResults = [];
+                cursorRequest.onsuccess = () => {
+                    let cursor = cursorRequest.result;
+                    if(cursor){
+                        if(cursor.value.deleted!=1){cursorResults.push(cursor.value)}
+                        cursor.continue();
+                    } else {
+                        if(cursorResults.length==1 && removeArray){
+                            resolve(cursorResults[0]);
+                        } else {
+                            resolve(cursorResults);
+                        }
+                    }
+                }
+                cursorRequest.onerror = (e) => {reject(e)}
+            })
+                .catch(e => {throw e});
+        })
+            .catch(e => {throw e});
+    }
+
     is(searchValue, index=null, removeArray = true){
         return this.getStore(index).then((oStore) => {
             return new Promise((resolve, reject) => {

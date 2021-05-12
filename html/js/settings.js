@@ -1,6 +1,6 @@
 import { Oculus } from "/file/js/oculus.js";
 import { ContextMenu } from "/file/js/contextmenu.js";
-export { Account, Help, Version };
+export { Account, Help };
 
 class Account extends Oculus{
     constructor(res, resId=null, access=[], main=false){
@@ -143,17 +143,19 @@ class Help extends Oculus{
     constructor(res, resId=null, access=[], main=false){
         super(res, resId, access, main);
     }
-    async load(){
-        let url = `/page/${this.res}`;
-        if (this.resId != null){url += "/"+this.resId}
-        arachne.getPage(url, this.ctn)
-            .then(text => {this.ctn.innerHTML=text})
-            .then(rest => {this.loadScript()})
-            .catch(e => {throw e});
-    }
-
-    loadScript(){
-        this.setTabs = true;
+    load(){
+        let mainBody = document.createDocumentFragment();
+        let helpText = document.createElement("DIV");
+        helpText.classList.add("card");
+        helpText.innerHTML = `
+        <h2>Hilfe</h2>
+        <p>
+        <a href="https://gitlab.lrz.de/haeberlin/dmlw/-/wikis/00-Start">Hilfe und Informationen</a> zu dMLW finden Sie auf unsererer
+        <a href="https://gitlab.lrz.de/haeberlin/dmlw">GitLab-Seite</a>.</p>
+        <p>Informationen zum Wörterbuch-Projekt auf <a href="www.mlw.badw.de">www.mlw.badw.de</a></p>
+            `;
+        mainBody.appendChild(helpText);
+        this.ctn.appendChild(mainBody);
     }
 }
 
