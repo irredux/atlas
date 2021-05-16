@@ -143,6 +143,7 @@ export class Argos{
         if (!('z_width' in this.userDisplay)) {this.userDisplay.z_width = 500}; // width of zettel in zettel-db/project
         if (!('ed_zoom' in this.userDisplay)) {this.userDisplay.ed_zoom= 1};
         if (!('zet_zoom' in this.userDisplay)) {this.userDisplay.zet_zoom= 1}; // zoom of zettel in zettel_detail
+        if (!('sOrder' in this.userDisplay)) {this.userDisplay.sOrder = 0}; // search order - 0: normal (ie lemma/date...); 1: id
 
         // sets width of zettel
         document.documentElement.style.setProperty("--zettelWidth", this.userDisplay.z_width+"px");

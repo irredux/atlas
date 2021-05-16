@@ -2,12 +2,36 @@ export { Elements, html };
 
 function html(i){
     if(i==null){return ""}
-    else{return DOMPurify.sanitize(i.replace(/&lt;/g, "<").replace(/&gt;/g, ">"), { ALLOWED_TAGS: ["aut", "b", "i", "sup"] })}
+    else{return DOMPurify.sanitize(i.replace(/&lt;/g, "<").replace(/&gt;/g, ">"), { ADD_TAGS: ["aut"] })}
 };
 
 class Elements {
     constructor(){
         //this.ctn = ctn;
+    }
+    div(content=null, attr = {}){
+        let div = document.createElement("DIV");
+        if(content!=null){div.innerHTML = html(content)}
+        if(attr.class!=null){div.classList.add(attr.class)}
+        return div;
+    }
+    i(content, attr = {}){
+        // classList must be an array
+        let i = document.createElement("I");
+        i.innerHTML = html(content);
+        if(attr.class!=null){i.classList.add(attr.class)}
+        return i;
+    }
+    pop(button, content, direction = "left"){
+        let box = document.createElement("DIV");
+        box.classList.add("popOver");
+        box.innerHTML = html(`<a>${button}</a>`);
+        let boxContent = document.createElement("DIV");
+        boxContent.classList.add("popOverContent");
+        boxContent.style.textAlign = direction;
+        boxContent.innerHTML = html(content);
+        box.appendChild(boxContent);
+        return box;
     }
     tab(value, name){
         let tab = document.createElement("DIV");
@@ -22,7 +46,7 @@ class Elements {
         container.setAttribute("name", name);
         return container;
     }
-    table(values, widths=null){
+    table(values, widths=[]){
         /*
          * values = 2 dimensional array containing str/HTML elements
          * widths = array containing width in pixel for cols
@@ -30,14 +54,16 @@ class Elements {
         let tbl = document.createElement("TABLE");
         for(const row of values){
             let tRow = document.createElement("TR");
-            for(const col of row){
+            let i = 0;
+            for(;i<row.length;i++){
                 let tCol = document.createElement("TD");
-                if(typeof col === "string"){
-                    tCol.innerHTML = col;
-                } else if(col == null){
+                if(widths[i]!=null){tCol.width = widths[i]}
+                if(typeof row[i] === "string"){
+                    tCol.innerHTML = row[i];
+                } else if(row[i] == null){
                     tCol.textContent = "";
                 } else {
-                    tCol = col;
+                    tCol.appendChild(row[i]);
                 }
                 tRow.appendChild(tCol);
             }
@@ -109,7 +135,7 @@ class Elements {
     }
     p(value){
         let p = document.createElement("P");
-        p.textContent = value;
+        p.innerHTML = html(value);
         return p;
     }
 }

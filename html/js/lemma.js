@@ -8,6 +8,16 @@ class Lemma extends Oculus{
         super(res, resId, access, main);
     }
     async load(query="*"){
+        const searchFields = {
+            lemma: {name: "Lemma", des: "Durchsucht alle Lemmata nach einer bestimmten Zeichenfolge."},
+            comment: {name: "Kommentar", des: "Durchsucht den Kommentar zu den Lemmata."},
+            id: {name: "ID", des: "Durchsucht IDs der Lemmata."}
+        };
+        const displayQuery = query;
+        for(const field in searchFields){
+            const reg = new RegExp(searchFields[field].name, "g");
+            query = query.replace(reg, field);
+        }
         const results = await arachne.lemma.search(query, "*", "lemma");
         this.ctn.innerHTML = "";
         let mainBody = document.createDocumentFragment();
@@ -19,7 +29,7 @@ class Lemma extends Oculus{
         searchBar.id = "searchBar"; searchBar.classList.add("card");
         let sbInput = document.createElement("INPUT");
         sbInput.type = "text";
-        (query === "*") ? sbInput.value = "" : sbInput.value = query;
+        (query === "*") ? sbInput.value = "" : sbInput.value = displayQuery;
         sbInput.id = "searchBarQuery";
         sbInput.spellcheck = "false"; sbInput.autocomplete = "off";
         sbInput.autocorrect = "off"; sbInput.autocapitalize = "off";
@@ -40,15 +50,27 @@ class Lemma extends Oculus{
             this.load(query);
         }
         searchBar.appendChild(sbButton);
-        let sbHelp = document.createElement("DIV");
-        sbHelp.classList.add("popOver");
-        sbHelp.innerHTML = "<a>Hilfe</a>";
-        let sbHelpContent = document.createElement("DIV");
-        sbHelpContent.classList.add("popOverContent");
-        sbHelpContent.style.textAlign = "left";
-        sbHelpContent.textContent = "bla!";
-        sbHelp.appendChild(sbHelpContent);
-        searchBar.appendChild(sbHelp);
+        let helpContent = `
+            <h3>Hilfe zur Suche</h3>
+            <p>Benötigen Sie eine ausführliche Hilfe zur Suche? Dann klicken Sie
+            <a href='https://gitlab.lrz.de/haeberlin/dmlw/-/wikis/00-Start'>hier</a>.</p>
+            <h4>verfügbare Felder</h4>
+            <table style='font-size: var(--minorTxtSize);'>
+                <tr><td><b>Feldname</b></td><td><b>Beschreibung</b></td></tr>
+            `;
+        for(const field in searchFields){
+        helpContent += `
+        <tr><td>${searchFields[field].name}</td><td>${searchFields[field].des}</td></tr>
+            `;
+
+        }
+       helpContent += `
+            </table>
+            <i style='font-size: var(--minorTxtSize);'>Achtung: Bei den Feldnamen
+            auf Groß- und Kleinschreibung achten!</i>
+            <p class='minorTxt'>Eine Suche nach '<i>Feldname</i>:NULL' zeigt gewöhnlich alle leeren Felder.</p>
+        `;
+        searchBar.appendChild(el.pop("Hilfe", helpContent));
         mainBody.appendChild(searchBar);
 
         // result box
@@ -198,12 +220,16 @@ class LemmaEdit extends Oculus{
         let sbHelpContent = document.createElement("DIV");
         sbHelpContent.classList.add("popOverContent");
         sbHelpContent.style.textAlign = "left";
-        sbHelpContent.textContent = "bla bla?!";
+        sbHelpContent.textContent = "-";
         sbHelp.appendChild(sbHelpContent);
         mainBody.appendChild(sbHelp);
         let iLemma = el.text(lemma.lemma);
         let iLemmaDicts = el.text(lemma.dicts);
         let iLemmaDisplay = el.text(html(lemma.lemma_display));
+        if(argos.main.o.zettel_detail.newLemma != null){
+            iLemma.value = argos.main.o.zettel_detail.newLemma;
+            iLemmaDisplay.value = argos.main.o.zettel_detail.newLemma;
+        }
         let iLemmaNr = el.text(lemma.lemma_nr);
         let iMLW = el.select(lemma.MLW);
         let iFragezeichen = el.select(lemma.Fragezeichen);
@@ -227,7 +253,15 @@ class LemmaEdit extends Oculus{
                     Ausschluss: iAusschluss.value,
                     comment: iKommentar.value
                 };
-                arachne.lemma.save(nValues).then(rTxt => {el.status("saved")});
+                arachne.lemma.save(nValues).then(rTxt => {
+                    el.status("saved");
+                    if(argos.main.o.zettel_detail.newLemma != null){
+                        this.close();
+                        console.log(rTxt.id);
+                        argos.main.o.zettel_detail.iLemmaInput.dataset.selected = rTxt.id;
+                        argos.main.o.zettel_detail.saveButton.click();
+                    }
+                });
             } else {el.status("error", "Bitte ein gültiges Lemma eintragen!")}
         }
         let iDelete = el.button("löschen");
@@ -246,17 +280,16 @@ class LemmaEdit extends Oculus{
             ["Eintrag ist auszuschließen <i class='minorTxt'>(mit [[...]]  markiert)</i>", iAusschluss, "", ""],
             ["Kommentar:", iKommentar, iSave, (lemma.zettelCount == 0) ? iDelete: ""]
         ];
-        let tbl = document.createElement("TABLE");
-        for(const row of tblContent){
-            let tr = document.createElement("TR");
-            for(const col of row){
-                let td = document.createElement("TD");
-                if(typeof col === "string"){td.innerHTML = col}
-                else{td.appendChild(col)}
-                tr.appendChild(td);
+        let tbl = null;
+        if(this.ctn.id === "zettel_lemma_add"){
+            let tblSingle = [];
+            for(const tblCtn of tblContent){
+                tblSingle.push([tblCtn[0], tblCtn[1]]);
+                tblSingle.push([tblCtn[2], tblCtn[3]]);
             }
-            tbl.appendChild(tr);
+            tbl = el.table(tblSingle);
         }
+        else{tbl = el.table(tblContent)}
         mainBody.appendChild(tbl);
         /* <td width='18%'></td> <td width='32%'></td>
         <td width='18%'></td><td width='32%'></td> */

@@ -164,12 +164,13 @@ class Oculus{
         this.startLoadMore();
     }
 
-    startLoadMore(){
+    async startLoadMore(){
         if(this.loadMore.resultList.length > this.loadMore.position){
             let i = this.loadMore.position;
             let max = (i+100 < this.loadMore.resultList.length) ? i+100 : this.loadMore.resultList.length;
             for(; i<max; i++){
-                this.loadMore.ctn.appendChild(this.contentLoadMore(this.loadMore.resultList[i]));
+                const nElement = await this.contentLoadMore(this.loadMore.resultList[i]);
+                this.loadMore.ctn.appendChild(nElement);
             }
             this.loadMore.position = i;
         }

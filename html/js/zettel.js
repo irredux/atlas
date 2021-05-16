@@ -1,13 +1,29 @@
 import { Oculus } from "/file/js/oculus.js";
 import { ContextMenu } from "/file/js/contextmenu.js";
 import { html } from "/file/js/elements.js";
-export { Zettel, ZettelAdd, ZettelBatch, ZettelDetail };
+export { Zettel, ZettelAdd, ZettelBatch, ZettelDetail, ZettelExport, ZettelImport };
 
 class Zettel extends Oculus{
     constructor(res, resId=null, access=[], main=false){
         super(res, resId, access, main);
     }
     async load(query="*"){
+        const searchFields = {
+            lemma: {name: "Lemma", des: "Durchsucht alle Lemmata nach einer bestimmten Zeichenfolge."},
+            type: {name: "Typ", des: "Sucht nach Zetteltypen (1: verzettelt, 2: Exzerpt, 3: Index, 4: Literatur)"},
+            work: {name: "Werk", des: "Durchsucht die verknüpften Werke."},
+            work_id: {name: "Werk-ID", des: "Durchsucht die verknüpften Werk-IDs."},
+            author: {name: "Autor", des: "Durchsucht die verknüpften Autoren."},
+            author_id: {name: "Autor-ID", des: "Durchsucht die verknüpften Autor-IDs."},
+            id: {name: "ID", des: "Durchsucht die IDs"}
+        };
+        const displayQuery = query;
+        for(const field in searchFields){
+            const reg = new RegExp(searchFields[field].name, "g");
+            query = query.replace(reg, field);
+        }
+        this.query = query; // export
+
         this.results = await arachne.zettel.search(query, "*", "zettel", false);
         this.resultLst = [];
         for(const result of this.results){this.resultLst.push(result.id)};
@@ -21,7 +37,7 @@ class Zettel extends Oculus{
         searchBar.id = "searchBar"; searchBar.classList.add("card");
         let sbInput = document.createElement("INPUT");
         sbInput.type = "text";
-        (query === "*") ? sbInput.value = "" : sbInput.value = query;
+        (query === "*") ? sbInput.value = "" : sbInput.value = displayQuery;
         sbInput.id = "searchBarQuery";
         sbInput.spellcheck = "false"; sbInput.autocomplete = "off";
         sbInput.autocorrect = "off"; sbInput.autocapitalize = "off";
@@ -49,15 +65,27 @@ class Zettel extends Oculus{
             this.load(query);
         }
         searchBar.appendChild(sbButton);
-        let sbHelp = document.createElement("DIV");
-        sbHelp.classList.add("popOver");
-        sbHelp.innerHTML = "<a>Hilfe</a>";
-        let sbHelpContent = document.createElement("DIV");
-        sbHelpContent.classList.add("popOverContent");
-        sbHelpContent.style.textAlign = "left";
-        sbHelpContent.textContent = "bla!";
-        sbHelp.appendChild(sbHelpContent);
-        searchBar.appendChild(sbHelp);
+        let helpContent = `
+            <h3>Hilfe zur Suche</h3>
+            <p>Benötigen Sie eine ausführliche Hilfe zur Suche? Dann klicken Sie
+            <a href='https://gitlab.lrz.de/haeberlin/dmlw/-/wikis/00-Start'>hier</a>.</p>
+            <h4>verfügbare Felder</h4>
+            <table style='font-size: var(--minorTxtSize);'>
+                <tr><td><b>Feldname</b></td><td><b>Beschreibung</b></td></tr>
+            `;
+        for(const field in searchFields){
+        helpContent += `
+        <tr><td>${searchFields[field].name}</td><td>${searchFields[field].des}</td></tr>
+            `;
+
+        }
+       helpContent += `
+            </table>
+            <i style='font-size: var(--minorTxtSize);'>Achtung: Bei den Feldnamen
+            auf Groß- und Kleinschreibung achten!</i>
+            <p class='minorTxt'>Eine Suche nach '<i>Feldname</i>:NULL' zeigt gewöhnlich alle leeren Felder.</p>
+        `;
+        searchBar.appendChild(el.pop("Hilfe", helpContent));
         mainBody.appendChild(searchBar);
 
         // result box
@@ -94,24 +122,19 @@ class Zettel extends Oculus{
                     function(){argos.loadEye("zettel_add")});
             }
             if(this.access.includes("z_add")){
-                cContext.addEntry('*', 'a', 'Zettel importieren',
-                    function(){argos.loadEye("zettel_import")});
+                cContext.addEntry('*', 'a', 'Zettel importieren', () => {argos.loadEye("zettel_import")});
             }
-            cContext.addEntry('*', 'a', 'Zettel exportieren',
-                function(){argos.loadEye("zettel_export", null, argos.o["zettel"].query)});
+            cContext.addEntry('*', 'a', 'Zettel exportieren', () => {argos.loadEye("zettel_export")});
             this.setContext = cContext.menu;
             /*
-        this.resultIds = JSON.parse(this.ctn.querySelector('div#resultIds').textContent);
-        
-
-        // open zettel detail, if in query
-        this.ctn.querySelector("div.zettel_box").addEventListener("dblclick", function(){
-            argos.loadEye("zettel_detail", this.selMarker.main.lastRow)
-        });
-        if(argos.getQuery("detail") != null){
-            argos.loadEye("zettel_detail", argos.getQuery("detail"))
-        }
-        */
+            // open zettel detail, if in query
+            this.ctn.querySelector("div.zettel_box").addEventListener("dblclick", function(){
+                argos.loadEye("zettel_detail", this.selMarker.main.lastRow)
+            });
+            if(argos.getQuery("detail") != null){
+                argos.loadEye("zettel_detail", argos.getQuery("detail"))
+            }
+            */
         }
         mainBody.appendChild(resultBox);
         this.ctn.appendChild(mainBody);
@@ -159,6 +182,129 @@ class Zettel extends Oculus{
 
 }
 
+class ZettelExport extends Oculus{
+    constructor(res, resId=null, access=[], main=false){
+        super(res, resId, access, main);
+    }
+    async load(){
+        const zettels = await arachne.zettel.search(argos.main.query, "*", "zettel", false);
+        let mainBody = document.createDocumentFragment();
+        let noPrint = el.div(null, {class: "noPrint"});
+        noPrint.appendChild(el.h("Zettel exportieren", 3));
+        if(zettels.length > 2000){
+            noPrint.appendChild(el.p(`
+            Es wurden 2000 Zettel vorbereitet.<br />
+            <b>Beachten Sie:</b> es können nicht mehr als 2000 Zettel
+            gleichzeitig exportiert werden.
+        `));
+        } else {
+            noPrint.appendChild(el.p(`
+            Es wurden ${zettels.length} Zettel vorbereitet.`));
+        }
+        let printZettel = el.button("drucken");
+        printZettel.style.float = "right";
+        printZettel.onclick = () => {
+            window.print();
+        }
+        noPrint.appendChild(printZettel);
+        noPrint.appendChild(el.closeButton(this));
+        mainBody.appendChild(noPrint);
+
+        let yesPrint = el.div(null, {class: "print"});
+        
+        let zCount = 0
+        for(const zettel of zettels){
+            zCount ++;
+            if(zCount == 2001){break}
+            let zettelPrint = el.div(null, {class: "zettel_print"});
+            if(zettel.img_path != null){
+                zettelPrint.innerHTML = html(`<img src="${zettel.img_path + '.jpg'}" />`);
+            } else {
+                zettelPrint.innerHTML = html(`
+                    <div class='digitalZettelLemma'>${!zettel.lemma_display}</div>
+                    <div class='digitalZettelDate'>${!zettel.date_display}</div>
+                    <div class='digitalZettelWork'>${!zettel.opus} ${zettel.stellenangabe}</div>
+                    <div class='digitalZettelText'>${!zettel.txt}</div>
+                    <div class='digitalZettelAuthor'>${zettel.editor}.</div>
+                `);
+            }
+            yesPrint.appendChild(zettelPrint);
+        }
+        mainBody.appendChild(yesPrint);
+        this.ctn.appendChild(mainBody);
+    }
+}
+
+class ZettelImport extends Oculus{
+    constructor(res, resId=null, access=[], main=false){
+        super(res, resId, access, main);
+    }
+    async load(){
+        let mainBody = document.createDocumentFragment();
+        mainBody.appendChild(el.h("Zettel importieren", 3));
+        mainBody.appendChild(el.closeButton(this));
+        let iLetter = el.text("S");
+        let iType = el.select(0, { 0: "...", 1: "verzettelt", 2: "Exzerpt",
+            3: "Index", 4: "Literatur"});
+        let tblContent = [
+            ["Buchstabe:", iLetter],
+            ["Zetteltyp:", iType]
+        ];
+        let iEditor = null;
+        if(argos.access.includes("admin")){
+            const users = await arachne.user.getAll();
+            let userList = {};
+            for(const user of users){
+                userList[user.id] = user.last_name;
+            }
+            iEditor = el.select(0, userList);
+            tblContent.push(["erstellt von:", iEditor]);
+        }
+        let iFiles = document.createElement("INPUT");
+        iFiles.type = "file"; iFiles.setAttribute("multiple", true);
+        tblContent.push(["Dateien:", iFiles]);
+        tblContent.push(["", "<i class='minorTxt'>max. 200 Bilder!</i>"]);
+
+        let iFolder = document.createElement("INPUT");
+        iFolder.type="checkbox"; iFolder.id = "from_folder";
+        let iFolderLabel = document.createElement("LABEL");
+        iFolderLabel.setAttribute("for", "from_folder");
+        iFolderLabel.textContent = "Bilder aus 'import_zettel'-Ordner";
+        let iSpan = document.createElement("SPAN");
+        iSpan.appendChild(iFolder); iSpan.appendChild(iFolderLabel);
+        tblContent.push(["", iSpan]);
+        let iUpload = el.button("hochladen");
+        iUpload.onclick = async () => {
+            const MaxItem= 200;
+            let cItemCount = maxItem;
+            let cUploadIndex = -1;
+            let uploadGroup = [];
+            const fLength = iFiles.files.length;
+            for(let i=0; i<fLength; i++){
+                if(cItemCount === MaxItem){
+                    cItemCount = 0;
+                    cUploadIndex ++;
+                    uploadGroup.push(new FormData());
+                    uploadGroup[cUploadIndex].append("letter", iLetter.value);
+                    uploadGroup[cUploadIndex].append("type", iType.value);
+                    uploadGroup[cUploadIndex].append("user_id_id", iEditor.value);
+                }
+                uploadGroup[cUploadIndex].append("files", iFiles.files[i]);
+            }
+            for(const uItem of uploadGroup){
+                console.log("Uploading next group...");
+                await fetch("/file/zettel", {method: "POST", body: uItem,
+                headers: {"Authorization": `Bearer ${argos.token}`}}).
+                    catch(e => {throw e});
+            }
+            console.log("Upload complete!");
+        }
+        tblContent.push(["", iUpload]);
+        mainBody.appendChild(el.table(tblContent));
+        this.ctn.appendChild(mainBody);
+    }
+}
+
 class ZettelAdd extends Oculus{
     constructor(res, resId=null, access=[], main=false){
         super(res, resId, access, main);
@@ -170,6 +316,8 @@ class ZettelAdd extends Oculus{
         let iLemma = el.text(""); iLemma.autocomplete = "off";
         this.bindAutoComplete(iLemma, "lemma", ["id", "lemma_display"]);
         let iType = el.select(5, {5: "Ausgeschriebener Zettel", 4: "Literatur"});
+        let iDateOwn = el.text("");
+        let iDateOwnDisplay = el.text("");
         iType.onchange = () => {
             if(iType.value === "4"){
                 divLit.style.display = "block";
@@ -207,7 +355,11 @@ class ZettelAdd extends Oculus{
             }, 500);
         }
         let iStelle = el.text(""); iStelle.autocomplete = "off";
-        let tblNoLit = el.table([["Zitiertitel:", iWork], ["Stellenangabe:", iStelle]]);
+        let tblNoLit = el.table([
+            ["Zitiertitel:", iWork], ["Stellenangabe:", iStelle],
+            ["Eigene Datierung <i class='minorTxt'>(Sotierung)</i>:", iDateOwn],
+            ["Eigene Datierung <i class='minorTxt'>(Darstellung)</i>:", iDateOwnDisplay]
+        ]);
         let divNoLit = document.createElement("DIV");
         divNoLit.appendChild(tblNoLit);
 
@@ -232,6 +384,12 @@ class ZettelAdd extends Oculus{
                     type: iType.value,
                     in_use: 1
                 };
+                if(iDateOwn.value != "" && !isNaN(parseInt(iDateOwn.value))){
+                    data.date_own = iDateOwn.value;
+                    data.date_own_display = iDateOwnDisplay.value;
+                } else if (iDateOwn.value != ""){
+                    alert("Der Eintrag für 'Eigene Datierung (Sortierung)' muss eine Ganzzahl sein. Der Eingetragene Wert konnte nicht gespeichert werden.");
+                }
                 if(iType.value === "4"){
                     data.literature = iLiteratur.value;
                 } else {
@@ -368,18 +526,6 @@ class ZettelBatch extends Oculus{
                 }
             });
         }
-
-
-
-        }, "zettel_export": function(me){
-            me.ctn.querySelector("input#printZettel").addEventListener("click", function(){window.print()});
-
-        }, "zettel_import": function(me){
-            if(me.ctn.querySelector("datalist") != null){
-                me.bindAutoComplete(me.ctn.querySelector("#userInput"), "user_data");
-            }
-            me.ctn.querySelector("input#importZettel").addEventListener("click", function(){me.createData()});
-            p
     */
 class ZettelDetail extends Oculus{
     constructor(res, resId=null, access=[], main=false){
@@ -468,14 +614,14 @@ class ZettelDetail extends Oculus{
         if(this.access.includes("z_edit")){
             rTHeader.appendChild(el.tab("Bearbeiten", "edit"));
             let edit = el.tabContainer("edit");
-            /*
-                            <td style='width: 175px;'><label>MLW relevant:</label></td>
-             */
+            /* <td style='width: 175px;'><label>MLW relevant:</label></td> */
             let iMLW = el.select(zettel.in_use);
             let iType = el.select(zettel.type, zTypes);
             let iLemma = el.text(zettel.lemma);
+            iLemma.dataset.selected = zettel.lemma_id;
             this.bindAutoComplete(iLemma, "lemma", ["id", "lemma_display"]);
             let iWork = el.text(zettel.example);
+            iWork.dataset.selected = zettel.work_id;
             this.bindAutoComplete(iWork, "work", ["id", "example"]);
             let iStelle = el.text(zettel.stellenangabe);
             let iBib = el.text(zettel.stellenangabe_bib);
@@ -511,7 +657,62 @@ class ZettelDetail extends Oculus{
             let iDateOwnDisplay = el.text(zettel.date_own_display);
             let iTxt = el.area(zettel.txt); iTxt.autocomplete = "off";
             let iSaveNext = el.button("speichern und weiter");
+            iSaveNext.onclick = () => {
+                if(iLemma.value != "" && iLemma.dataset.selected == null){
+                    this.newLemma = iLemma.value;
+                    this.iLemmaInput = iLemma;
+                    this.saveButton = iSave;
+                    argos.loadEye("zettel_lemma_add");
+                } else {
+                    let data = {
+                        id: this.resId,
+                        in_use: iMLW.value,
+                        type: iType.value,
+                        lemma_id: iLemma.dataset.selected,
+                        work_id: iWork.dataset.selected,
+                        stellenangabe: iStelle.value,
+                        stellenangabe_bib: iBib.value,
+                        txt: iTxt.value
+                    };
+                    if(iPageNr.value != "" && !isNaN(parseInt(iPageNr.value))){data.page_nr = iPageNr.value}
+                    if(iDateOwn.value != "" && !isNaN(parseInt(iDateOwn.value))){
+                        data.date_own = iDateOwn.value;
+                        data.date_own_display = iDateOwnDisplay.value;
+                    }
+                    arachne.zettel.save(data).
+                        then(() => {el.status("saved");rB5.click();}).
+                        catch(e => {throw e});
+                }
+            }
+
             let iSave = el.button("speichern");
+            iSave.onclick = () => {
+                if(iLemma.value != "" && iLemma.dataset.selected == null){
+                    this.newLemma = iLemma.value;
+                    this.iLemmaInput = iLemma;
+                    this.saveButton = iSave;
+                    argos.loadEye("zettel_lemma_add");
+                } else {
+                    let data = {
+                        id: this.resId,
+                        in_use: iMLW.value,
+                        type: iType.value,
+                        lemma_id: iLemma.dataset.selected,
+                        work_id: iWork.dataset.selected,
+                        stellenangabe: iStelle.value,
+                        stellenangabe_bib: iBib.value,
+                        txt: iTxt.value
+                    };
+                    if(iPageNr.value != "" && !isNaN(parseInt(iPageNr.value))){data.page_nr = iPageNr.value}
+                    if(iDateOwn.value != "" && !isNaN(parseInt(iDateOwn.value))){
+                        data.date_own = iDateOwn.value;
+                        data.date_own_display = iDateOwnDisplay.value;
+                    }
+                    arachne.zettel.save(data).
+                        then(() => {el.status("saved");this.refresh();}).
+                        catch(e => {throw e});
+                }
+            }
             let tblOwnDate = [["Eigenes Sortierdatum", iDateOwn],
                 ["Eigenes Anzeigedatum", iDateOwnDisplay],
                 ["Text:", iTxt], ["", iSaveNext], ["", iSave]
@@ -680,65 +881,3 @@ class ZettelDetail extends Oculus{
         this.setTabs = true;
     }
 }
-        /*
-        }, "zettel_detail": function(me){
-            me.setResultBrowser(me.resId, function(){me.resId=event.target.id;me.refresh()});
-
-            // event listeners
-            me.ctn.querySelector('input#opusInput_hidden').onchange = function(){
-                if(this.value != 0){
-                    me._getJSON("data/zettel_opus_preview?qJSON="+encodeURIComponent(JSON.stringify({"id": this.value})), function(rData){
-                        me.ctn.querySelector("td#date_display").textContent = rData[0]["date_display"];
-                        if(rData[0]["date_type"] == 9){
-                        let warning = document.createElement("SPAN");
-                        warning.textContent = "Eigenes Datum nötig!";
-                        warning.style.color = "var(--errorStat)";
-                        me.ctn.querySelector("td#date_display").appendChild(warning);
-                        }
-                        me.ctn.querySelector("td#citation").textContent = rData[0]["citation"];
-                        var editions = JSON.parse(rData[0]["editions"]);
-                        var editionBox = me.ctn.querySelector("td#editionEdit");
-                        editionBox.textContent = "";
-                        var lineBreak = document.createElement("BR");
-                        for(var edition of editions){
-                            let nEdition = document.createElement("A");
-                            nEdition.href = edition["url"];
-                            nEdition.textContent = edition["label"];
-                            nEdition.id = "edition_"+edition["id"];
-                            editionBox.appendChild(nEdition);
-                            editionBox.appendChild(lineBreak);
-                        }
-                    });
-                } else {
-                        me.ctn.querySelector("td#date_display").textContent = "";
-                        me.ctn.querySelector("td#citation").textContent = "";
-                        me.ctn.querySelector("td#editionEdit").textContent = "";
-                }
-            }
-            // set autocomplete
-            me.bindAutoComplete(me.ctn.querySelector("#lemmaInput"), "lemma_data");
-            me.bindAutoComplete(me.ctn.querySelector("#opusInput"), "work_data");
-
-
-
-        }, "zettel_lemma_add": function(me){
-            me.ctn.querySelector("input[name=lemma]").value = document.getElementById("zettel_detail").querySelector("input#lemmaInput").value;
-            me.ctn.querySelector("input[name=lemma_display]").value = document.getElementById("zettel_detail").querySelector("input#lemmaInput").value;
-
-            // event listeners 
-            me.ctn.querySelector("input#newLemma").addEventListener("click", function(){me.createData(function(){
-                me._getJSON("data/zettel_lemma?qJSON="+encodeURIComponent(JSON.stringify({"lemma": me.ctn.querySelector("input[name=lemma]").value})), function(rData){
-                    document.getElementById("zettel_detail").querySelector("#lemmaInput_hidden").value = parseInt(rData[0]["id"]);
-                    argos.dataList["lemma_data"].add(rData[0]);
-                    document.getElementById("zettel_detail").querySelector("#lemmaInput").style.color = "inherit";
-                    me.close();
-                    if(document.getElementById("zettel_detail").querySelector('input#saveZettelChangesNext').dataset.clicked == "1"){
-                        document.getElementById("zettel_detail").querySelector("#saveZettelChangesNext").click();
-                    } else {
-                        document.getElementById("zettel_detail").querySelector("#saveZettelChanges").click();
-                    }
-                });
-
-            })});
-        }
-*/

@@ -1,4 +1,5 @@
 #!/user/bin/env python3
+# -*- coding: utf-8 -*-
 """buticula.py - modifies bottle.py to send and receive data from dMLW Database
 
 Author: Alexander Häberlin <alexander.haeberlin@mlw.badw.de>
@@ -29,6 +30,7 @@ from os import path, urandom, mkdir, remove, listdir, rename
 import re
 from shutil import rmtree, move
 import sys
+import tempfile
 from uuid import uuid4
 import zipfile
 
@@ -167,6 +169,8 @@ class Buticula(Bottle):
 
         # files
         self.route("/file/<res>/<res_id>", callback=self.file_read)
+        self.route("/file/zettel", callback=self.zettel_import, method="POST")
+
         # OLD FILES!
         self.route("/export_project/<mlw_file>", callback=self.f_mlw)
         self.route("/zettel/<letter>/<dir_nr>/<img>", callback=self.f_zettel)
@@ -174,6 +178,7 @@ class Buticula(Bottle):
         self.route("/session", callback=self.session, method="POST");
 
         # OLD ROUTES!
+        self.route("/exec/<res>", callback=self.exec_on_server, method="GET");
         self.route("/module", callback=self.module, method="POST")
         self.route("/library_viewer", callback=self.library_viewer)
         #self.route("/opera/export/<lst_type>", callback=self.opera_export)
@@ -441,23 +446,30 @@ class Buticula(Bottle):
             if self.doublesided == True:
                 remove(f"{self.p}/zettel/{zettel['letter']}/{zettel['img_folder']}/{zettel['id']}v.jpg")
 
-    def zettel_import(self, test, user):
+    def zettel_import(self):
+        user = self.auth();
         # uploading images for zettel-db
         u_letter = request.forms.letter
         if len(u_letter) == 1 and u_letter.isalpha() and "z_add" in user["access"]:
             u_type = request.forms.type
-            u_path = self.p + "/content/import_zettel/"
-            # if the imgs are uploaded via website, save them to upload folder
+            temp_dir = tempfile.TemporaryDirectory()
+            temp_dir_name = temp_dir.name+"/";
             if request.forms.from_folder == "":
+                # files from upload
                 u_files = request.files.getall("files")
                 if len(u_files) == 0:
-                    return False
+                    temp_dir.cleanup();
+                    return HTTPResponse(status=400) # bad request
                 else:
-                    if path.exists(u_path) == False: mkdir(u_path)
                     for u_file in u_files:
-                        u_file.save(u_path)
+                        u_file.save(temp_dir_name)
+            else:
+                # files from "import_zettel": move to temp dir
+                for lst in listdir(self.p + "/content/import_zettel/"):
+                    if lst[-4:] == ".jpg":
+                        move(self.p + "/content/import_zettel/"+lst, temp_dir_name+lst);
             f_lst = []
-            for lst in listdir(u_path):
+            for lst in listdir(temp_dir_name):
                 if lst[-4:] == ".jpg":
                     f_lst.append(lst)
             f_lst.sort()
@@ -498,19 +510,34 @@ class Buticula(Bottle):
                     c_path = f_path + f"{(new_id-1)//max_files}/"
                     if path.exists(c_path) == False: mkdir(c_path)
                     # rename and move file
-                    rename(u_path + f, c_path + f"{new_id}.jpg")
+                    move(temp_dir_name + f, c_path + f)
+                    rename(c_path + f, c_path + f"{new_id}.jpg")
                     if self.doublesided:
                         recto = False
                 else:
-                    rename(u_path + f, c_path + f"{new_id}v.jpg")
+                    move(temp_dir_name + f, c_path + f)
+                    rename(c_path + f, c_path + f"{new_id}v.jpg")
                     recto = True
-            return True
+            temp_dir.cleanup()
+            return HTTPResponse(status=201) # created
         else:
-            return False
+            return HTTPResponse(status=400) # bad request
 
     # ################################################################
     # -III- REST requests
     # ################################################################
+    def exec_on_server(self, res):
+        user = self.auth()
+        if res == "opera_update" and "o_edit" in user["access"]:
+            self.create_opera();
+            return HTTPResponse(status=200) # OK
+        if res == "library_update" and "l_edit" in user["access"]:
+            self.db.command("CALL update_library");
+            self.create_opera();
+            return HTTPResponse(status=200) # OK
+        else: return HTTPResponse(status=404) # not found 
+
+
     def session(self):
         email = request.json.get("user", "")
         password = request.json.get("password", "")

@@ -372,7 +372,10 @@ class Arachne{
             if(loadLabel!=null){loadLabel.textContent = tbl}
             this[tbl] = new ArachneDatabase(tbl, this.dbName, this.dbVersion, this.token);
             await this[tbl].update();
-            if(this[tbl].optimize){this[tbl].data = await this[tbl].getAll()}
+            if(this[tbl].optimize){
+                if(argos.userDisplay.sOrder===1){this[tbl].data = await this[tbl].getAll()}
+                else {this[tbl].data = await this[tbl].getAll(tbl)}
+            }
         }
     }
 

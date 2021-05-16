@@ -8,9 +8,27 @@ class Account extends Oculus{
     }
     async load(){
         let mainBody = document.createDocumentFragment();
+        let cardWebsite = el.card();
+        cardWebsite.style.margin = "20px 10%";
+        cardWebsite.appendChild(el.h("Darstellung der Webseite", 3));
+        let iZettel = el.text(argos.userDisplay.z_width);
+        let iSearch = el.select(argos.userDisplay.sOrder, {0: "normal", 1: "ID"});
+        const tblWeb = [["Breite der Zettel:", iZettel],
+            ["Suche ordnen nach...", iSearch]];
+        cardWebsite.appendChild(el.table(tblWeb));
+        let saveWeb = el.button("Änderungen speichern");
+        saveWeb.onclick = () => {
+            argos.userDisplay.z_width = iZettel.value;
+            argos.userDisplay.sOrder = parseInt(iSearch.value);
+            argos.setUserDisplay();
+            el.status("saved");
+        };
+        cardWebsite.appendChild(saveWeb);
+        cardWebsite.appendChild(el.p("Die Änderungen werden nur lokal im Browser gespeichert und werden nicht über den Server synchronisiert. - <b>Achtung:</b> Es kann sein, dass die Webseite neu geladen werden muss, damit die Änderungen sichtbar werden."));
+        mainBody.appendChild(cardWebsite);
+
         let cardDB = el.card();
         cardDB.style.margin = "20px 10%";
-        //cardDB.appendChild(el.h("Persönliche Einstellungen", 3));
         cardDB.appendChild(el.h("Lokale Datenbank", 3));
         let setupB = el.button("Lokale Datenbank neu generieren");
         setupB.onclick = () => {
