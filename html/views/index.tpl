@@ -18,7 +18,7 @@
             import { Elements } from "/file/js/elements.js";
             globalThis.el = new Elements();
             globalThis.arachne = new Arachne("dmlw");
-            globalThis.argos = new Argos();
+            globalThis.argos = new Argos("{{full_update}}");
         </script>
     </head>
     <body>

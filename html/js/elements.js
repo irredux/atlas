@@ -80,6 +80,9 @@ class Elements {
         let statusBox = document.createElement("DIV");
         statusBox.classList.add("statusLabel");
         switch(type){
+            case "updated":
+                statusBox.textContent = (displayTxt==="") ? "Die Datenbank ist jetzt aktuell." : displayTxt;
+                break;
             case "saved":
                 statusBox.textContent = (displayTxt==="") ? "Eintrag gespeichert." : displayTxt;
                 break;

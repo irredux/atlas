@@ -31,6 +31,8 @@ function stringToQuery(input){
     let operator = "&&";
     for(const query of queries2){
         let negative = false;
+        let greater = false;
+        let smaller = false;
         if(query==="oder"){
             operator = "||"
         } else {
@@ -45,12 +47,22 @@ function stringToQuery(input){
                 negative = true;
                 value = value.substring(1);
             }
+            if(value.startsWith(">")){
+                greater = true;
+                value = value.substring(1);
+            }
+            if(value.startsWith("<")){
+                smaller = true;
+                value = value.substring(1);
+            }
             output.push({
                 "col": col,
                 "value": value,
                 "regex": false,
                 "operator": operator,
-                "negative": negative 
+                "negative": negative,
+                "greater": greater,
+                "smaller": smaller
             });
             operator = "&&";
         }
@@ -64,7 +76,7 @@ class ArachneDatabase{
         this.tblName = tblName;
         this.dbName = dbName;
         this.dbVersion = dbVersion;
-        this.data = [];
+        this.data = null;
         if(arachne.optimize.includes(tblName)){this.optimize = true}
         else{this.optimize=false}
     }
@@ -127,7 +139,7 @@ class ArachneDatabase{
                 cursorRequest.onsuccess = () => {
                     let cursor = cursorRequest.result;
                     if(cursor){
-                        if(cursor.value.deleted!=1){cursorResults.push(cursor.value)}
+                        cursorResults.push(cursor.value);
                         cursor.continue();
                     } else {
                         if(cursorResults.length==1 && removeArray){
@@ -152,7 +164,7 @@ class ArachneDatabase{
                 cursorRequest.onsuccess = () => {
                     let cursor = cursorRequest.result;
                     if(cursor){
-                        if(cursor.value.deleted!=1){cursorResults.push(cursor.value)}
+                        cursorResults.push(cursor.value);
                         cursor.continue();
                     } else {
                         if(cursorResults.length==1 && removeArray){
@@ -177,14 +189,31 @@ class ArachneDatabase{
         if(lastEntry.length > 0){return lastEntry[0].u_date}
         else {return "2020-01-01 01:00:00"}
     }
+    async removeDeleted(){
+        const delList = await this.is(1, "deleted", false);
+        return new Promise((resolve, reject) => {
+            let request = indexedDB.open(this.dbName, this.dbVersion);
+            request.onerror = e => {reject(e)}
+            request.onsuccess = () => {
+                let db = request.result;
+                let tAction = db.transaction(this.tblName, "readwrite");
+                let oStore = tAction.objectStore(this.tblName);
+                for(const delItem of delList){oStore.delete(delItem.id)}
+                resolve();
+            }
+        });
+    }
 
     async update(){
         const startTime = Date.now();
         const url = `/data/${this.tblName}?u_date=${await this.version()}`;
-        return fetch(url, {
+        const newData = await fetch(url, {
             headers: {"Authorization": `Bearer ${this.token}`}
         })
-            .then(response => response.json())
+            .then(response => {
+                if(response.status === 401){argos.loadMain("login")}
+                else if(response.status === 200){return response.json()}
+            })
             .then(items => { return new Promise((resolve, reject) => {
                 if(items.length>0){
                     let request = indexedDB.open(this.dbName, this.dbVersion);
@@ -202,9 +231,17 @@ class ArachneDatabase{
                     resolve(false);
                 }
             })})
-            .then(newData => {if(this.optimize && newData){return this.getAll()}})
-            .then(all => {this.data = all})
             .catch(e => {throw e});
+
+        // remove "deleted"
+        if(newData){await this.removeDeleted()}
+        
+        // optimize?
+        if(this.optimize && (newData || this.data == null)){
+            let sIndex = null;
+            if(argos.userDisplay.sOrder!=1){sIndex=this.tblName}
+            this.getAll(sIndex).then(all => {this.data = all}).catch(e => {throw e});
+        }
     }
 
     async delete(rowId){
@@ -258,7 +295,7 @@ class ArachneDatabase{
         // query: object containing cols/value pairs as key/value
         // if query === "*" all data will be returned
         let data = []
-        if(this.optimize){data = this.data}
+        if(this.optimize&&this.data != null){data = this.data}
         else{data = await this.getAll(orderIndex)}
         if(query === "*"){
             return data
@@ -271,23 +308,19 @@ class ArachneDatabase{
                     found = false;
                     if(q.col === "*"){
                         // any row
+                        for(const key in item){
+                            if(q.negative === false && `${item[key]}`.indexOf(q.value)>-1){found = true}
+                            if(q.negative === true && `${item[key]}`.indexOf(q.value)===-1){found = true}
+                        }
                     } else if (Object.keys(item).includes(q.col)){
                         // row given
                         if(q.regex === false && q.negative === false && item[q.col] == q.value){found = true}
                         else if(q.regex === false && q.negative === true && item[q.col] != q.value){found = true}
+                        else if(q.regex === false && q.greater === true && item[q.col] > q.value){found = true}
+                        else if(q.regex === false && q.smaller === true && item[q.col] < q.value){found = true}
                     }
                     if(!found){break}
                 }
-                /*
-                let found = true;
-                    if(q.col === "*" || Object.keys(item).includes(q.col)){
-                        //if(q.regex===false && item[q.col] != q.value){found = false}
-                        if(`${item[q.col]}`.match(new RegExp(`^${q.value}$`))===null){found=false}
-                    } else {
-                        found = false;
-                    }
-                }
-                */
                 if(found){
                     if(returnCols==="*"){results.push(item)}
                     else{
@@ -361,6 +394,7 @@ class Arachne{
                         oStore.createIndex(index, oSchema.indices[index]);
                     }
                 }
+                localStorage.setItem("lastFullUpdate", Date.now());
                 resolve();
             }
             request.onsuccess = () => {resolve()};
@@ -372,11 +406,9 @@ class Arachne{
             if(loadLabel!=null){loadLabel.textContent = tbl}
             this[tbl] = new ArachneDatabase(tbl, this.dbName, this.dbVersion, this.token);
             await this[tbl].update();
-            if(this[tbl].optimize){
-                if(argos.userDisplay.sOrder===1){this[tbl].data = await this[tbl].getAll()}
-                else {this[tbl].data = await this[tbl].getAll(tbl)}
-            }
         }
+        el.status("updated");
+        if(loadLabel!=null){loadLabel.parentNode.remove()}
     }
 
     deleteDB(){
@@ -384,6 +416,7 @@ class Arachne{
         return new Promise((resolve, reject) => {
             let request = indexedDB.deleteDatabase(this.dbName);
             request.onsuccess = () => {resolve()};
+            request.onblocked = e => {console.log("DB blocked:", e)}
             request.onerror = e => {reject(e)};
         });
     }

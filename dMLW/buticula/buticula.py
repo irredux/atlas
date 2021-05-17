@@ -18,7 +18,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 from binascii import hexlify
 from configparser import ConfigParser
 from datetime import datetime, timedelta, date
@@ -35,16 +34,8 @@ from uuid import uuid4
 import zipfile
 
 from dMLW.arachne import Arachne
-from dMLW.buticula.bottle import (Bottle,
-        HTTPResponse,
-        redirect,
-        request,
-        response,
-        server_names,
-        static_file,
-        template,
-        TEMPLATE_PATH,
-        )
+from dMLW.buticula.bottle import (Bottle, HTTPResponse, HTTPError, abort, redirect, request,
+        response, server_names, static_file, template, TEMPLATE_PATH)
 from dMLW.tiro import Tiro
 
 class Buticula(Bottle):
@@ -67,6 +58,7 @@ class Buticula(Bottle):
         self.Tiro.log(f"\t... html path: {self.p_html}")
         self.template = template
         self.request = request
+        self.full_update = "2021-05-16 19:56:17" # local client-sided database
 
         # set session parameters
         self.s_hours = 4
@@ -113,10 +105,10 @@ class Buticula(Bottle):
             self.captions = json.load(captions_file)
         self.Tiro.log("\t captions loaded.")
 
-        self.Tiro.log(f"\t load version descriptions:")
-        with open(self.p + "/dMLW/version.JSON") as version_file:
-            self.main_version = json.load(version_file)
-        self.sub_version = []
+        #self.Tiro.log(f"\t load version descriptions:")
+        #with open(self.p + "/dMLW/version.JSON") as version_file:
+        #    self.main_version = json.load(version_file)
+        #self.sub_version = []
 
         self.Tiro.log(f"\t load main menu")
         with open(self.p + "/config/mainMenu.JSON") as menu_file:
@@ -137,18 +129,13 @@ class Buticula(Bottle):
         # write opera sheets
         self.create_opera()
 
-        # stores functions and methods which are executed with data_get and data_update
-        self.dataFunctions = {
-                "opera_update": self.create_opera,
-                "project_export": self.project_export,
-                "article_position": self.project_calculate_article_position
-                }
-
         self.Tiro.log("\tButicula started.")
     # ################################################################
     # -I- routes
     # ################################################################
-        # login and account
+        #self.add_hook("before_request", self.hook)
+
+        # login pages and account
         self.route("/", callback=self.site)
         self.route("/logout", callback=self.logout)
         self.route("/account_create", callback=self.account_create)
@@ -159,8 +146,17 @@ class Buticula(Bottle):
         self.route("/site/<res>", callback=self.site)
         self.route("/site/<res>/<res_id>", callback=self.site)
 
-        # system routes
+        # config
         self.route("/config/<res>", callback=self.config_read, method="GET")
+
+        # session
+        self.route("/session", callback=self.session_create, method="POST");
+        self.route("/session", callback=self.session_read, method="GET");
+
+        # user
+        self.route("/data/user/<id:int>", callback=self.user_update, method="PATCH")
+
+        # data
         self.route("/data/<res>", callback=self.data_create, method="POST")
         self.route("/data/<res>", callback=self.data_read, method="GET")
         self.route("/data/<res>/<res_id:int>", callback=self.data_read, method="GET")
@@ -169,33 +165,35 @@ class Buticula(Bottle):
 
         # files
         self.route("/file/<res>/<res_id>", callback=self.file_read)
-        self.route("/file/zettel", callback=self.zettel_import, method="POST")
-
-        # OLD FILES!
-        self.route("/export_project/<mlw_file>", callback=self.f_mlw)
-        self.route("/zettel/<letter>/<dir_nr>/<img>", callback=self.f_zettel)
-
-        self.route("/session", callback=self.session, method="POST");
+        #self.route("/file/zettel", callback=self.zettel_import, method="POST")
 
         # OLD ROUTES!
         self.route("/exec/<res>", callback=self.exec_on_server, method="GET");
-        self.route("/module", callback=self.module, method="POST")
-        self.route("/library_viewer", callback=self.library_viewer)
+        self.route("/export_project/<mlw_file>", callback=self.f_mlw)
+        self.route("/zettel/<letter>/<dir_nr>/<img>", callback=self.f_zettel)
+
+        #self.route("/module", callback=self.module, method="POST")
+        #self.route("/library_viewer", callback=self.library_viewer)
         #self.route("/opera/export/<lst_type>", callback=self.opera_export)
     # ################################################################
     # -II- assorted methods
     # ################################################################
+    #def hook(self):
+        #print("hello friend, im the captain hook!")
+        #return HTTPResponse(status=418)
+        #response.HTTPError(status=418)
+
+
+
     def add_view_path(self, path):
         # used in secondary version
         TEMPLATE_PATH.insert(0, path)
 
-    def auth(self, access = ["auth"], start = False, logout = False):
+    def auth(self, access = ["auth"], logout = False):
         c_session = request.headers.get("Authorization")
-        if c_session == "" or c_session == None: return HTTPResponse(status=401) # unauthorized
+        if c_session == "" or c_session == None: abort(401) # unauthorized
         c_session = c_session[7:]
 
-        reset_route = True
-        usr_o = None
         usr_i = self.db.search("user", {"session": c_session}, ["id", "first_name",
             "last_name", "email", "session_last_active", "access", "settings", "password",
             "show_raw", "order_by_id"])
@@ -205,33 +203,21 @@ class Buticula(Bottle):
             u_access = set(json.loads(usr_i[0].get("access")))
             session_max = timedelta(hours=self.s_hours, minutes=self.s_minutes)
             update_after = timedelta(hours=0, minutes=10)
-            if (session_max >= (datetime.now() - u_last) and
-                    logout == False and
+            if (session_max >= (datetime.now() - u_last) and logout == False and
                     set(access).issubset(u_access)):
                 # session ok
                 if update_after <= (datetime.now() - u_last):
                     self.db.save("user", {"session_last_active": datetime.now()},
                             usr_i[0].get("id"))
-                usr_o = usr_i[0]
-                reset_route = False
+                usr_i[0]["access"] = json.loads(usr_i[0]["access"])
+                return usr_i[0]
             else:
                 # session is too old or logout
                 self.db.save("user", {"session": ""}, usr_i[0].get("id"))
-
-        if reset_route:
-            response.set_cookie("mlw_session", "", secure=self.cookie_secure)
-            if start:
-                return None
-            else:
-                if request.path != '/logout':
-                    redirect(f"/?href={request.path}")
-                else:
-                    redirect("/")
+                abort(401) # unauthorized
         else:
-            if "settings" not in usr_o.keys():
-                usr_o["settings"] = []
-            usr_o["access"] = json.loads(usr_o["access"])
-            return usr_o
+            # more than one user found?!
+            abort(401) # unauthorized
 
     def create_opera(self, user=None):
         self.create_opera_sheet_mai()
@@ -379,6 +365,7 @@ class Buticula(Bottle):
 
     def run(self):
         # modifying 'run' method
+        #self.__server_settings["reloader"] = True
         super(Buticula, self).run(**self.__server_settings)
 
     def project_calculate_article_position(self, user):
@@ -452,80 +439,85 @@ class Buticula(Bottle):
         u_letter = request.forms.letter
         if len(u_letter) == 1 and u_letter.isalpha() and "z_add" in user["access"]:
             u_type = request.forms.type
-            temp_dir = tempfile.TemporaryDirectory()
-            temp_dir_name = temp_dir.name+"/";
-            if request.forms.from_folder == "":
-                # files from upload
-                u_files = request.files.getall("files")
-                if len(u_files) == 0:
-                    temp_dir.cleanup();
-                    return HTTPResponse(status=400) # bad request
-                else:
-                    for u_file in u_files:
-                        u_file.save(temp_dir_name)
-            else:
-                # files from "import_zettel": move to temp dir
-                for lst in listdir(self.p + "/content/import_zettel/"):
-                    if lst[-4:] == ".jpg":
-                        move(self.p + "/content/import_zettel/"+lst, temp_dir_name+lst);
             f_lst = []
-            for lst in listdir(temp_dir_name):
-                if lst[-4:] == ".jpg":
-                    f_lst.append(lst)
+            input_path = self.p + "/content/import_zettel/"
+            for lst in listdir(input_path):
+                if lst[-4:] == ".jpg": f_lst.append(lst)
             f_lst.sort()
-
-            # checking and creating path to new files
-            f_path = self.p + "/zettel/"
-            if path.exists(f_path) == False: mkdir(f_path)
-            f_path += f"{u_letter}/"
-            if path.exists(f_path) == False: mkdir(f_path)
-
-            # set user_id for first editor
-            c_user_id = user['id']
-            if 'admin' in user['access'] and request.forms.user_id_id != '':
-                c_user_id = request.forms.user_id_id
-
-            # loop through file-list
-            recto = True
-            if self.doublesided == True:
-                max_files = 500
+            if len(f_lst) == 0: return HTTPResponse(status=400) # bad request
             else:
-                max_files = 1000
-            c_path = ""
-            new_id = 0
-            c_loop = 0
-            for f in f_lst:
-                c_loop += 1
-                if recto:
-                    # create entry in db
-                    save_dict = {"c_date": date.today(), "user_id": c_user_id,
-                            "letter": u_letter, "created_by": c_user_id,
-                            "in_use": True, "created_date": date.today()}
-                    if u_type != "0":
-                        save_dict["type"] = u_type
-                    new_id = self.db.save("zettel", save_dict)
-                    self.db.save("zettel", {"img_folder": f"{(new_id-1)//max_files}"},
-                            new_id)
-                    # create subfolder so that no folder has more than 1'000 files
-                    c_path = f_path + f"{(new_id-1)//max_files}/"
-                    if path.exists(c_path) == False: mkdir(c_path)
-                    # rename and move file
-                    move(temp_dir_name + f, c_path + f)
-                    rename(c_path + f, c_path + f"{new_id}.jpg")
-                    if self.doublesided:
-                        recto = False
+                # checking and creating path to new files
+                f_path = self.p + "/zettel/"
+                if path.exists(f_path) == False: mkdir(f_path)
+                f_path += f"{u_letter}/"
+                if path.exists(f_path) == False: mkdir(f_path)
+
+               # set user_id for first editor
+                c_user_id = user['id']
+                if 'admin' in user['access'] and request.forms.user_id_id != '':
+                    c_user_id = request.forms.user_id_id
+
+               # loop through file-list
+                recto = True
+                if self.doublesided == True:
+                    max_files = 500
                 else:
-                    move(temp_dir_name + f, c_path + f)
-                    rename(c_path + f, c_path + f"{new_id}v.jpg")
-                    recto = True
-            temp_dir.cleanup()
-            return HTTPResponse(status=201) # created
+                    max_files = 1000
+                c_path = ""
+                new_id = 0
+                c_loop = 0
+                for f in f_lst:
+                    c_loop += 1
+                    if recto:
+                        # create entry in db
+                        save_dict = {"c_date": date.today(), "user_id": c_user_id,
+                                "letter": u_letter, "created_by": c_user_id,
+                                "in_use": True, "created_date": date.today()}
+                        if u_type != "0":
+                            save_dict["type"] = u_type
+                        new_id = self.db.save("zettel", save_dict)
+                        self.db.save("zettel", {"img_folder": f"{(new_id-1)//max_files}"},
+                                new_id)
+                        # create subfolder so that no folder has more than 1'000 files
+                        c_path = f_path + f"{(new_id-1)//max_files}/"
+                        if path.exists(c_path) == False: mkdir(c_path)
+                        # rename and move file
+                        rename(input_path + f, c_path + f"{new_id}.jpg")
+                        if self.doublesided:
+                            recto = False
+                    else:
+                        rename(input_path + f, c_path + f"{new_id}v.jpg")
+                        recto = True
+                return HTTPResponse(status=201) # created
         else:
             return HTTPResponse(status=400) # bad request
 
     # ################################################################
     # -III- REST requests
     # ################################################################
+    def user_update(self, id):
+        user = self.auth()
+        n_access = request.json.get("access", None)
+        o_password = request.json.get("old_password", None)
+        n_password = request.json.get("new_password", None)
+        n_first_name = request.json.get("first_name", None)
+        n_last_name = request.json.get("last_name", None)
+        n_email = request.json.get("email", None)
+
+        if n_access != None and "admin" in user["access"]:
+            self.db.save("user", {"access": n_access}, id)
+            return HTTPResponse(status=200) # OK
+        elif n_email != None and id == user["id"]:
+            self.db.save("user", {"email": n_email, "first_name": n_first_name,
+                "last_name": n_last_name}, id)
+            return HTTPResponse(status=200) # OK
+        elif (n_password != None and o_password != None and
+                id == user["id"] and self.pw_check(user["password"], o_password)):
+            self.db.save("user", {"password": pw_set(n_password)}, id)
+            return HTTPResponse(status=200) # OK
+        else:
+            return HTTPResponse(status=404)
+
     def exec_on_server(self, res):
         user = self.auth()
         if res == "opera_update" and "o_edit" in user["access"]:
@@ -538,7 +530,17 @@ class Buticula(Bottle):
         else: return HTTPResponse(status=404) # not found 
 
 
-    def session(self):
+    def session_read(self):
+        user = self.auth()
+        r_user = {
+                "id": user["id"],
+                "first_name": user["first_name"],
+                "last_name": user["last_name"],
+                "email": user["email"]
+                }
+        return json.dumps(r_user);
+
+    def session_create(self):
         email = request.json.get("user", "")
         password = request.json.get("password", "")
         if email != "" and password != "":
@@ -558,6 +560,7 @@ class Buticula(Bottle):
         if res=="oStores": return json.dumps(self.oStores)
         else:
             user = self.auth()
+            print("USER:", user)
             if res == "access": return json.dumps(user["access"])
             elif res == "menu":
                 user_menu = []
@@ -569,6 +572,26 @@ class Buticula(Bottle):
                                 nItems.append(subMenu);
                         if len(nItems) != 0: user_menu.append([key, nItems])
                 return json.dumps(user_menu);
+            elif res == "server_stats":
+                server_stats = {
+                        "author": [
+                            self.db.command(f"SELECT MAX(u_date) AS r FROM author")[0]["r"],
+                            self.db.command(f"SELECT COUNT(*) AS r FROM author WHERE deleted IS NULL")[0]["r"]
+                            ],
+                        "work": [
+                            self.db.command(f"SELECT MAX(u_date) AS r FROM work")[0]["r"],
+                            self.db.command(f"SELECT COUNT(*) AS r FROM work WHERE deleted IS NULL")[0]["r"]
+                            ],
+                        "lemma": [
+                            self.db.command(f"SELECT MAX(u_date) AS r FROM lemma")[0]["r"],
+                            self.db.command(f"SELECT COUNT(*) AS r FROM lemma WHERE deleted IS NULL")[0]["r"]
+                            ],
+                        "zettel": [
+                            self.db.command(f"SELECT MAX(u_date) AS r FROM zettel")[0]["r"],
+                            self.db.command(f"SELECT COUNT(*) AS r FROM zettel WHERE deleted IS NULL")[0]["r"]
+                            ]
+                        }
+                return json.dumps(server_stats, default=str)
             else: return HTTPResponse(status=404) # not found
 
     def data_create(self, res):
@@ -588,6 +611,7 @@ class Buticula(Bottle):
 
     def data_read(self, res, res_id=None):
         user = self.auth()
+
         if res not in self.accessREAD.keys(): return HTTPResponse(status=404) # not found
         r_cols = "";
         v_cols = [];
@@ -686,8 +710,7 @@ class Buticula(Bottle):
                 return template("opera/opera_min_sheet")
         else:
             return template("index", captions=self.captions["index"],
-                    colors=self.color_scheme, user=None,
-                    main_menu=self.main_menu)
+                    colors=self.color_scheme, user=None, full_update=self.full_update)
 
     # ################################################################
     # -IV- file requests
@@ -699,7 +722,7 @@ class Buticula(Bottle):
             return static_file(mlw_file, root=self.p + "/export_project/")
 
     def f_zettel(self, letter, dir_nr, img):
-        self.auth()
+        #self.auth()
         return static_file(img, root=self.p + f"/zettel/{letter}/{dir_nr}")
 
     # ################################################################

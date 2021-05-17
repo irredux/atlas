@@ -136,7 +136,6 @@ class Library extends Oculus{
         } else {
             tdContents.push(`<a target='_blank' href='/site/viewer/${values.id}'>Digitalisat</a>`); 
         }
-        console.log(values);
         for(const tdContent of tdContents){
             let td = document.createElement("TD");
             td.innerHTML = html(tdContent);

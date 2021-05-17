@@ -3,7 +3,9 @@ import { ShortCuts } from "/file/js/shortcuts.js";
 
 export class Argos{
     // windows handler; holds an controls DOM elements 'Oculus'
-    constructor(){
+    constructor(requestedLastFullUpdate){
+        this.serverUpdate = this.setServerUpdate(requestedLastFullUpdate);
+
         // set default Select-Key depending on operating system
         this.SelectKey = 'Ctrl';
         if (navigator.appVersion.indexOf('Mac') > -1){this.SelectKey = 'Cmd';}
@@ -58,36 +60,52 @@ export class Argos{
             */
         }
     }
+    
+    user(){
+        return fetch("/session", {headers: {"Authorization": `Bearer ${this.token}`}}).
+            then(re => re.json()).
+            catch(e => {throw e});
+    }
+    setServerUpdate(date){
+        const year = date.substring(0,4);
+        const month = parseInt(date.substring(5,7))-1;
+        const day = parseInt(date.substring(8, 10));
+        const hours = parseInt(date.substring(11, 13))-1;
+        const minutes = parseInt(date.substring(14, 16))-1;
+        const seconds = parseInt(date.substring(17, 19))-1;
+        return Date.UTC(year, month, day, hours, minutes, seconds);
+    }
 
-    login(token){
+    async login(token){
         sessionStorage.setItem("token", token);
-        document.body.textContent = "";
-        let loadLabel = document.createElement("DIV"); loadLabel.id = "loadLabel";
-        loadLabel.textContent = "Datenbank wird aktualisiert... ";
-        let loadLabelCurrent = document.createElement("SPAN");
-        loadLabelCurrent.style.fontStyle = "italic";
-        loadLabel.appendChild(loadLabelCurrent);
-        document.body.appendChild(loadLabel);
-
-        // set user values
-        /*
-        this.access = access;
-        this.userId = userId;
-        */
-
         arachne.token = token;
         this.token = token;
-        arachne.createDB()
-            .then(() => arachne.loadDB(loadLabelCurrent))
-            .then(() => fetch("/config/access", {headers: {"Authorization": `Bearer ${this.token}`}}))
-            .then(re => re.json())
+
+        document.body.textContent = "";
+        const lastFullUpdate = localStorage.getItem("lastFullUpdate");
+        await arachne.createDB();
+        if(lastFullUpdate <= this.serverUpdate){
+            // reset DB and full update
+            let loadLabel = document.createElement("DIV"); loadLabel.id = "loadLabel";
+            loadLabel.textContent = "Datenbank wird aktualisiert... ";
+            let loadLabelCurrent = document.createElement("SPAN");
+            loadLabelCurrent.style.fontStyle = "italic";
+            loadLabel.appendChild(loadLabelCurrent);
+            document.body.appendChild(loadLabel);
+            await arachne.loadDB(loadLabelCurrent);
+        } else {
+            // only download new data
+            arachne.loadDB()
+        }
+
+        fetch("/config/access", {headers: {"Authorization": `Bearer ${this.token}`}})
+            .then(re => {if(re.status === 200){return re.json()}})
             .then((access) => {
                 this.access = access;
                 return fetch("/config/menu", {headers: {"Authorization": `Bearer ${this.token}`}});
             })
-            .then(re => re.json())
+            .then(re => {if(re.status === 200){return re.json()}})
             .then((items) => {
-                loadLabel.remove();
                 let headerMenu = document.createElement("DIV");
                 headerMenu.id = "headerMenu";
                  // GET mainMenu -> display here!

@@ -217,6 +217,11 @@ class Tests extends Oculus{
         super(res, resId, access, main);
     }
     async load(){
+        const serverStats = await fetch("/config/server_stats", {
+            headers: {"Authorization": `Bearer ${argos.token}`}}).
+            then(re => re.json()).
+            catch(e => {throw e});
+        console.log(serverStats);
         document.getElementById("headerMenu").style.opacity = "0";
         let speedTest = await arachne.zettel.getAll();
         let mochaDIV = document.createElement("DIV");
@@ -233,7 +238,7 @@ class Tests extends Oculus{
         this.ctn.appendChild(backButtonDiv);
 
         mocha.setup("bdd");
-        mocha.slow(0);
+        mocha.slow(20);
 
         describe("Arachne", () => {
             describe("Umwandlungen (StQ):", () => {
@@ -243,7 +248,9 @@ class Tests extends Oculus{
                         negative: false,
                         operator: "&&",
                         regex: false,
-                        value: "test"
+                        value: "test",
+                        greater: false,
+                        smaller: false
                     }]);
                     chai.expect(stringToQuery("teste mich")).to.deep.equal([
                         {
@@ -251,14 +258,18 @@ class Tests extends Oculus{
                             negative: false,
                             operator: "&&",
                             regex: false,
-                            value: "teste"
+                            value: "teste",
+                            greater: false,
+                            smaller: false
                         },
                         {
                             col: "*",
                             negative: false,
                             operator: "&&",
                             regex: false,
-                            value: "mich"
+                            value: "mich",
+                            greater: false,
+                            smaller: false
                         }
                     ]);
                 });
@@ -268,7 +279,31 @@ class Tests extends Oculus{
                         negative: true,
                         operator: "&&",
                         regex: false,
-                        value: "test"
+                        value: "test",
+                        greater: false,
+                        smaller: false
+                    }]);
+                });
+                it("Prüfe: einfach grösser als", async () => {
+                    chai.expect(stringToQuery(">test")).to.deep.equal([{
+                        col: "*",
+                        negative: false,
+                        operator: "&&",
+                        regex: false,
+                        value: "test",
+                        greater: true,
+                        smaller: false
+                    }]);
+                });
+                it("Prüfe: einfach kleiner als", async () => {
+                    chai.expect(stringToQuery("<test")).to.deep.equal([{
+                        col: "*",
+                        negative: false,
+                        operator: "&&",
+                        regex: false,
+                        value: "test",
+                        greater: false,
+                        smaller: true 
                     }]);
                 });
                 it("Prüfe: Feldnamen", async () => {
@@ -277,7 +312,9 @@ class Tests extends Oculus{
                         negative: false,
                         operator: "&&",
                         regex: false,
-                        value: "test"
+                        value: "test",
+                        greater: false,
+                        smaller: false
                     }]);
                     chai.expect(stringToQuery("id:test lemma:rest")).to.deep.equal([
                         {
@@ -285,16 +322,40 @@ class Tests extends Oculus{
                             negative: false,
                             operator: "&&",
                             regex: false,
-                            value: "test"
+                            value: "test",
+                            greater: false,
+                            smaller: false
                         },
                         {
                             col: "lemma",
                             negative: false,
                             operator: "&&",
                             regex: false,
-                            value: "rest"
+                            value: "rest",
+                            greater: false,
+                            smaller: false
                         }
                     ]);
+                });
+                it("Prüfe: Feldnamen grösser/kleiner", async () => {
+                    chai.expect(stringToQuery("id:>test")).to.deep.equal([{
+                        col: "id",
+                        negative: false,
+                        operator: "&&",
+                        regex: false,
+                        value: "test",
+                        greater: true,
+                        smaller: false
+                    }]);
+                    chai.expect(stringToQuery("id:<test")).to.deep.equal([{
+                        col: "id",
+                        negative: false,
+                        operator: "&&",
+                        regex: false,
+                        value: "test",
+                        greater: false,
+                        smaller: true 
+                    }]);
                 });
                 it("Prüfe: Feldnamen negativ", async () => {
                     chai.expect(stringToQuery("id:-test")).to.deep.equal([{
@@ -302,7 +363,9 @@ class Tests extends Oculus{
                         negative: true,
                         operator: "&&",
                         regex: false,
-                        value: "test"
+                        value: "test",
+                        greater: false,
+                        smaller: false
                     }]);
                     chai.expect(stringToQuery("id:test lemma:-rest")).to.deep.equal([
                         {
@@ -310,14 +373,18 @@ class Tests extends Oculus{
                             negative: false,
                             operator: "&&",
                             regex: false,
-                            value: "test"
+                            value: "test",
+                            greater: false,
+                            smaller: false
                         },
                         {
                             col: "lemma",
                             negative: true,
                             operator: "&&",
                             regex: false,
-                            value: "rest"
+                            value: "rest",
+                            greater: false,
+                            smaller: false
                         }
                     ]);
                 });
@@ -328,22 +395,39 @@ class Tests extends Oculus{
                             negative: false,
                             operator: "&&",
                             regex: false,
-                            value: "test"
+                            value: "test",
+                            greater: false,
+                            smaller: false
                         },
                         {
                             col: "lemma",
                             negative: false,
                             operator: "&&",
                             regex: false,
-                            value: "rest"
+                            value: "rest",
+                            greater: false,
+                            smaller: false
                         }
                     ]);
                 });
             });
             describe("Suche:", () => {
+                it("Prüfe: einfach", async () => {
+                    let search = await arachne.lemma.search("kacabre");
+                    chai.expect(search[0].id).to.equal(3);
+                });
+                it("Prüfe: einfach (negativ)", async () => {
+                    let search = await arachne.lemma.search("quq");
+                    chai.expect(search.length).to.equal(0);
+                });
                 it("Prüfe: Feldname", async () => {
                     let search = await arachne.lemma.search("lemma:k");
                     chai.expect(search[0].id).to.equal(1);
+                });
+                it("Prüfe: Feldname grösser", async () => {
+                    let search = await arachne.lemma.search("id:>9000");
+                    console.log(search[0]);
+                    chai.expect(search.length).to.equal(486);
                 });
                 it("Prüfe: Feldname (2 Resultate)", async () => {
                     let search = await arachne.lemma.search("lemma:syrupus");
@@ -401,53 +485,53 @@ class Tests extends Oculus{
                 it("Prüfe: ist aktuell... ", async () => {
                     let version = await arachne.author.version();
                     // SELECT MAX(u_date) FROM work;
-                    chai.expect(version).to.equal("2021-04-14 18:00:00");
+                    chai.expect(version).to.equal(serverStats.author[0]);
                 });
                 it("Prüfe: ist komplett... ", async () => {
                     let count = await arachne.author.getAll();
                     // SELECT COUNT(*) FROM work;
-                    chai.expect(count.length).to.equal(956);
+                    chai.expect(count.length).to.equal(serverStats.author[1]);
                 });
             });
             describe("Werke", () => {
                 it("Prüfe: ist aktuell... ", async () => {
                     let version = await arachne.work.version();
                     // SELECT MAX(u_date) FROM work;
-                    chai.expect(version).to.equal("2021-05-01 14:59:51");
+                    chai.expect(version).to.equal(serverStats.work[0]);
                 });
                 it("Prüfe: ist komplett... ", async () => {
                     let count = await arachne.work.getAll();
                     // SELECT COUNT(*) FROM work;
-                    chai.expect(count.length).to.equal(3995);
+                    chai.expect(count.length).to.equal(serverStats.work[1]);
                 });
             });
             describe("Lemmata", () => {
                 it("Prüfe: ist aktuell... ", async () => {
                     let version = await arachne.lemma.version();
                     // SELECT MAX(u_date) FROM work;
-                    chai.expect(version).to.equal("2021-05-06 12:52:10");
+                    chai.expect(version).to.equal(serverStats.lemma[0]);
                 });
                 it("Prüfe: ist komplett... ", async () => {
                     let count = await arachne.lemma.getAll();
-                    chai.expect(count.length).to.equal(9360);
+                    chai.expect(count.length).to.equal(serverStats.lemma[1]);
                 });
                 it("Prüfe: Sortierung nach Lemma/Lemma Nr... ", async () => {
                     let count = await arachne.lemma.getAll("lemma");
-                    chai.expect(count.length).to.equal(9360);
+                    chai.expect(count.length).to.equal(serverStats.lemma[1]);
                 });
             });
             describe("Zettel", () => {
                 it("Prüfe: ist aktuell... ", async () => {
                     let version = await arachne.zettel.version();
-                    chai.expect(version).to.equal("2021-05-06 14:28:56");
+                    chai.expect(version).to.equal(serverStats.zettel[0]);
                 });
                 it("Prüfe: ist komplett... ", async () => {
                     let count = await arachne.zettel.getAll();
-                    chai.expect(count.length).to.equal(124523);
+                    chai.expect(count.length).to.equal(serverStats.zettel[1]);
                 }).timeout(10000);
                 it("Prüfe: Sotierung nach Lemma/Lemma Nr/Datierung ... ", async () => {
                     let count = await arachne.zettel.getAll("zettel");
-                    chai.expect(count.length).to.equal(124523);
+                    chai.expect(count.length).to.equal(serverStats.zettel[1]);
                 }).timeout(10000);
             });
         }); 

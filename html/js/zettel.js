@@ -260,28 +260,38 @@ class ZettelImport extends Oculus{
             iEditor = el.select(0, userList);
             tblContent.push(["erstellt von:", iEditor]);
         }
-        let iFiles = document.createElement("INPUT");
-        iFiles.type = "file"; iFiles.setAttribute("multiple", true);
-        tblContent.push(["Dateien:", iFiles]);
-        tblContent.push(["", "<i class='minorTxt'>max. 200 Bilder!</i>"]);
+        //let iFiles = document.createElement("INPUT");
+        //iFiles.type = "file"; iFiles.setAttribute("multiple", true);
+        //tblContent.push(["Dateien:", iFiles]);
+        //tblContent.push(["", "<i class='minorTxt'>max. 200 Bilder!</i>"]);
+        tblContent.push(["", "<i class='minorTxt'>Bitte verwenden Sie für den Upload den 'import_zettel'-Ordner</i>"]);
 
-        let iFolder = document.createElement("INPUT");
-        iFolder.type="checkbox"; iFolder.id = "from_folder";
-        let iFolderLabel = document.createElement("LABEL");
-        iFolderLabel.setAttribute("for", "from_folder");
-        iFolderLabel.textContent = "Bilder aus 'import_zettel'-Ordner";
-        let iSpan = document.createElement("SPAN");
-        iSpan.appendChild(iFolder); iSpan.appendChild(iFolderLabel);
-        tblContent.push(["", iSpan]);
+        //let iFolder = document.createElement("INPUT");
+        //iFolder.type="checkbox"; iFolder.id = "from_folder";
+        //let iFolderLabel = document.createElement("LABEL");
+        //iFolderLabel.setAttribute("for", "from_folder");
+        //iFolderLabel.textContent = "Bilder aus 'import_zettel'-Ordner";
+        //let iSpan = document.createElement("SPAN");
+        //iSpan.appendChild(iFolder); iSpan.appendChild(iFolderLabel);
+        //tblContent.push(["", iSpan]);
         let iUpload = el.button("hochladen");
         iUpload.onclick = async () => {
-            const MaxItem= 200;
+            let data = new FormData();
+            data.append("letter", iLetter.value);
+            data.append("type", iType.value);
+            data.append("user_id_id", iEditor.value);
+            fetch("/file/zettel", {method: "POST", body: data,
+            headers: {"Authorization": `Bearer ${argos.token}`}}).
+                then(re => {el.status("saved", "Import erfolgreich.")}).
+                catch(e => {throw e});
+            /*
+            const maxItem= 100;
             let cItemCount = maxItem;
             let cUploadIndex = -1;
             let uploadGroup = [];
             const fLength = iFiles.files.length;
             for(let i=0; i<fLength; i++){
-                if(cItemCount === MaxItem){
+                if(cItemCount >= maxItem){
                     cItemCount = 0;
                     cUploadIndex ++;
                     uploadGroup.push(new FormData());
@@ -289,15 +299,18 @@ class ZettelImport extends Oculus{
                     uploadGroup[cUploadIndex].append("type", iType.value);
                     uploadGroup[cUploadIndex].append("user_id_id", iEditor.value);
                 }
-                uploadGroup[cUploadIndex].append("files", iFiles.files[i]);
+                cItemCount ++;
+                uploadGroup[cUploadIndex].append("files"+i, iFiles.files[i]);
             }
             for(const uItem of uploadGroup){
                 console.log("Uploading next group...");
-                await fetch("/file/zettel", {method: "POST", body: uItem,
-                headers: {"Authorization": `Bearer ${argos.token}`}}).
+                await fetch("/file/zettel", {method: "POST", body: uItem}).//,
+                //headers: {"Authorization": `Bearer ${argos.token}`}}).
+                    then(re => {console.log(re.status)}).
                     catch(e => {throw e});
             }
             console.log("Upload complete!");
+            */
         }
         tblContent.push(["", iUpload]);
         mainBody.appendChild(el.table(tblContent));

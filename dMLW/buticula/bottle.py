@@ -1354,11 +1354,12 @@ class BaseRequest(object):
         for part in body_iter(read_func, self.MEMFILE_MAX):
             body.write(part)
             body_size += len(part)
-            if not is_temp_file and body_size > self.MEMFILE_MAX:
-                body, tmp = TemporaryFile(mode='w+b'), body
-                body.write(tmp.getvalue())
-                del tmp
-                is_temp_file = True
+            #if not is_temp_file and body_size > self.MEMFILE_MAX:
+            #    print("BOOOOOOOM")
+            #    body, tmp = TemporaryFile(mode='w+b'), body
+            #    body.write(tmp.getvalue())
+            #    del tmp
+            #    is_temp_file = True
         self.environ['wsgi.input'] = body
         body.seek(0)
         return body
