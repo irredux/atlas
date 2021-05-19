@@ -1,375 +1,195 @@
-export { Arachne, stringToQuery };
-
+export { Arachne };
 /*
 const fetch = require("node-fetch");
 module.exports = Arachne;
 */
-function stringToQuery(input){
-    const quotes = input.split('"');
-    let inQuotes = false;
-    let queries = [];
-    for(const quote of quotes){
-        if(inQuotes===false){
-            inQuotes = true;
-            queries = queries.concat(quote.split(" "));
-        } else {
-            inQuotes = false;
-            queries.push(quote);
-        }
-    }
-    let i = 0;
-    let queries2 = [];
-    for(;i<queries.length;i++){
-        if(queries[i][queries[i].length-1]===":"){
-            queries2.push(queries[i]+queries[i+1]);
-            i ++;
-        } else if(queries[i]!=""){
-            queries2.push(queries[i]);
-        }
-    }
-    let output = [];
-    let operator = "&&";
-    for(const query of queries2){
-        let negative = false;
-        let greater = false;
-        let smaller = false;
-        if(query==="oder"){
-            operator = "||"
-        } else {
-            let col = "*";
-            let value = query;
-            let colSeparator = query.indexOf(":");
-            if(colSeparator>-1){
-                value = query.substring(colSeparator+1);
-                col = query.substring(0,colSeparator);
-            }
-            if(value.startsWith("-")){
-                negative = true;
-                value = value.substring(1);
-            }
-            if(value.startsWith(">")){
-                greater = true;
-                value = value.substring(1);
-            }
-            if(value.startsWith("<")){
-                smaller = true;
-                value = value.substring(1);
-            }
-            output.push({
-                "col": col,
-                "value": value,
-                "regex": false,
-                "operator": operator,
-                "negative": negative,
-                "greater": greater,
-                "smaller": smaller
-            });
-            operator = "&&";
-        }
-    }
-    return output;
-}
 
-class ArachneDatabase{
-    constructor(tblName, dbName, dbVersion, token){
-        this.token = token;
+class ArachneWrapper{
+    constructor(tblName, dbName, dbVersion, optimize, token){
+        this.worker = new Worker("/file/js/arachneWW.js");
         this.tblName = tblName;
         this.dbName = dbName;
         this.dbVersion = dbVersion;
-        this.data = null;
-        if(arachne.optimize.includes(tblName)){this.optimize = true}
-        else{this.optimize=false}
+        this.optimize = optimize;
+        this.token = token;
     }
-
-    /* ***************************************** */
-    /*           indexedDB Connection            */
-    /* ***************************************** */
-    getStore(index=null){
+    load(){
         return new Promise((resolve, reject) => {
-            let request = indexedDB.open(this.dbName, this.dbVersion)
-            request.onsuccess = () => {
-                let db = request.result;
-                let tAction = db.transaction(this.tblName, "readonly");
-                let oStore = tAction.objectStore(this.tblName);
-                if(index){resolve(oStore.index(index))}
-                else {resolve(oStore)}
-
+            this.worker.onmessage = msg => {
+                if(msg.data){resolve()}
+                else{reject()}
             }
-            request.onerror = (e) => {reject(e)}
-        });
-    }
-
-    getAll(index=null){
-        // ATTENTION: DOESNT FILTER OUT DELETED OBJECTS!
-        return this.getStore(index).then((oStore) => {
-            return new Promise((resolve, reject) => {
-                let getAll = oStore.getAll();
-                getAll.onsuccess = () => {resolve(getAll.result)}
-                getAll.onerror = (e) => {reject(e)}
+            this.worker.postMessage({
+                request: "LOAD",
+                tblName: this.tblName,
+                dbName: this.dbName,
+                dbVersion: this.dbVersion,
+                optimize: this.optimize, 
+                sOrder: argos.userDisplay.sOrder,
+                token: this.token
             });
         });
     }
-
-    getCursor(keyRange=null, index=null, limit = null, direction="next"){
-        return this.getStore(index).then((oStore) => {
-            return new Promise((resolve, reject) => {
-                let cursorRequest  = oStore.openCursor(keyRange, direction);
-                let cursorResults = [];
-                let cursorCount = 0;
-                cursorRequest.onsuccess = () => {
-                    let cursor = cursorRequest.result;
-                    if(cursor && (limit == null || cursorCount <= limit)){
-                        cursorCount ++;
-                        cursorResults.push(cursor.value);
-                        cursor.continue();
-                    } else {
-                        resolve(cursorResults);
-                    }
+    version(){
+        return new Promise((resolve, reject) => {
+            this.worker.onmessage = msg => {
+                let data = msg.data;
+                switch(data.status){
+                    case 200:
+                        resolve(data.version);
+                        break;
+                    case 401:
+                        argos.loadMain("login");
+                        break;
+                    default:
+                        reject();
                 }
-                cursorRequest.onerror = (e) => {reject(e)}
+            }
+            this.worker.postMessage({request: "VERSION"});
+        });
+    }
+    search(query, returnCols="*", orderIndex = null){
+        return new Promise((resolve, reject) => {
+            this.worker.onmessage = msg => {
+                let data = msg.data;
+                resolve(data);
+                /*
+                switch(data.status){
+                    case 200:
+                        resolve(data.results);
+                        break;
+                    case 401:
+                        argos.loadMain("login");
+                        break;
+                    default:
+                        reject();
+                }*/
+            }
+            this.worker.postMessage({
+                request: "SEARCH",
+                query: query,
+                returnCols: returnCols,
+                orderIndex: orderIndex
             });
         });
     }
-
-    bound(lowerSearch, upperSearch, index=null, removeArray = false){
-        return this.getStore(index).then((oStore) => {
-            return new Promise((resolve, reject) => {
-                let cursorRequest  = oStore.openCursor(IDBKeyRange.bound(lowerSearch, upperSearch));
-                let cursorResults = [];
-                cursorRequest.onsuccess = () => {
-                    let cursor = cursorRequest.result;
-                    if(cursor){
-                        cursorResults.push(cursor.value);
-                        cursor.continue();
-                    } else {
-                        if(cursorResults.length==1 && removeArray){
-                            resolve(cursorResults[0]);
-                        } else {
-                            resolve(cursorResults);
-                        }
-                    }
-                }
-                cursorRequest.onerror = (e) => {reject(e)}
-            })
-                .catch(e => {throw e});
-        })
-            .catch(e => {throw e});
-    }
-
     is(searchValue, index=null, removeArray = true){
-        return this.getStore(index).then((oStore) => {
-            return new Promise((resolve, reject) => {
-                let cursorRequest  = oStore.openCursor(IDBKeyRange.only(searchValue));
-                let cursorResults = [];
-                cursorRequest.onsuccess = () => {
-                    let cursor = cursorRequest.result;
-                    if(cursor){
-                        cursorResults.push(cursor.value);
-                        cursor.continue();
-                    } else {
-                        if(cursorResults.length==1 && removeArray){
-                            resolve(cursorResults[0]);
-                        } else {
-                            resolve(cursorResults);
-                        }
-                    }
-                }
-                cursorRequest.onerror = (e) => {reject(e)}
-            })
-                .catch(e => {throw e});
-        })
-            .catch(e => {throw e});
-    }
-
-    /* ***************************************** */
-    /*               search methods              */
-    /* ***************************************** */
-    async version(){
-        const lastEntry = await this.getCursor(null, "update", 1, "prev")
-        if(lastEntry.length > 0){return lastEntry[0].u_date}
-        else {return "2020-01-01 01:00:00"}
-    }
-    async removeDeleted(){
-        const delList = await this.is(1, "deleted", false);
         return new Promise((resolve, reject) => {
-            let request = indexedDB.open(this.dbName, this.dbVersion);
-            request.onerror = e => {reject(e)}
-            request.onsuccess = () => {
-                let db = request.result;
-                let tAction = db.transaction(this.tblName, "readwrite");
-                let oStore = tAction.objectStore(this.tblName);
-                for(const delItem of delList){oStore.delete(delItem.id)}
-                resolve();
-            }
-        });
-    }
-
-    async update(){
-        const startTime = Date.now();
-        const url = `/data/${this.tblName}?u_date=${await this.version()}`;
-        const newData = await fetch(url, {
-            headers: {"Authorization": `Bearer ${this.token}`}
-        })
-            .then(response => {
-                if(response.status === 401){argos.loadMain("login")}
-                else if(response.status === 200){return response.json()}
-            })
-            .then(items => { return new Promise((resolve, reject) => {
-                if(items.length>0){
-                    let request = indexedDB.open(this.dbName, this.dbVersion);
-                    request.onerror = e => {reject(e)}
-                    request.onsuccess = () => {
-                        let db = request.result;
-                        let tAction = db.transaction(this.tblName, "readwrite");
-                        let oStore = tAction.objectStore(this.tblName);
-                        for(const item of items){oStore.put(item)}
-                        tAction.oncomplete = () => {
-                            resolve(true);
-                        }
-                    }
-                }else{
-                    resolve(false);
-                }
-            })})
-            .catch(e => {throw e});
-
-        // remove "deleted"
-        if(newData){await this.removeDeleted()}
-        
-        // optimize?
-        if(this.optimize && (newData || this.data == null)){
-            let sIndex = null;
-            if(argos.userDisplay.sOrder!=1){sIndex=this.tblName}
-            this.getAll(sIndex).then(all => {this.data = all}).catch(e => {throw e});
-        }
-    }
-
-    async delete(rowId){
-        const response = await fetch(`/data/${this.tblName}/${rowId}`, {
-            method: "delete",
-            headers: {"Authorization": `Bearer ${this.token}`}
-        });
-        if(response.status===200){
-            await this.update();
-            return true;
-        } else {
-            throw `DB ERROR: entry not deleted. Status: ${response.status}`
-        }
-    }
-    async save(newValues){
-        /*
-        newValues is an object containing col/values as key/value pairs.
-        when no id is given, a new entry will be created.
-        */
-        console.log(`Start saving in ${this.tblName}:`, newValues);
-        let url = `/data/${this.tblName}`;
-        let method = "POST";
-        const rId = newValues.id;
-        if(newValues.id!=null){
-            url += `/${newValues.id}`;
-            method = "PATCH";
-            delete newValues.id;
-        }
-        console.log(newValues);
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${this.token}`
-            },
-            body: JSON.stringify(newValues)
-        });
-        if(response.status===201 && method==="POST"){
-            const newId = parseInt(await response.text());
-            await this.update();
-            return await this.is(newId)
-        } else if(response.status===200 && method==="PATCH"){
-            await this.update();
-            return rId;
-        } else {
-            throw `DB ERROR: entry not saved. Status: ${response.status}`
-        }
-    }
-
-    async search(query, returnCols="*", orderIndex = null){
-        // query: object containing cols/value pairs as key/value
-        // if query === "*" all data will be returned
-        let data = []
-        if(this.optimize&&this.data != null){data = this.data}
-        else{data = await this.getAll(orderIndex)}
-        if(query === "*"){
-            return data
-        } else {
-            query = stringToQuery(query);
-            let results = [];
-            for (const item of data){
-                let found = false;
-                for (const q of query){
-                    found = false;
-                    if(q.col === "*"){
-                        // any row
-                        for(const key in item){
-                            if(q.negative === false && `${item[key]}`.indexOf(q.value)>-1){found = true}
-                            if(q.negative === true && `${item[key]}`.indexOf(q.value)===-1){found = true}
-                        }
-                    } else if (Object.keys(item).includes(q.col)){
-                        // row given
-                        if(q.regex === false && q.negative === false && item[q.col] == q.value){found = true}
-                        else if(q.regex === false && q.negative === true && item[q.col] != q.value){found = true}
-                        else if(q.regex === false && q.greater === true && item[q.col] > q.value){found = true}
-                        else if(q.regex === false && q.smaller === true && item[q.col] < q.value){found = true}
-                    }
-                    if(!found){break}
-                }
-                if(found){
-                    if(returnCols==="*"){results.push(item)}
-                    else{
-                        let rItem = {};
-                        for(const returnCol of returnCols){
-                            rItem[returnCol] = item[returnCol];
-                        }
-                        results.push(rItem);
-                    }
+            this.worker.onmessage = msg => {
+                let data = msg.data;
+                switch(data.status){
+                    case 200:
+                        resolve(data.results);
+                        break;
+                    case 401:
+                        argos.loadMain("login");
+                        break;
+                    default:
+                        reject();
                 }
             }
-            return results;
-        }
+            this.worker.postMessage({
+                request: "IS",
+                searchValue: searchValue,
+                index: index,
+                removeArray: removeArray
+            });
+        });
+    }
+    bound(lowerSearch, upperSearch, index=null, removeArray = false){
+        return new Promise((resolve, reject) => {
+            this.worker.onmessage = msg => {
+                let data = msg.data;
+                switch(data.status){
+                    case 200:
+                        resolve(data.results);
+                        break;
+                    case 401:
+                        argos.loadMain("login");
+                        break;
+                    default:
+                        reject();
+                }
+            }
+            this.worker.postMessage({
+                request: "BOUND",
+                lowerSearch: lowerSearch,
+                upperSearch: upperSearch,
+                index: index,
+                removeArray: removeArray
+            });
+        });
+    }
+    delete(rowId){
+        return new Promise((resolve, reject) => {
+            this.worker.onmessage = msg => {
+                let data = msg.data;
+                switch(data.status){
+                    case 200:
+                        resolve(data.result);
+                        break;
+                    case 401:
+                        argos.loadMain("login");
+                        break;
+                    default:
+                        reject();
+                }
+            }
+            this.worker.postMessage({
+                request: "DELETE",
+                rowId: rowId
+            });
+        });
+    }
+    save(newValues){
+        return new Promise((resolve, reject) => {
+            this.worker.onmessage = msg => {
+                let data = msg.data;
+                switch(data.status){
+                    case 200:
+                        resolve(data.result);
+                        break;
+                    case 401:
+                        argos.loadMain("login");
+                        break;
+                    default:
+                        reject();
+                }
+            }
+            this.worker.postMessage({
+                request: "SAVE",
+                newValues: newValues
+            });
+        });
+    }
+    getAll(index=null){
+        return new Promise((resolve, reject) => {
+            this.worker.onmessage = msg => {
+                let data = msg.data;
+                switch(data.status){
+                    case 200:
+                        resolve(data.results);
+                        break;
+                    case 401:
+                        argos.loadMain("login");
+                        break;
+                    default:
+                        reject();
+                }
+            }
+            this.worker.postMessage({
+                request: "GETALL",
+                index: index
+            });
+        });
     }
 }
-/*
-    add(data){
-        this.data.push(JSON.parse(JSON.stringify(data).replace(/<[^>]*>/g, "")));
-    }
-    remove(dataId){
-        var removeIndex = -1;
-        this.data.forEach(function(e, index){
-            if(e["id"]==dataId){removeIndex = index}
-        });
-        if(removeIndex > -1){this.data.splice(removeIndex, 1)}else{throw "DataList: Item not found."}
-    }
-    filter(filter=null){
-        if(filter==null){
-            return this.data;
-        } else {
-            var rData = []; var rDict = {};
-            loop1:
-            for(var item of this.data){
-                rDict = {};
-                for(var dict in filter){if(item[dict] != filter[dict]){continue loop1}}
-                rData.push(item);
-            }
-            return rData;
-        }
-    }
-}
-*/
 
 class Arachne{
     constructor(dbName){
         // set up DB
         this.dbName = dbName;
         this.dbVersion = 1;
-        this.optimize = ["lemma", "zettel"];
     }
 
     async createDB(){
@@ -401,14 +221,16 @@ class Arachne{
         });
     }
 
-    async loadDB(loadLabel=null){
+    async loadDB(loadLabel=null, sync = true){
+        this.optimize = argos.userDisplay.optimize;
         for(const tbl of this.oStores){
             if(loadLabel!=null){loadLabel.textContent = tbl}
-            this[tbl] = new ArachneDatabase(tbl, this.dbName, this.dbVersion, this.token);
-            await this[tbl].update();
+            this[tbl] = new ArachneWrapper(tbl, this.dbName, this.dbVersion, (this.optimize.includes(tbl) ? true : false), this.token);
+            if(sync){await this[tbl].load()}
+            else{this[tbl].load()}
         }
-        el.status("updated");
         if(loadLabel!=null){loadLabel.parentNode.remove()}
+        else{el.status("updated")}
     }
 
     deleteDB(){

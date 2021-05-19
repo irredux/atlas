@@ -2,7 +2,7 @@ export { Elements, html };
 
 function html(i){
     if(i==null){return ""}
-    else{return DOMPurify.sanitize(i.replace(/&lt;/g, "<").replace(/&gt;/g, ">"), { ADD_TAGS: ["aut"] })}
+    else{return DOMPurify.sanitize(i.replace(/&lt;/g, "<").replace(/&gt;/g, ">"), { ADD_TAGS: ["aut", "gruen", "gelb", "rot", "blau"] })}
 };
 
 class Elements {
@@ -32,6 +32,79 @@ class Elements {
         boxContent.innerHTML = html(content);
         box.appendChild(boxContent);
         return box;
+    }
+    popHTMLHelp(){
+        let helpContent = `
+<h3>Hilfe bei der Formatierung</h3>
+<p class='minorTxt'>Texte können per HTML-Elementen formatiert werden. Der Text, der formatiert werden soll, muss links und rechts mit den speziellen 'Tags' umschlossen werden. Im Folgenden finden Sie eine Liste mit den möglichen Formatierungen.</p>
+<table class='minorTxt'>
+        <tr>
+            <td><b>Formatierung</b></td>
+            <td><b>Beschreibung</b></td>
+            <td><b>Beispiel</b></td>
+        </tr>
+        <tr>
+            <td><b>fett</b></td>
+            <td>Text mit Schriftstärke 'fett' (engl. bold)</td>
+            <td>&#60;b&gt;fett&#60;/b&gt; &rarr; <b>fett</b></td>
+        </tr>
+        <tr>
+            <td><i>kursiv</i></td>
+            <td>Text mit Schriftlage 'kursiv' (engl. italic)</td>
+            <td>&#60;i&gt;kursiv&#60;/i&gt; &rarr; <i>kursiv</i></td>
+        </tr>
+        <tr>
+            <td>Text<sup>hochgestellt</sup></td>
+            <td>Hochgestellter Text (engl. superscript text)</td>
+            <td>Text&#60;sup&gt;hochgestellt&#60;/sup&gt; &rarr; Text<sup>hochgestellt</sup></td>
+        </tr>
+        <tr>
+            <td><aut>Autor</aut></td>
+            <td>Text in Kapitälchen (= Autorangabe)</td>
+            <td>&#60;aut&gt;Autor&#60;/aut&gt; &rarr; <aut>Autor</aut></td>
+        </tr>
+        <tr>
+            <td><gruen>grün</gruen></td>
+            <td>Grün markierter Text</td>
+            <td>&#60;gruen&gt;grün&#60;/gruen&gt; &rarr; <gruen>grün</gruen></td>
+        </tr>
+        <tr>
+            <td><gelb>gelb</gelb></td>
+            <td>Gelb markierter Text</td>
+            <td>&#60;gelb&gt;gelb&#60;/gelb&gt; &rarr; <gelb>gelb</gelb></td>
+        </tr>
+        <tr>
+            <td><rot>rot</rot></td>
+            <td>Rot markierter Text</td>
+            <td>&#60;rot&gt;rot&#60;/rot&gt; &rarr; <rot>rot</rot></td>
+        </tr>
+        <tr>
+            <td><blau>blau</blau></td>
+            <td>Blau markierter Text</td>
+            <td>&#60;blau&gt;blau&#60;/blau&gt; &rarr; <blau>blau</blau></td>
+        </tr>
+</table>
+<p>
+    <i class='minorTxt'>Achtung: HTML-Tags werden bei der Suche berücksichtigt und sollten darum nur in Feldern benutzt werden, welche ausschließlich zur Anzeige dienen.</i>
+</p>
+<h3>Sonderzeichen</h3>
+<p class='minorTxt'>Sonderzeichen können per Copy&amp;Paste eingesetzt werden, oder als HTML-Entity eingegeben werden. Im Folgenden finden Sie eine Liste mit Zeichen, die in den Text eingefügt werden können.
+<table class='minorTxt'>
+    <tr>
+        <td><b>Zeichen</b></td>
+        <td><b>HTML Code</b></td>
+    </tr>
+    <tr>
+        <td>&para; <i>(Zeilenumbruch)</i></td>
+        <td>&#60;br /&gt;</td>
+    </tr>
+    <tr>
+        <td>&dagger;</td>
+        <td>&amp;dagger&#59;</td>
+    </tr>
+</table>
+        `;
+        return this.pop("Hilfe", helpContent, "left");
     }
     tab(value, name){
         let tab = document.createElement("DIV");

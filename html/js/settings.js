@@ -75,6 +75,24 @@ class Account extends Oculus{
         let cardDB = el.card();
         cardDB.style.margin = "20px 10%";
         cardDB.appendChild(el.h("Lokale Datenbank", 3));
+        cardDB.appendChild(el.p("Hier finden Sie die lokal gespeicherten Tabellen. Optimierte Tabellen werden im Arbeitsspeicher behalten und sind schneller verfügbar. Es kann aber sein, dass der Computer oder Browser dadurch verlangsamt wird."));
+        let tblContent = [["<b>Tabellen-Name</b>", "<b>zuletzt aktualisiert</b>", "<b>optimiert</b>"]];
+        for(const tbl of arachne.oStores){
+            let iOptimize = document.createElement("A");
+            iOptimize.textContent = arachne[tbl].optimize ? "ja" : "nein";
+            iOptimize.onclick = () => {
+                const cIndex = argos.userDisplay.optimize.indexOf(tbl);
+                if(cIndex > -1){
+                    argos.userDisplay.optimize.splice(cIndex, 1);
+                } else {
+                    argos.userDisplay.optimize.push(tbl);
+                }
+                argos.setUserDisplay();
+                location.reload();
+            }
+            tblContent.push([tbl, await arachne[tbl].version(), iOptimize]);
+        }
+        cardDB.appendChild(el.table(tblContent));
         let setupB = el.button("Lokale Datenbank neu generieren");
         setupB.onclick = () => {
             document.body.innerHTML = "<div id='loadLabel'>Lokale Datenbank wird gelöscht...</div>";

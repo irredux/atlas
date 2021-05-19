@@ -70,7 +70,7 @@ class Zettel extends Oculus{
             <p>Benötigen Sie eine ausführliche Hilfe zur Suche? Dann klicken Sie
             <a href='https://gitlab.lrz.de/haeberlin/dmlw/-/wikis/00-Start'>hier</a>.</p>
             <h4>verfügbare Felder</h4>
-            <table style='font-size: var(--minorTxtSize);'>
+            <table class='minorTxt'>
                 <tr><td><b>Feldname</b></td><td><b>Beschreibung</b></td></tr>
             `;
         for(const field in searchFields){
@@ -81,7 +81,7 @@ class Zettel extends Oculus{
         }
        helpContent += `
             </table>
-            <i style='font-size: var(--minorTxtSize);'>Achtung: Bei den Feldnamen
+            <i class='minorTxt'>Achtung: Bei den Feldnamen
             auf Groß- und Kleinschreibung achten!</i>
             <p class='minorTxt'>Eine Suche nach '<i>Feldname</i>:NULL' zeigt gewöhnlich alle leeren Felder.</p>
         `;
@@ -545,6 +545,7 @@ class ZettelDetail extends Oculus{
         super(res, resId, access, main);
     }
     async load(){
+        const user = await argos.user();
         const zettel = await arachne.zettel.is(this.resId);
         const siblings = await arachne.zettel.is(this.resId, "siblings", false);
         let mainBody = document.createDocumentFragment();
@@ -563,7 +564,10 @@ class ZettelDetail extends Oculus{
 
         rTHeader.appendChild(el.tab("Übersicht", "overview"));
         let overview = el.tabContainer("overview");
-        let editions = await arachne.edition.is(zettel.work_id, "work", false);
+        let editions = [];
+        if(zettel.work_id > 0){
+            editions = await arachne.edition.is(zettel.work_id, "work", false);
+        }
         let editionDIV = document.createElement("DIV");
         for(const edition of editions){
             let ed = el.p("");
@@ -594,7 +598,7 @@ class ZettelDetail extends Oculus{
                 let cmntBox = document.createElement("P");
                 cmntBox.innerHTML = `<b>${comment.user}</b>, am ${comment.u_date.split(" ")[0]}:`;
                 cmntBox.insertAdjacentHTML("beforeend", `<br />${comment.comment}`);
-                if(argos.userId === comment.user_id){
+                if(user.id === comment.user_id || argos.access.includes("comment_moderator")){
                     let delLabel = document.createElement("I");
                     delLabel.classList.add("minorTxt");
                     delLabel.textContent = " (löschen)";

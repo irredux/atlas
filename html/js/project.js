@@ -1,7 +1,7 @@
 import { Oculus } from "/file/js/oculus.js";
 import { ContextMenu } from "/file/js/contextmenu.js";
 import { html } from "/file/js/elements.js";
-export { Project, ProjectOverview };
+export { Project, ProjectOverview, ProjectZettelPreview };
 
 class ProjectOverview extends Oculus{
     constructor(res, resId=null, access=[], main=false){
@@ -68,48 +68,50 @@ class ProjectOverview extends Oculus{
         //context menu
         let cContext = new ContextMenu();
         cContext.addEntry('div.projectItems', 'span', 'Projekt verschieben nach ...', null);
-        cContext.addEntry('div.projectItems.projectArchive', 'a', '... aktive Projekte', function(){me._put("data/project/"+me.selMarker["main"]["lastRow"], {"status": 1}, function(){location.reload()});});
-        cContext.addEntry('div.projectItems.projectTrash', 'a', '... aktive Projekte', function(){me._put("data/project/"+me.selMarker["main"]["lastRow"], {"status": 1}, function(){location.reload()});});
-        cContext.addEntry('div.projectItems.projectActive', 'a', '... Archiv', function(){me._put("data/project/"+me.selMarker["main"]["lastRow"], {"status": 2}, function(){location.reload()});});
-        cContext.addEntry('div.projectItems.projectTrash', 'a', '... Archiv', function(){me._put("data/project/"+me.selMarker["main"]["lastRow"], {"status": 2}, function(){location.reload()});});
-        cContext.addEntry('div.projectItems.projectActive', 'a', '... Papierkorb', function(){me._put("data/project/"+me.selMarker["main"]["lastRow"], {"status": 3}, function(){location.reload()});});
-        cContext.addEntry('div.projectItems.projectArchive', 'a', '... Papierkorb', function(){me._put("data/project/"+me.selMarker["main"]["lastRow"], {"status": 3}, function(){location.reload()});});
+        cContext.addEntry('div.projectItems.projectArchive', 'a', '... aktive Projekte', () => {
+            arachne.project.save({id: this.selMarker.main.lastRow, status: 1}).
+                then(() => {this.refresh()})});
+        cContext.addEntry('div.projectItems.projectTrash', 'a', '... aktive Projekte', () => {
+            arachne.project.save({id: this.selMarker.main.lastRow, status: 1}).
+                then(() => {this.refresh()})});
+        cContext.addEntry('div.projectItems.projectActive', 'a', '... Archiv', () => {
+            arachne.project.save({id: this.selMarker.main.lastRow, status: 2}).
+                then(() => {this.refresh()})});
+        cContext.addEntry('div.projectItems.projectTrash', 'a', '... Archiv', () => {
+            arachne.project.save({id: this.selMarker.main.lastRow, status: 2}).
+                then(() => {this.refresh()})});
+        cContext.addEntry('div.projectItems.projectActive', 'a', '... Papierkorb', () => {
+            arachne.project.save({id: this.selMarker.main.lastRow, status: 3}).
+                then(() => {this.refresh()})});
+        cContext.addEntry('div.projectItems.projectArchive', 'a', '... Papierkorb', () => {
+            arachne.project.save({id: this.selMarker.main.lastRow, status: 3}).
+                then(() => {this.refresh()})});
         cContext.addEntry('div.tab_container[name=p_active]', 'hr', '', null)
-        cContext.addEntry('div.tab_container[name=p_active]', 'a', 'Neues Projekt erstellen', function(){
-            var timeNow = getNow();
-            me._post("/data/project", {"name": "Neues Projekt", "status": "1", "date_created": timeNow, "date_changed": timeNow}, function(){
-                me._getJSON("/data/project", function(rData){
-                    me._post("/data/article", {"name": "Unsortierte Zettel", "position": "000", "project_id": rData[0].id}, function(){
-                        location.reload();
-                    });
-                }, {"date_created": timeNow});
-            });
+        cContext.addEntry('div.tab_container[name=p_active]', 'a', 'Neues Projekt erstellen', () => {
+            arachne.project.save({"name": "Neues Projekt", "status": 1}).
+                then(project => arachne.article.save({
+                    project_id: project.id,
+                    position: "000",
+                    name: "Unsortierte Zettel"
+                })).
+                then(() => {this.refresh()}).
+                catch(e => {throw e});
         });
         cContext.addEntry('div.projectItems.projectTrash', 'hr', '', null);
-        cContext.addEntry('div.projectItems.projectTrash', 'a', 'Papierkorb leeren', function(){
-            me.ctn.querySelectorAll(".projectTrash").forEach(function(e){
-                me._getJSON("/data/article", function(rData){
-                    let delList = [];
-                    for(const item of rData){
-                        delList.push({res_id: item.id});
-                        me._getJSON("/data/zettel_lnk", function(rData){
-                            let delListZettels = [];
-                            for(const item of rData){
-                                delListZettels.push({res_id: item.id});
-                            }
-                            if(delListZettels.length > 0){
-                                console.log(delListZettels);
-                                me._post("/batch", {"res": "zettel_lnk", "mode": "delete", "items": delListZettels}, function(){});
-                            }
-                        }, {"article_id": item.id});
+        cContext.addEntry('div.projectItems.projectTrash', 'a', 'Papierkorb leeren', async () => {
+            const projects = await arachne.project.is(3, "status", false);
+            if(projects.length > 0 && confirm("Papierkorb wirklich leeren? Dieser Schritt kann nicht rückgängig gemacht werden.")){
+                for(const project of projects){
+                    const articles = await arachne.article.is(project.id, "project", false);
+                    for(const article of articles){
+                        const zettelLnks = await arachne.zettel_lnk.is(article.id, "article", false);
+                        for(const zettelLnk of zettelLnks){await arachne.zettel_lnk.delete(zettelLnk.id)}
+                        await arachne.article.delete(article.id);
                     }
-                    if(delList.length > 0){
-                        console.log(delList);
-                        me._post("/batch", {"res": "article", "mode": "delete", "items": delList}, function(){});
-                    }
-                }, {"project_id": e.id});
-                me._delete("/data/project/"+e.id, function(){location.reload()});
-            });
+                    await arachne.project.delete(project.id);
+                }
+                this.refresh();
+            }
         });
         this.setContext = cContext.menu;
     }
@@ -122,7 +124,6 @@ class Project extends Oculus{
     async load(){
         let mainBody = document.createDocumentFragment();
         /*
-<div id="projectId" class="argSys">{{items[0]["id"]}}</div>
 <style>
     input#changeOpus{
         border: none;
@@ -363,10 +364,10 @@ class Project extends Oculus{
                 }
                 nZettel.addEventListener("click", function(){
                     let cEvent = event.target.closest("div.detail_zettel");
-                    if(argos.o.project.o["project_zettel_preview"]!=null){
-                        argos.o.project.o["project_zettel_preview"].close();
+                    if(argos.main.o["project_zettel_preview"]!=null){
+                        argos.main.o["project_zettel_preview"].close();
                     }
-                    argos.load("project_zettel_preview", cEvent.id)
+                    argos.loadEye("project_zettel_preview", cEvent.id)
                 });
                 let cParent = this.ctn.querySelector("div.detail_article[data-position='"+zettel.position+"']");
                 if(cParent != null){cParent.appendChild(nZettel)}
@@ -752,6 +753,155 @@ function onDragDrop(mode = "over"){
         }
     }
 }
+
+class ProjectZettelPreview extends Oculus{
+    constructor(res, resId=null, access=[], main=false){
+        super(res, resId, access, main);
+    }
+    async load(){
+        let mainBody = document.createDocumentFragment();
+        if(this.access.includes("comment")){
+            let pmContent = document.createElement("DIV");
+            const comments = await arachne.comment.is(this.resId, "zettel", false);
+            for(const comment of comments){
+                let cmntBox = document.createElement("P");
+                cmntBox.innerHTML = `<b>${comment.user}</b>, am ${comment.u_date.split(" ")[0]}:`;
+                cmntBox.insertAdjacentHTML("beforeend", `<br />${comment.comment}`);
+                if(user.id === comment.user_id || argos.access.includes("comment_moderator")){
+                    let delLabel = document.createElement("I");
+                    delLabel.classList.add("minorTxt");
+                    delLabel.textContent = " (löschen)";
+                    delLabel.style.cursor = "pointer";
+                    delLabel.onclick = () => {
+                        if(window.confirm("Soll der Kommentar wirklich gelöscht werden? Dieser Schritt kann nicht rückgängig gemacht werden!")){
+                        arachne.comment.delete(comment.id).then(() => {this.refresh()});
+                        }
+                    }
+                    cmntBox.appendChild(delLabel);
+                }
+                commentContainer.appendChild(cmntBox);
+
+            }
+            let newComment = document.createElement("P");
+            newComment.textContent = "Neue Notiz:";
+            let newTextArea = document.createElement("TEXTAREA");
+            let submitButton = el.button("speichern");
+            submitButton.onclick = () => {
+                if(newTextArea.value != ""){
+                    arachne.comment.save({comment: newTextArea.value, zettel_id: this.resId, user_id: argos.userId})
+                        .then((rTxt) => {this.refresh()});
+                }
+            }
+            newComment.appendChild(newTextArea);
+            newComment.appendChild(submitButton);
+            commentContainer.appendChild(newComment);
+            pmContent.appendChild(commentContainer);
+            mainBody.appendChild(this.createBox("comment", "Kommentare", pmContent));
+        }
+        this.ctn.appendChild(mainBody);
+    }
+    createBox(id, button, content){
+        let box = document.createElement("DIV");
+        box.classList.add("projectMenuEntry"); box.id = id;
+        let pmButton = document.createElement("DIV");
+        pmButton.textContent = button; pmButton.classList.add("projectMenuButton");
+        box.appendChild(pmButton);
+        let pmContent = document.createElement("DIV");
+        pmContent.classList.add("projectMenuContent");
+        pmContent.appendChild(content);
+        box.appendChild(pmContent);
+        return box;
+    }
+}
+/*
+    <div class="projectMenuContent">
+        % if zettel.get("comments") != None:
+            % cmnts = json.loads(zettel.get("comments").replace('\n', '<br />').replace('\r', '<br />'))
+            % for cmnt in cmnts:
+                <p><form>
+                    <b>{{cmnt["user"]}}</b>, am {{str(cmnt["date"]).split()[0]}}:
+                    <br />{{!cmnt["comment"]}}
+                    % if user["id"] == cmnt["user_id"]:
+                        <i class="deleteEntry" style='cursor:pointer;'>(löschen)</i>
+                        <input type="hidden" name="res" value="comment" />
+                        <input type="hidden" name="resId" value="{{cmnt["id"]}}" />
+                    % end
+                </form></p>
+            % end
+        % end
+        <form autocomplete="off">
+            <table>
+                <tr>
+                    <td>Neue Notiz:</td>
+                    <td><textarea name="comment" autocomplete="off"></textarea></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>
+                        <input type="button" class="noUpload" id="newComment" value="speichern" />
+                    </td>
+                </tr>
+            </table>
+            <input type="hidden" name="res" value ="comment" />
+            <input type="hidden" name="zettel_id" value="{{zettel["id"]}}" />
+            <input type="hidden" name="user_id" value="{{user["id"]}}" />
+            <input type="hidden" name="date" value="{{c_date}}" />
+        </form>
+    </div>
+
+
+% if zettel.get("work_id", 0) > 0:
+<div class="projectMenuEntry" id='opera'>
+    <div class="projectMenuButton">opera-Eintrag</div>
+    <div class="projectMenuContent" style='left: 10px;'>
+        <table>
+            <tr style='vertical-align: top;'>
+                <td class='c1'>{{!zettel.get('date_display', '')}}</td>
+                <td class='c2'><aut>{{zettel.get('author_abbr', '')}}</aut></td>
+                <td class='c3'>{{!zettel.get('author_full', '')}}</td>
+                <td class='c4'></td>
+                <td class='c5'></td>
+            </tr>
+            <tr style='vertical-align: top;'>
+                <td class='c1'></td>
+                <td class='c2'>&nbsp;&nbsp;&nbsp;{{zettel.get('work_abbr', '')}}</td>
+                <td class='c3'>&nbsp;&nbsp;&nbsp;{{zettel.get('work_full', '')}}</td>
+                <td class='c4'><i>{{zettel.get('bibliography', '')}}</i></td>
+                <td class='c5'>{{!zettel.get('txt_info', '')}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+% end
+% if zettel.get('editions', None):
+<div class="projectMenuEntry" id='edition'>
+    <div class="projectMenuButton">Editionen</div>
+    <div class="projectMenuContent">
+        % editions = json.loads(zettel.get("editions"))
+        % for edition in editions:
+        <a href='{{edition.get('url', '')}}' target='_blank'>{{!edition.get('label', '')}}</a><br />
+        % end
+    </div>
+</div>
+% end
+
+<div class="projectMenuEntry" id='zettel'>
+    <div class="projectMenuButton">Zettel</div>
+    <div class="projectMenuContent">
+        <div style='width: var(--zettelWidth);
+        % if zettel.get("img_path", False) == False:
+        height: var(--zettelHeight);
+        % end
+        '>
+            % if zettel.get("img_path"):
+                <img style="width:100%" src='{{zettel["img_path"] + '.jpg'}}' />
+            % else:
+                % include("zettel/zettel_card_digital", zettel=zettel)
+            % end
+        </div>
+    </div>
+</div>
+ */
 
 
 /*

@@ -55,7 +55,7 @@ class Lemma extends Oculus{
             <p>Benötigen Sie eine ausführliche Hilfe zur Suche? Dann klicken Sie
             <a href='https://gitlab.lrz.de/haeberlin/dmlw/-/wikis/00-Start'>hier</a>.</p>
             <h4>verfügbare Felder</h4>
-            <table style='font-size: var(--minorTxtSize);'>
+            <table class='minorTxt'>
                 <tr><td><b>Feldname</b></td><td><b>Beschreibung</b></td></tr>
             `;
         for(const field in searchFields){
@@ -66,7 +66,7 @@ class Lemma extends Oculus{
         }
        helpContent += `
             </table>
-            <i style='font-size: var(--minorTxtSize);'>Achtung: Bei den Feldnamen
+            <i class='minorTxt'>Achtung: Bei den Feldnamen
             auf Groß- und Kleinschreibung achten!</i>
             <p class='minorTxt'>Eine Suche nach '<i>Feldname</i>:NULL' zeigt gewöhnlich alle leeren Felder.</p>
         `;
@@ -149,6 +149,7 @@ class LemmaComment extends Oculus{
     async load(){
         let lemma = await arachne.lemma.is(this.resId);
         let comments = await arachne.comment.is(this.resId, "lemma", false);
+        let user = await argos.user();
 
         let mainBody = document.createDocumentFragment();
         mainBody.appendChild(el.closeButton(this));
@@ -158,7 +159,7 @@ class LemmaComment extends Oculus{
             let cmntBox = document.createElement("P");
             cmntBox.innerHTML = `<b>${comment.user}</b>, am ${comment.u_date.split(" ")[0]}:`;
             cmntBox.insertAdjacentHTML("beforeend", `<br />${comment.comment}`);
-            if(argos.userId === comment.user_id){
+            if(user.id === comment.user_id || argos.access.includes("comment_moderator")){
                 let delLabel = document.createElement("I");
                 delLabel.classList.add("minorTxt");
                 delLabel.textContent = " (löschen)";
@@ -213,20 +214,13 @@ class LemmaEdit extends Oculus{
             mainBody.appendChild(zCount);
         }
         
-        let sbHelp = document.createElement("DIV");
-        sbHelp.classList.add("popOver");
-        sbHelp.innerHTML = "<a>Hilfe</a>";
+        let sbHelp = el.popHTMLHelp();
         sbHelp.style.top = "10px"; sbHelp.style.right = "40px"; sbHelp.style.textAlign = "right";
-        let sbHelpContent = document.createElement("DIV");
-        sbHelpContent.classList.add("popOverContent");
-        sbHelpContent.style.textAlign = "left";
-        sbHelpContent.textContent = "-";
-        sbHelp.appendChild(sbHelpContent);
         mainBody.appendChild(sbHelp);
         let iLemma = el.text(lemma.lemma);
         let iLemmaDicts = el.text(lemma.dicts);
         let iLemmaDisplay = el.text(html(lemma.lemma_display));
-        if(argos.main.o.zettel_detail.newLemma != null){
+        if(argos.main.o.zettel_detail != null){
             iLemma.value = argos.main.o.zettel_detail.newLemma;
             iLemmaDisplay.value = argos.main.o.zettel_detail.newLemma;
         }
@@ -255,7 +249,7 @@ class LemmaEdit extends Oculus{
                 };
                 arachne.lemma.save(nValues).then(rTxt => {
                     el.status("saved");
-                    if(argos.main.o.zettel_detail.newLemma != null){
+                    if(argos.main.o.zettel_detail != null){
                         this.close();
                         console.log(rTxt.id);
                         argos.main.o.zettel_detail.iLemmaInput.dataset.selected = rTxt.id;

@@ -59,7 +59,7 @@ class Library extends Oculus{
             <p>Benötigen Sie eine ausführliche Hilfe zur Suche? Dann klicken Sie
             <a href='https://gitlab.lrz.de/haeberlin/dmlw/-/wikis/00-Start'>hier</a>.</p>
             <h4>verfügbare Felder</h4>
-            <table style='font-size: var(--minorTxtSize);'>
+            <table class='minorTxt'>
                 <tr><td><b>Feldname</b></td><td><b>Beschreibung</b></td></tr>
             `;
         for(const field in searchFields){
@@ -69,7 +69,7 @@ class Library extends Oculus{
         }
        helpContent += `
             </table>
-            <i style='font-size: var(--minorTxtSize);'>Achtung: Bei den Feldnamen
+            <i class='minorTxt'>Achtung: Bei den Feldnamen
             auf Groß- und Kleinschreibung achten!</i>
             <p class='minorTxt'>Eine Suche nach '<i>Feldname</i>:NULL' zeigt gewöhnlich alle leeren Felder.</p>
         `;
@@ -124,7 +124,11 @@ class Library extends Oculus{
         this.ctn.appendChild(mainBody);
     }
     async contentLoadMore(values){
+        const scans = await arachne.scan_lnk.is(values.id, "edition", false);
         let tr = document.createElement("TR");
+        if(scans.length == 0 && (values.url == "" || values.url == null)){
+            tr.style.color = "var(--errorStat)";
+        }
         tr.id = values.id; tr.classList.add("loadMore", "edition");
         let tdContents = [(values.url)?"Link":"Scan", values.edition_name, 
             values.editor + " " +values.year, values.comment, values.dir_name];
@@ -133,9 +137,10 @@ class Library extends Oculus{
         else{tdContents.push("")}
         if(values.url!=null && values.url != ""){
             tdContents.push(`<a target='_blank' href='${values.url}'>Link</a>`); 
-        } else {
-            tdContents.push(`<a target='_blank' href='/site/viewer/${values.id}'>Digitalisat</a>`); 
-        }
+        } else if(scans.length > 0){
+            tdContents.push(`<a target='_blank' href='/site/viewer/${values.id}'>Digitalisat</a> (${scans.length})`); 
+        }else{tdContents.push("")}
+
         for(const tdContent of tdContents){
             let td = document.createElement("TD");
             td.innerHTML = html(tdContent);
@@ -465,7 +470,7 @@ class Opera extends Oculus{
         cContext.addEntry('*', 'hr', '', null);
         cContext.addEntry('*', 'a', 'Opera-Listen exportieren', function(){argos.loadEye("opera_export")});
         this.setContext = cContext.menu;
-
+        
         await fetch(`/site/opera/${list}`, {
             headers: {"Authorization": `Bearer ${argos.token}`}
         })
@@ -502,25 +507,13 @@ class AuthorEdit extends Oculus{
     async load(){
         let author = {};
         let mainBody = document.createDocumentFragment();
+        let sbHelp = el.popHTMLHelp();
+        sbHelp.style.top = "10px"; sbHelp.style.right = "40px"; sbHelp.style.textAlign = "right";
+        mainBody.appendChild(sbHelp);
         if(this.resId>0){
             author = await arachne.author.is(this.resId);
             mainBody.appendChild(el.h(`${author.full} <i class='minorTxt'>(ID: ${author.id})</i>`, 3))
         }else{mainBody.appendChild(el.h("Neuer Autor erstellen", 3))}
-        /*
-            <div class='popOver' style='display:inline-box;'>
-                <span style="z-index: 1">Sortierdatum <a>(?)</a>:</span>
-                <div class='popOverContent' style='text-align: left;'>
-                    % include("help/help_opera_sort")
-                </div>
-            </div>
-
-            <div class='popOver' style='display:inline-box;'>
-                Sortierdatum-Typ <a>(?)</a>:
-                <div class='popOverContent' style='text-align: left;'>
-                    % include("help/help_opera_sort_type")
-                </div>
-            </div>
-         */
         let iFull = el.text(author.full);
         let iDateDisplay = el.text(author.date_display);
         let iAbbr = el.text(author.abbr);
@@ -617,25 +610,14 @@ class WorkEdit extends Oculus{
     async load(){
         let work = {};
         let mainBody = document.createDocumentFragment();
+        let sbHelp = el.popHTMLHelp();
+        sbHelp.style.top = "10px"; sbHelp.style.right = "40px"; sbHelp.style.textAlign = "right";
+        mainBody.appendChild(sbHelp);
         if(this.resId>0){
             work = await arachne.work.is(this.resId);
             mainBody.appendChild(el.h(`${work.full} <i class='minorTxt'>(ID: ${work.id})</i>`, 3))
         }
         else{mainBody.appendChild(el.h("Neues Werk erstellen", 3))}
-        /*
-            <div class='popOver' style='display:inline-box;'>
-                <span style="z-index: 1">Sortierdatum <a>(?)</a>:</span>
-                <div class='popOverContent' style='text-align: left;'>
-                    % include("help/help_opera_sort")
-                </div>
-            </div>
-            <div class='popOver' style='display:inline-box;'>
-                Sortierdatum-Typ <a>(?)</a>:
-                <div class='popOverContent' style='text-align: left;'>
-                    % include("help/help_opera_sort_type")
-                </div>
-            </div>
-            */
         const authorsRaw = await arachne.author.getAll();
         let authors = {};
         for(const authorRaw of authorsRaw){authors[authorRaw.id] = authorRaw.abbr}

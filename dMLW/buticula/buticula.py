@@ -133,13 +133,11 @@ class Buticula(Bottle):
     # ################################################################
     # -I- routes
     # ################################################################
-        #self.add_hook("before_request", self.hook)
-
         # login pages and account
         self.route("/", callback=self.site)
-        self.route("/logout", callback=self.logout)
-        self.route("/account_create", callback=self.account_create)
-        self.route("/account_create", callback=self.account_create, method="POST")
+        #self.route("/logout", callback=self.logout)
+        #self.route("/account_create", callback=self.account_create)
+        #self.route("/account_create", callback=self.account_create, method="POST")
 
         # open argos 
         self.route("/site", callback=self.site)
@@ -154,6 +152,7 @@ class Buticula(Bottle):
         self.route("/session", callback=self.session_read, method="GET");
 
         # user
+        self.route("/data/user", callback=self.user_create, method="POST")
         self.route("/data/user/<id:int>", callback=self.user_update, method="PATCH")
 
         # data
@@ -167,24 +166,16 @@ class Buticula(Bottle):
         self.route("/file/<res>/<res_id>", callback=self.file_read)
         #self.route("/file/zettel", callback=self.zettel_import, method="POST")
 
-        # OLD ROUTES!
+        # functions
         self.route("/exec/<res>", callback=self.exec_on_server, method="GET");
+
+        # OLD ROUTES!
         self.route("/export_project/<mlw_file>", callback=self.f_mlw)
         self.route("/zettel/<letter>/<dir_nr>/<img>", callback=self.f_zettel)
 
-        #self.route("/module", callback=self.module, method="POST")
-        #self.route("/library_viewer", callback=self.library_viewer)
-        #self.route("/opera/export/<lst_type>", callback=self.opera_export)
     # ################################################################
     # -II- assorted methods
     # ################################################################
-    #def hook(self):
-        #print("hello friend, im the captain hook!")
-        #return HTTPResponse(status=418)
-        #response.HTTPError(status=418)
-
-
-
     def add_view_path(self, path):
         # used in secondary version
         TEMPLATE_PATH.insert(0, path)
@@ -195,8 +186,7 @@ class Buticula(Bottle):
         c_session = c_session[7:]
 
         usr_i = self.db.search("user", {"session": c_session}, ["id", "first_name",
-            "last_name", "email", "session_last_active", "access", "settings", "password",
-            "show_raw", "order_by_id"])
+            "last_name", "email", "session_last_active", "access", "settings", "password"])
 
         if len(usr_i) == 1:
             u_last = usr_i[0].get("session_last_active")
@@ -341,7 +331,7 @@ class Buticula(Bottle):
     def login_check(self, user, pw):
         user_login = self.db.search("user", {"email": user}, ["id", "password",
             "session", "access", "session_last_active"])
-        if (len(user_login) == 1 and
+        if (len(user_login) == 1 and "auth" in user_login[0]["access"] and
                 self.pw_check(user_login[0]["password"], pw)):
             return user_login[0]
         else:
@@ -495,6 +485,25 @@ class Buticula(Bottle):
     # ################################################################
     # -III- REST requests
     # ################################################################
+    def user_create(self):
+        user = {"first_name": request.json["first_name"],
+                "last_name": request.json["last_name"],
+                "email": request.json["email"],
+                "password": request.json["password"],
+                "access": []}
+        print(user)
+        if (user["first_name"] != "" and user["last_name"] != "" and
+                user["email"] != "" and user["password"] != ""):
+            c_email = self.db.search("user", {"email": user["email"]}, ["id"])
+            if len(c_email) == 0:
+                user["password"] = self.pw_set(user["password"])
+                self.db.save("user", user)
+                return HTTPResponse(status=201) # CREATED
+            else:
+                return HTTPResponse(status=409) # CONFLICT
+        else:
+            return HTTPResponse(status=406) # NOT ACCEPTABLE
+
     def user_update(self, id):
         user = self.auth()
         n_access = request.json.get("access", None)
@@ -557,42 +566,47 @@ class Buticula(Bottle):
         else: return HTTPResponse(status=401) # unauthorized
 
     def config_read(self, res):
-        if res=="oStores": return json.dumps(self.oStores)
-        else:
-            user = self.auth()
-            print("USER:", user)
-            if res == "access": return json.dumps(user["access"])
-            elif res == "menu":
-                user_menu = []
-                for key, menu in self.main_menu.items():
-                    if menu["access"] == "*" or menu["access"] in user["access"]:
-                        nItems = []
-                        for subMenu in menu["items"]:
-                            if subMenu.get("access", "*") == "*" or subMenu.get("access") in user["access"]:
-                                nItems.append(subMenu);
-                        if len(nItems) != 0: user_menu.append([key, nItems])
-                return json.dumps(user_menu);
-            elif res == "server_stats":
-                server_stats = {
-                        "author": [
-                            self.db.command(f"SELECT MAX(u_date) AS r FROM author")[0]["r"],
-                            self.db.command(f"SELECT COUNT(*) AS r FROM author WHERE deleted IS NULL")[0]["r"]
-                            ],
-                        "work": [
-                            self.db.command(f"SELECT MAX(u_date) AS r FROM work")[0]["r"],
-                            self.db.command(f"SELECT COUNT(*) AS r FROM work WHERE deleted IS NULL")[0]["r"]
-                            ],
-                        "lemma": [
-                            self.db.command(f"SELECT MAX(u_date) AS r FROM lemma")[0]["r"],
-                            self.db.command(f"SELECT COUNT(*) AS r FROM lemma WHERE deleted IS NULL")[0]["r"]
-                            ],
-                        "zettel": [
-                            self.db.command(f"SELECT MAX(u_date) AS r FROM zettel")[0]["r"],
-                            self.db.command(f"SELECT COUNT(*) AS r FROM zettel WHERE deleted IS NULL")[0]["r"]
-                            ]
-                        }
-                return json.dumps(server_stats, default=str)
-            else: return HTTPResponse(status=404) # not found
+        user = self.auth()
+        if res=="oStores":
+            r_stores = []
+            for store in self.oStores:
+                for permission in self.accessREAD[store["name"]]:
+                    if permission["access"] in user["access"]:
+                        r_stores.append(store)
+                        break
+            return json.dumps(r_stores)
+        elif res == "access": return json.dumps(user["access"])
+        elif res == "menu":
+            user_menu = []
+            for key, menu in self.main_menu.items():
+                if menu["access"] == "*" or menu["access"] in user["access"]:
+                    nItems = []
+                    for subMenu in menu["items"]:
+                        if subMenu.get("access", "*") == "*" or subMenu.get("access") in user["access"]:
+                            nItems.append(subMenu);
+                    if len(nItems) != 0: user_menu.append([key, nItems])
+            return json.dumps(user_menu);
+        elif res == "server_stats":
+            server_stats = {
+                    "author": [
+                        self.db.command(f"SELECT MAX(u_date) AS r FROM author")[0]["r"],
+                        self.db.command(f"SELECT COUNT(*) AS r FROM author WHERE deleted IS NULL")[0]["r"]
+                        ],
+                    "work": [
+                        self.db.command(f"SELECT MAX(u_date) AS r FROM work")[0]["r"],
+                        self.db.command(f"SELECT COUNT(*) AS r FROM work WHERE deleted IS NULL")[0]["r"]
+                        ],
+                    "lemma": [
+                        self.db.command(f"SELECT MAX(u_date) AS r FROM lemma")[0]["r"],
+                        self.db.command(f"SELECT COUNT(*) AS r FROM lemma WHERE deleted IS NULL")[0]["r"]
+                        ],
+                    "zettel": [
+                        self.db.command(f"SELECT MAX(u_date) AS r FROM zettel")[0]["r"],
+                        self.db.command(f"SELECT COUNT(*) AS r FROM zettel WHERE deleted IS NULL")[0]["r"]
+                        ]
+                    }
+            return json.dumps(server_stats, default=str)
+        else: return HTTPResponse(status=404) # not found
 
     def data_create(self, res):
         user = self.auth()
@@ -816,32 +830,6 @@ class Buticula(Bottle):
                         export_url=export_url, preview=export_txt)
 ################################################################################
     # OLD!
-    def account_create(self):
-        # process POST - if successful redirect to /
-        r_lst = []
-        if request.forms.create_user:
-            user = {"first_name": request.forms.first_name,
-                    "last_name": request.forms.last_name,
-                    "email": request.forms.email,
-                    "password": request.forms.password,
-                    "access": []}
-            if (user["first_name"] and user["last_name"] and user["email"] and
-                    user["password"]):
-                c_email = self.db.search("user", {"email": user["email"]}, ["id"])
-                if len(c_email) == 0:
-                    user["password"] = self.pw_set(user["password"])
-                    self.db.save("user", user)
-                    redirect("/")
-                else:
-                    r_lst.append("E-Mail Adresse bereits vorhanden.")
-            else:
-                r_lst.append("Bitte füllen Sie alle Felder aus.")
-        if len(self.sub_version) == 0:
-            c_date = self.main_version[0]['date']
-        else:
-            c_date = self.sub_version[0]['date']
-        return template("account/account_create", r_lst=r_lst, captions=self.captions["index"], colors=self.color_scheme, c_date=c_date)
-
     def module(self):
         user = self.login_check(request.forms.user, request.forms.pw)
         if user == None:
@@ -886,61 +874,3 @@ class Buticula(Bottle):
                 #    for key, value in rep_dict.items():
                 #        dump = re.sub(key, value, dump)
                 return json.dumps(dump)
-
-
-    def library_viewer(self):
-        user = self.auth()
-        if "library" in user["access"]:
-            scan = {}
-            scan["c_page"] = request.query.page
-            edition = self.db.search("edition_view", {"id": int(request.query.edition)},
-                    ["id", "opus", "path"])[0]
-            pages = self.db.search("scan_lnk_view",
-                    {"edition_id": int(request.query.edition)}, ["id", "filename", "full_text"])
-
-            for nr, page in enumerate(pages):
-                if page["filename"] == scan["c_page"]:
-                    scan["c_page_id"] = page["id"]
-                    scan["full_text"] = page.get("full_text", "")
-                    c_page_id = page["id"]
-                    if nr > 0:
-                        scan["l_page"] = pages[nr-1]["filename"]
-                    if nr < (len(pages)-1):
-                        scan["n_page"] = pages[nr+1]["filename"]
-                    break
-            else:
-                scan["l_page"] = pages[-2]["filename"]
-                scan["c_page"] = pages[-1]["filename"]
-                scan["c_page_id"] = pages[-1]["id"]
-
-            return template("library/viewer", edition=edition, pages=pages,
-                    scan=scan, colors=self.color_scheme, user=user)
-
-
-    def login(self):
-        # process login request
-        if request.method == "POST":
-            login = request.forms.login
-            email = request.forms.email
-            password = request.forms.password
-            if login != "" and email != "" and password != "":
-                user_login = self.login_check(email, password)
-                if user_login != None:
-                    new_key = str(uuid4())
-                    data = {"session": new_key,
-                            "session_last_active": str(datetime.now()),
-                            "agent":request.headers.get('User-Agent')
-                            }
-                    self.db.save("user", data, user_login.get("id"))
-                    response.set_cookie("mlw_session", new_key, secure = self.cookie_secure)
-                    redirect("/site")
-        # load page
-        if len(self.sub_version) == 0:
-            c_date = self.main_version[0]['date']
-        else:
-            c_date = self.sub_version[0]['date']
-        return template('login', c_date=c_date,
-                captions=self.captions["index"], colors=self.color_scheme)
-
-    def logout(self):
-        self.auth(logout = True)

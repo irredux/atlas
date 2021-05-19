@@ -1,6 +1,6 @@
 import { Oculus } from "/file/js/oculus.js";
 import { ContextMenu } from "/file/js/contextmenu.js";
-import { stringToQuery } from "/file/js/arachne.js";
+//import { stringToQuery } from "/file/js/arachneWW.js";
 import "/file/js/chart.js";
 
 export { Administration, AdministrationDetail, Statistics, Tests };
@@ -410,6 +410,19 @@ class Tests extends Oculus{
                         }
                     ]);
                 });
+                it("Prüfe: Sternchen", async () => {
+                    chai.expect(stringToQuery("lemma:stern*")).to.deep.equal([
+                        {
+                            col: "lemma",
+                            negative: false,
+                            operator: "&&",
+                            regex: true,
+                            value: "stern.*",
+                            greater: false,
+                            smaller: false
+                        }
+                    ]);
+                });
             });
             describe("Suche:", () => {
                 it("Prüfe: einfach", async () => {
@@ -424,9 +437,12 @@ class Tests extends Oculus{
                     let search = await arachne.lemma.search("lemma:k");
                     chai.expect(search[0].id).to.equal(1);
                 });
+                it("Prüfe: Feldname kleiner", async () => {
+                    let search = await arachne.lemma.search("id:<2");
+                    chai.expect(search.length).to.equal(1);
+                });
                 it("Prüfe: Feldname grösser", async () => {
                     let search = await arachne.lemma.search("id:>9000");
-                    console.log(search[0]);
                     chai.expect(search.length).to.equal(486);
                 });
                 it("Prüfe: Feldname (2 Resultate)", async () => {
@@ -442,6 +458,14 @@ class Tests extends Oculus{
                     let search = await arachne.lemma.search("lemma:syrupus lemma_nr:-2");
                     chai.expect(search.length).to.equal(1);
                     chai.expect(search[0].id).to.equal(8883);
+                });
+                it("Prüfe: normal + Sternchen", async () => {
+                    let search = await arachne.lemma.search("syrup*");
+                    chai.expect(search.length).to.equal(11);
+                });
+                it("Prüfe: Feldnamen + Sternchen", async () => {
+                    let search = await arachne.lemma.search("lemma:syrup*");
+                    chai.expect(search.length).to.equal(4);
                 });
             });
             describe("Geschwindigkeit:", () => {

@@ -1,10 +1,10 @@
 import { Zettel, ZettelAdd, ZettelBatch, ZettelDetail, ZettelExport, ZettelImport } from "/file/js/zettel.js";
 import { Lemma, LemmaComment, LemmaEdit, LemmaToProject } from "/file/js/lemma.js";
 import { Library, LibraryEdit, LibrarySelector, LibraryUpdate, Opera, OperaExport, OperaUpdate, AuthorEdit, WorkEdit } from "/file/js/opera.js";
-import { Project, ProjectOverview } from "/file/js/project.js";
+import { Project, ProjectOverview, ProjectZettelPreview } from "/file/js/project.js";
 import { Account, Help } from "/file/js/settings.js";
 import { Administration, AdministrationDetail, Statistics, Tests } from "/file/js/server.js";
-import { Login, Logout } from "/file/js/account.js";
+import { Login, AccountCreate, Logout } from "/file/js/account.js";
 import { Viewer } from "/file/js/library.js";
 
 export class Docker{
@@ -34,7 +34,9 @@ export class Docker{
             "opera_export": OperaExport,
             "project_overview": ProjectOverview,
             "project": Project,
+            "project_zettel_preview": ProjectZettelPreview,
             "login": Login,
+            "account_create": AccountCreate,
             "logout": Logout,
             "account": Account,
             "help": Help,
