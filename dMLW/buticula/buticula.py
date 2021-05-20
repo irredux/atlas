@@ -150,6 +150,7 @@ class Buticula(Bottle):
         # session
         self.route("/session", callback=self.session_create, method="POST");
         self.route("/session", callback=self.session_read, method="GET");
+        self.route("/session", callback=self.session_delete, method="DELETE");
 
         # user
         self.route("/data/user", callback=self.user_create, method="POST")
@@ -564,6 +565,12 @@ class Buticula(Bottle):
                 return data["session"]
             else: return HTTPResponse(status=401) # unauthorized
         else: return HTTPResponse(status=401) # unauthorized
+
+    def session_delete(self):
+        user = self.auth()
+        self.db.save("user", {"session": ""}, user["id"])
+        return HTTPResponse(status=200)
+
 
     def config_read(self, res):
         user = self.auth()

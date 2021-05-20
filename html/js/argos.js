@@ -84,7 +84,7 @@ export class Argos{
         document.body.textContent = "";
         const lastFullUpdate = localStorage.getItem("lastFullUpdate");
         await arachne.createDB();
-        if(lastFullUpdate <= this.serverUpdate){
+        if(1 > 0 || lastFullUpdate <= this.serverUpdate){ // disable background-update on startup!
             // reset DB and full update
             let loadLabel = document.createElement("DIV"); loadLabel.id = "loadLabel";
             loadLabel.textContent = "Datenbank wird aktualisiert... ";
