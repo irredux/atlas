@@ -64,7 +64,9 @@ class ProjectOverview extends Oculus{
         this.setTabs = true;
 
         // change name
-        this.setSelection("main", "div.projectItems", false, function(){me._put("data/project/"+event.target.id, {"name": event.target.textContent})});
+        this.setSelection("main", "div.projectItems", false, () => {
+            arachne.project.save({id: event.target.id, name: html(event.target.textContent)});
+        });
         //context menu
         let cContext = new ContextMenu();
         cContext.addEntry('div.projectItems', 'span', 'Projekt verschieben nach ...', null);
@@ -120,284 +122,634 @@ class ProjectOverview extends Oculus{
 class Project extends Oculus{
     constructor(res, resId=null, access=[], main=false){
         super(res, resId, access, main);
+        this.editMode = false;
     }
     async load(){
-        let mainBody = document.createDocumentFragment();
+        this.currentDrag = null;
         /*
-<style>
-    input#changeOpus{
-        border: none;
-        font-size: 90%;
-    }
-    input#changeOpus:focus{
-        border: none;
-    }
-</style>
-
-         */
-        let mainFrame = document.createElement("DIV");
-        mainFrame.classList.add("project_mainFrame");
-
-        let detailView = document.createElement("DIV"); //me.ctn.querySelector("div.project_detail");
-        detailView.classList.add("project_detail");
-
-        let menuBox = document.createElement("DIV");
-        menuBox.classList.add("project_menu_container");
-        let menuProjectBox = document.createElement("DIV");
-        menuProjectBox.classList.add("project_menu");
-        let menuView = document.createElement("DIV");//me.ctn.querySelector("div.article_container");
-        menuView.classList.add("article_container");
-
-        // onProjectLoad
-        //argos.o.project.defaultGroupId = null;
-        let keyWords = new KeyWordSetter();
-        let articles = await arachne.article.bound([this.resId, "000"], [this.resId, "?"], "default", false);
-        
-        if(articles.length > 0){detailView.textContent = ""}
-        // set max depth of article groups
-        var maxDepth = {};
-        for(const article of articles){
-            let cDepth = (article.position.match(/\./g)||[]).length;
-            let cGroup = article.position.substring(0,3);
-            if(maxDepth[cGroup] != null){
-                if(maxDepth[cGroup]<cDepth){maxDepth[cGroup] = cDepth}
-            }else{maxDepth[cGroup] = cDepth}
+        window.onerror = (e) => {
+            alert("Ein Fehler ist aufgetreten! Änderungen werden vielleicht nicht gespeichert. Laden Sie die Seite neu.\n\n"+e);
         }
-
-        //display articles
-        for(const article of articles){
-            let cError = [];
-            let cPath = article.position.substring(0,article.position.length-4);
-            let cDepth = (article.position.match(/\./g)||[]).length;
-            let cMaxDepth = maxDepth[article.position.substring(0,3)];
-            let cName = article.position.substring(article.position.length-3);
-            var cType = keyWords.word(article.type, cDepth)+" ";
-            if(article.position=="000"){
-                cType = "";
-                //argos.o.project.defaultGroupId = article.id;
-            }
-            var cNumber = -1;
-            if(cDepth>0){
-                cNumber = document.querySelectorAll("div.artBox[data-position='"+cPath+"'] > div.artBox[data-arttype='0']").length;
-            }else{
-                cNumber = document.querySelectorAll("div.article_container > div.artBox[data-arttype='0']").length;
-            }
-
-            let daKeyWord = document.createElement("SPAN");
-            daKeyWord.textContent = cType;
-            daKeyWord.classList.add("daKeyWord");
-            let daKeySign = document.createElement("SPAN");
-            daKeySign.innerHTML = keyWords.sign(article.type, cNumber, cDepth, cMaxDepth)+" ";
-            daKeySign.classList.add("artLvlMark");
-            let cDisplayTextDetail = document.createElement("SPAN");
-            cDisplayTextDetail.textContent = article.name;
-            if(article.position!="000"){cDisplayTextDetail.classList.add("da_article")}
-            cDisplayTextDetail.id = article.id;
-            let cDisplayText = document.createElement("SPAN");
-            cDisplayText.textContent = article.name;
-            if(article.name.length > 20){cDisplayText.textContent=article.name.substring(0,20)+"..."}
-            let cZettelCount= document.createElement("SPAN");
-            cZettelCount.classList.add("artBoxZettelCount");
-            if(article.zettel_count>0){cZettelCount.textContent = article.zettel_count}
-
-            let cAppendDetail = document.createElement("DIV");
-            if(article.type == 5){cAppendDetail.classList.add("isComment")}
-            cAppendDetail.dataset.position = article.position;
-            cAppendDetail.dataset.arttype = article.type;
-            let cAppend = cAppendDetail.cloneNode(true);
-
-            // entry for main view
-            cAppendDetail.classList.add("detail_article");
-            cAppendDetail.id = "da_"+article.id;
-            cAppendDetail.appendChild(daKeyWord);
-            cAppendDetail.appendChild(cDisplayTextDetail);
-            let cParent = this.ctn.querySelector("div.detail_article[data-position='"+cPath+"']");
-            if(cParent != null){cParent.appendChild(cAppendDetail)}
-            else{detailView.appendChild(cAppendDetail)}
-
-            // entry for sidebar
-            let cDeleteButton = document.createElement("SPAN");
-            cDeleteButton.classList.add("artBoxDelete");
-            cDeleteButton.classList.add("editMode");
-            cDeleteButton.classList.add("editModeOff");
-            cDeleteButton.onclick=function(){
-                // deleteArticle(article_id)
-                if(confirm("Soll die Gruppe wirklich gelöscht werden? Alle Untergruppen und die darin befindlichen Zettel werden ebenfalls aus dem Projekt entfernt.")){
-                    var cArticleList = [];
-                    var cZettelList = [];
-                    cArticleList.push({"res_id": event.target.parentNode.id});
-                    event.target.parentNode.querySelectorAll("div.artBox").forEach(function(e){
-                        cArticleList.push({"res_id": e.id});
-                    });
-                    document.querySelectorAll("div.detail_article#da_"+event.target.parentNode.id+" div.detail_zettel").forEach(function(e){
-                        cZettelList.push({"res_id": e.dataset.lnk_id});
-                    });
-                    me._post("/batch", {"res": "article", "mode": "delete", "items": cArticleList}, function(){
-                        me._post("/batch", {"res": "zettel_lnk", "mode": "delete", "items": cZettelList}, function(){
-                            me.refresh();
-                        });
-                    });
-                }
-            }; 
-            cDeleteButton.innerHTML = "&#x2715;";
-
-            cAppend.classList.add("artBox");
-            cAppend.id = article.id;
-            cAppend.addEventListener("click", function(){
-                let cElement = event.target;
-                if(!event.target.classList.contains("artBox")){
-                    cElement = event.target.closest(".artBox");
-                }
-                if(!cElement.classList.contains("editModeArticle")){
-                scrollToArticle(cElement.id);
-                }
-            });
-            cAppend.appendChild(daKeySign); 
-            cAppend.appendChild(cDisplayText);
-            cAppend.appendChild(cZettelCount);
-            if(article.position!=="000"){cAppend.appendChild(cDeleteButton)}
-
-            // check for errors or warnings
-            //if(article.date_sort == null){cError.push("Keine Datierung für Stelle gefunden.")}
-            if(cError.length>0){
-                let cErrorSpan = document.createElement("SPAN");
-                cErrorSpan.classList.add("bla");
-                cErrorSpan.innerHTML = cError.join("<br />");
-                cAppend.appendChild(cErrorSpan);
-            }
-
-            // create insert boxes
-            let insertAfter = document.createElement("DIV");
-            insertAfter.classList.add("artInsert");
-            insertAfter.classList.add("editMode");
-            insertAfter.classList.add("editModeOff");
-            insertAfter.textContent = "hinzufügen";
-            if(cPath!==""){insertAfter.dataset.position = `${cPath}.${((parseInt(cName)+1)+"").padStart(3, "0")}`}
-            else{insertAfter.dataset.position = `${((parseInt(cName)+1)+"").padStart(3, "0")}`}
-            if(article.position!=="000"){
-                let insertChild = insertAfter.cloneNode(true);
-                if(cPath!==""){insertChild.dataset.position = `${cPath}.${cName}.001`}
-                else{insertChild.dataset.position = `${cName}.001`}
-                insertChild.onclick=function(){
-                    me._put("/data/article_position", {project_id: me.resId,
-                        old_position: "", new_position: event.target.dataset.position,
-                        type: 0}, function(){me.refresh()});
-                }
-                cAppend.appendChild(insertChild);
-            }
-            insertAfter.onclick=function(){
-                let aType = 0;
-                if(cDepth===0){aType = 1}
-                me._put("/data/article_position", {project_id: me.resId,
-                    old_position: "", new_position: event.target.dataset.position,
-                    type: aType}, function(){me.refresh()});
-            }
-
-            // add to DOM
-            cParent = this.ctn.querySelector("div.artBox[data-position='"+cPath+"']");
-            if(cParent != null){cParent.appendChild(cAppend);cParent.appendChild(insertAfter)}
-            else{menuView.appendChild(cAppend);menuView.appendChild(insertAfter)}
-
-
-            // load and display zettel
-            let zettel_lnks = await arachne.zettel_lnk.is(article.id, "article", false);
-            // CHECK FOR ERRORS HERE: NO DATE_SORT; TOO MANY ACTIVE ELEMENTS ETC.
-            for(const zettel_lnk of zettel_lnks){
-                let zettel = await arachne.zettel.is(zettel_lnk.zettel_id);
-                //argos.o.project.resultIds.push(zettel.id);
-                let nZettel = document.createElement("DIV");
-                nZettel.classList.add("detail_zettel");
-                if(zettel.include_export==1){nZettel.classList.add("zettelExported")}
-                nZettel.id = zettel.id;
-                nZettel.dataset.lnk_id = zettel.lnk_id;
-                nZettel.draggable = true;
-                if(zettel.type != 4){
-                    let nOpus = document.createElement("INPUT");
-                    nOpus.classList.add("opus", "inlineText");
-                    nOpus.type="TEXT";
-                    //nOpus.setAttribute("disabled", true);
-                    nOpus.id = "opus";
-                    nOpus.dataset.zettelId = zettel.id;
-                    if(zettel.example_plain!=null){nOpus.value=zettel.example_plain}
-                    else{
-                        if(zettel.include_export==1){
-                            nOpus.classList.add("errMarked");
-                            nOpus.title = "* Zettel wird exportiert: Eintrag ergänzen.";
-                        }
-                        nOpus.value = "Werk";
-                        nOpus.style.fontStyle="italic";
-                    };
-                    nOpus.size = nOpus.value.length;
-                    let nStelle = document.createElement("SPAN");
-                    nStelle.classList.add("stelle");
-                    nStelle.id = zettel.id;
-                    if(zettel.stellenangabe==null||zettel.stellenangabe===""){
-                        if(zettel.include_export==1){
-                            nStelle.classList.add("errMarked");
-                            nStelle.title = "* Zettel wird exportiert: Eintrag ergänzen.";
-                        }
-                        nStelle.textContent = "Stelle";
-                        nStelle.style.fontStyle="italic";
-                    }else{nStelle.textContent=zettel.stellenangabe}
-                    let nExportText = document.createElement("SPAN");
-                        nExportText.classList.add("exportText");
-                        nExportText.id = zettel.id;
-                        nExportText.dataset.lnk_id = zettel.lnk_id;
-                    if(zettel.display_text==null||zettel.display_text===""){
-                        if(zettel.include_export==1){
-                            nExportText.classList.add("errMarked");
-                            nExportText.title = "* Zettel wird exportiert: Eintrag ergänzen.";
-                        }
-                        nExportText.textContent = "...";
-                        nExportText.style.fontStyle="italic";
-                    }else{nExportText.textContent=zettel.display_text}
-                    nZettel.appendChild(newEl("&lowast; "));
-                    nZettel.appendChild(nOpus);
-                    nZettel.appendChild(newEl("; "));
-                    nZettel.appendChild(nStelle);
-                    nZettel.appendChild(newEl(" &ldquo;"));
-                    nZettel.appendChild(nExportText);
-                    nZettel.appendChild(newEl(" &rdquo;"));
-                    //this.bindAutoComplete(nOpus, "work_data");
-                } else {
-                    nZettel.innerHTML = `&lowast; <i>Literaturzettel</i>`;
-                }
-                nZettel.addEventListener("click", function(){
-                    let cEvent = event.target.closest("div.detail_zettel");
-                    if(argos.main.o["project_zettel_preview"]!=null){
-                        argos.main.o["project_zettel_preview"].close();
-                    }
-                    argos.loadEye("project_zettel_preview", cEvent.id)
-                });
-                let cParent = this.ctn.querySelector("div.detail_article[data-position='"+zettel.position+"']");
-                if(cParent != null){cParent.appendChild(nZettel)}
-                else{detailView.appendChild(nZettel)}
-            }
-        }
-        
-
-        // check if there are zettels in the project, if not display warning.
-        // set selection etc.
-        /*
-        this.setSelection("main", "div.detail_zettel", true);
-        this.setSelection("opus", "input.opus", false, function(){
-            const hiddenId = me.ctn.querySelector("#opus_hidden").value;
-            const zettelId = event.target.dataset.zettelId;
-            if(hiddenId > 0){
-                me._put("data/zettel/"+zettelId, {"work_id": hiddenId}, function(){me.refresh()});
-            }else{me.refresh() }
-        });
-        this.setSelection("article", "span.da_article", false, function(){
-            saveArticleName(event.target.textContent, event.target.id);
-        });
-        this.setSelection("stelle", "span.stelle", false, function(){
-            me._put("data/zettel/"+event.target.id, {"stellenangabe": event.target.textContent}, function(){me.refresh()});
-        });
-        this.setSelection("exportText", "span.exportText", false, function(){
-            me._put("data/zettel_lnk/"+event.target.dataset.lnk_id, {"display_text": event.target.textContent}, function(){me.refresh()});
-        });
         */
-        
+        let mainBody = document.createDocumentFragment();
+        const cache = localStorage.getItem(`p_${this.resId}`);
+        if(cache != null && 1 == 0){
+        //if(cache != null && confirm("Soll die Seite aus dem Cache geladen werden?")){
+            this.ctn.innerHTML = cache;
+            console.log("aus dem Cache!");
+        } else {
+            let detailBox = document.createElement("DIV");
+            let menuBox = document.createElement("DIV");
+            menuBox.classList.add("project_menu_container");
+            detailBox.classList.add("project_detail");
+            const articles = await arachne.article.bound([this.resId, 0, 0], [this.resId, 99999999, 9999999], "article", false);
+            const keyWords = new KeyWordSetter();
+            
+            let getSubs = (parentId, parentDepth) => {
+                const subs = articles.filter(i => i.parent_id === parentId)
+
+                let re = [];
+                let cDepth = subs.length > 0?parentDepth+1:parentDepth;
+                let cMaxDepth = cDepth;
+                for(const sub of subs){
+                    sub.depth = cDepth;
+                    const [sSubs, maxDepth] = getSubs(sub.id, sub.depth);
+                    if(maxDepth > cMaxDepth) cMaxDepth=maxDepth;
+                    re.push(sub);
+                    re = re.concat(sSubs);
+                }
+                return [re, cMaxDepth];
+            }
+            let projects = [];
+            const tops = articles.filter(i => i.parent_id === 0);
+            for(let top of tops){
+                top.depth = 1;
+                const [subs, maxDepth] = getSubs(top.id, top.depth);
+                top.maxDepth = maxDepth;
+                projects.push(top);
+                projects = projects.concat(subs);
+            }
+
+            /* ********************************** */
+            let designArticle = async (article) => {
+                let mArt = document.createDocumentFragment();
+                const zettels = await arachne.zettel_lnk.bound([article.id, "", 0, 0, 0], [(article.id+1), "?", 9999, 9999, 9999], "zettel", false);
+                if(zettels.length === 0 && article.parent_id === 0 && article.sort_nr === 0){
+                    // empty "unsortierte Zettel"
+                    return [null, null];
+                }
+                // article in menu view
+                let mBox = document.createElement("DIV");
+                mBox.id = "m_"+article.id;
+                mBox.classList.add("mBox");
+                mBox.setAttribute("draggable", this.editMode);
+                if(this.editMode){mBox.classList.add("editModeArticle")}
+                mBox.dataset.sort_nr = article.sort_nr;
+                mBox.dataset.parent_id = article.parent_id;
+                mBox.style.padding = "0 0 5px 10px";
+                mBox.ondragstart = (e) => {
+                    e.stopPropagation();
+                    mBox.querySelectorAll(".artInsert").forEach((e) => {
+                        e.style.visibility = "hidden";
+                    });
+                    this.currentDragMBox = mBox;
+                    this.currentDragMBoxAfter = mBoxAfter;
+                    this.currentDragDBox = dBox;
+                    this.currentDragZettel = null;
+                }
+                mBox.ondragend = (e) => {
+                    e.stopPropagation();
+                    mBox.querySelectorAll(".artInsert").forEach((e) => {
+                        e.style.visibility = "visible";
+                    });
+                    this.currentDragMBox = null;
+                    this.currentDragMBoxAfter = null;
+                    this.currentDragDBox = null;
+                    this.currentDragZettel = null;
+                }
+                let mBoxText = document.createElement("DIV");
+                mBoxText.onclick = (e) => {
+                    e.stopPropagation();
+                    dBox.scrollIntoView();
+                    dBox.classList.add("selected");
+                    setTimeout(() => {dBox.classList.remove("selected")}, 500);
+                }
+                mBoxText.ondragenter = (e) => {return false;}
+                mBoxText.ondragover = (e) => {
+                    event.target.style.textShadow = "0 0 3px var(--mainColor)";
+                    //event.target.style.color = "red";
+                    return false;
+                }
+                mBoxText.ondragleave = (e) => {
+                    e.stopPropagation();
+                    try{
+                    event.target.style.textShadow = "none";
+                    //event.target.style.color = "initial";
+                    }
+                    catch{}
+                }
+                mBoxText.ondrop = async (e) => {
+                    e.stopPropagation();
+                    mBoxText.style.textShadow = "none";
+                    let sourceElements = {};
+                    if(this.currentDragZettel!=null){
+                        for(const cId of this.selMarker.main.ids){
+                            let cZettelElement = document.querySelector(`.detail_zettel[id='${cId}']`);
+                            await arachne.zettel_lnk.save({
+                                id: cZettelElement.dataset.lnk_id,
+                                article_id: mBoxText.parentNode.id.substring(2)
+                            });
+                            const nArtId = cZettelElement.parentNode.dataset.article_id;
+                            if(!(nArtId in sourceElements)){
+                                sourceElements[nArtId] = cZettelElement.parentNode;
+                            }
+                        }
+                        // recalculate sourceZettelBoxes
+                            for(const el in sourceElements){
+                                const nZettels = await arachne.zettel_lnk.bound([parseInt(el), "", 0, 0, 0], [(parseInt(el)+1), "?", 9999, 9999, 9999], "zettel", false);
+                                const setZettel = new CustomEvent("setZettel", {detail: nZettels});
+                                sourceElements[el].dispatchEvent(setZettel);
+                                let nMBoxText = document.getElementById("m_"+el).children[0];
+                                if(nZettels.length > 0){nMBoxText.children[2].textContent = nZettels.length}
+                                else {nMBoxText.children[2].textContent = ""}
+                            }
+                        // recalculate targetZettelBox 
+                        let nArtId = parseInt(dBoxZettel.dataset.article_id);
+                        console.log("dBoxID", nArtId);
+                        const nZettels = await arachne.zettel_lnk.bound([nArtId, "", 0, 0, 0], [(nArtId+1), "?", 9999, 9999, 9999], "zettel", false);
+                        const setZettel = new CustomEvent("setZettel", {detail: nZettels});
+                        dBoxZettel.dispatchEvent(setZettel);
+                        if(nZettels.length > 0){mBoxText.children[2].textContent = nZettels.length}
+                        else {mBoxText.children[2].textContent = ""}
+                        this.selMarker.main.ids = [];
+                        this.selMarker.main.lastRow = null;
+                    }
+                }
+                mBoxText.innerHTML = html(`
+                        <span class="artLvlMark"></span>
+                        <span>${article.name.substring(0, 20)}${article.name.length>20?"...":""}</span>
+                        <span class="artBoxZettelCount">${zettels.length>0?zettels.length:""}</i>
+                    `);
+                let mBoxDelete = document.createElement("SPAN");
+                mBoxDelete.classList.add("artBoxDelete", "editMode");
+                if(!this.editMode){mBoxDelete.classList.add("editModeOff")}
+                mBoxDelete.style.marginRight = "20px";
+                mBoxDelete.innerHTML = "&#x2715;";
+                mBoxDelete.onclick= async () => {
+                    if(confirm("Soll die Gruppe wirklich gelöscht werden? Alle Untergruppen und die darin befindlichen Zettel werden ebenfalls aus dem Projekt entfernt.")){
+                        let aLst = [article.id];
+                        let zLst = [];
+                        mBox.querySelectorAll(".mBox").forEach((e) => {
+                            aLst.push(parseInt(e.id.substring(2)));
+                        });
+                        dBox.querySelectorAll(".detail_zettel").forEach((e) => {
+                            zLst.push(parseInt(e.dataset.lnk_id));
+                        });
+                        for(const a of aLst){await arachne.article.delete(a)}
+                        for(const z of zLst){await arachne.zettel_lnk.delete(z)}
+                        mBox.remove();
+                        mBoxAfter.remove();
+                        dBox.remove();
+                    }
+                } 
+                mBoxText.appendChild(mBoxDelete);
+                mBox.appendChild(mBoxText);
+                let mBoxInsert = document.createElement("DIV");
+                mBoxInsert.classList.add("artInsert", "editMode");
+                if(!this.editMode){mBoxInsert.classList.add("editModeOff")}
+                mBoxInsert.textContent = "hinzufügen";
+                mBoxInsert.onclick = async () => {
+                    let nArticle = await arachne.article.save({
+                        project_id: article.project_id,
+                        name: "Neue Gruppe",
+                        type: 0,
+                        sort_nr: 1,
+                        parent_id: article.id
+                    });
+                    const [mArt, dArt] = await designArticle(nArticle);
+                    mBoxChildren.prepend(mArt);
+                    dBoxChildren.prepend(dArt);
+                    this.resetSortNr();
+                }
+                mBoxInsert.ondragenter = (e) => {return false;}
+                mBoxInsert.ondragover = (e) => {
+                    event.target.classList.add("dragOverArticle");
+                    event.target.textContent = "verschieben";
+                    return false;
+                }
+                mBoxInsert.ondragleave = (e) => {
+                    try{
+                        event.target.classList.remove("dragOverArticle");
+                        event.target.textContent = "hinzufügen";
+                    }
+                    catch{}
+                }
+                mBoxInsert.ondrop = async (e) => {
+                    if(this.currentDragMBox != null){
+                        this.currentDragMBox.dataset.sort_nr = 1;
+                        mBoxChildren.prepend(this.currentDragMBoxAfter);
+                        mBoxChildren.prepend(this.currentDragMBox);
+                        dBoxChildren.prepend(this.currentDragDBox);
+                        await arachne.article.save({
+                            id: this.currentDragMBox.id.substring(2),
+                            sort_nr: 1,
+                            parent_id: mBox.id.substring(2)
+                        });
+                    }
+                    this.resetSortNr();
+                }
+                mBox.appendChild(mBoxInsert);
+                let mBoxChildren = document.createElement("DIV");
+                mBox.appendChild(mBoxChildren);
+
+                let mBoxAfter = document.createElement("DIV");
+                mBoxAfter.classList.add("artInsert", "editMode");
+                if(!this.editMode){mBoxAfter.classList.add("editModeOff")}
+                mBoxAfter.textContent = "hinzufügen";
+                mBoxAfter.onclick = async () => {
+                    let nArticle = await arachne.article.save({
+                        project_id: article.project_id,
+                        name: "Neue Gruppe",
+                        type: 0,
+                        sort_nr: (parseInt(mBox.dataset.sort_nr)+1),
+                        parent_id: mBox.dataset.parent_id
+                    });
+                    const [mArt, dArt] = await designArticle(nArticle);
+                    mBoxAfter.after(mArt);
+                    dBox.after(dArt);
+                    this.resetSortNr();
+                }
+                mBoxAfter.ondragenter = (e) => {return false;}
+                mBoxAfter.ondragover = (e) => {
+                    event.target.classList.add("dragOverArticle");
+                    event.target.textContent = "verschieben";
+                    return false;
+                }
+                mBoxAfter.ondragleave = (e) => {
+                    try{
+                        event.target.classList.remove("dragOverArticle");
+                        event.target.textContent = "hinzufügen";
+                    }
+                    catch{}
+                }
+                mBoxAfter.ondrop = async (e) => {
+                    if(this.currentDragMBox != null){
+                        this.currentDragMBox.dataset.sort_nr = (parseInt(mBox.dataset.sort_nr)+1);
+                        mBoxAfter.after(this.currentDragMBoxAfter);
+                        mBoxAfter.after(this.currentDragMBox);
+                        dBox.after(this.currentDragDBox);
+                        await arachne.article.save({
+                            id: this.currentDragMBox.id.substring(2),
+                            sort_nr:  (parseInt(mBox.dataset.sort_nr)+1),
+                            parent_id: mBox.dataset.parent_id
+                        });
+                    }
+                    this.resetSortNr();
+                }
+
+                mArt.appendChild(mBox);
+                mArt.appendChild(mBoxAfter);
+
+                let dArt = document.createDocumentFragment();
+                let dBox = document.createElement("DIV");
+                dBox.mBox = mBox;
+                dBox.id = "d_"+article.id;
+                dBox.style.padding = "0 0 0 10px";
+                let dBoxText = document.createElement("DIV");
+                dBoxText.innerHTML = html(`
+                    <span></span>
+                    <span class="da_article" id="${article.id}">${article.name}</span>  
+                    `);
+                dBox.appendChild(dBoxText);
+                let dBoxZettel = document.createElement("DIV");
+                dBoxZettel.dataset.article_id = article.id;
+                dBoxZettel.addEventListener("setZettel", (e) => {
+                    dBoxZettel.innerHTML = "";
+                    for(const zettel of e.detail){
+                        let zBox = document.createElement("DIV");
+                        zBox.id = zettel.zettel_id; 
+                        zBox.dataset.lnk_id = zettel.id;
+                        zBox.classList.add("detail_zettel");
+                        zBox.setAttribute("draggable", !this.editMode);
+                        if(zettel.type == 4){
+                            zBox.innerHTML = "* <i>Literaturzettel</i>";
+                        } else {
+                            zBox.innerHTML = html(`
+                        ∗ <span class="opus">${zettel.opus?zettel.opus:"<i>Werk</i>"}</span>;
+                        <span class="stelle">${zettel.stellenangabe?zettel.stellenangabe:"<i>Stelle</i>"}</span>
+                        &ldquo;<span class="exportText">${zettel.display_text?zettel.display_text:"..."}</span>&rdquo;`);
+                            if(zettel.include_export == 1){zBox.classList.add("zettelExported")}
+                        }
+                        dBoxZettel.appendChild(zBox);
+                        zBox.ondragstart = () => {
+                            if(this.selMarker.main.ids.length === 0){
+                                let evt = new MouseEvent("mouseup", {
+                                    bubbles: true,
+                                    cancelable: true,
+                                    view: window
+                                });
+                                zBox.dispatchEvent(evt);
+                            }
+                            this.currentDragMBox = null;
+                            this.currentDragMBoxAfter = null;
+                            this.currentDragDBox = null;
+                            this.currentDragZettel = zBox;
+                        }
+                        zBox.ondragend = (e) => {
+                            e.stopPropagation();
+                            this.currentDragMBox = null;
+                            this.currentDragMBoxAfter = null;
+                            this.currentDragDBox = null;
+                            this.currentDragZettel = null;
+                        }
+                        /*
+                            z.onclick = () => {
+                                let cEvent = event.target.closest("div.detail_zettel");
+                                if(argos.main.o["project_zettel_preview"]!=null){
+                                    argos.main.o["project_zettel_preview"].close();
+                                }
+                                argos.loadEye("project_zettel_preview", cEvent.id)
+                            }
+                            d.appendChild(z);
+                         */
+                    }
+                });
+                const setZettel = new CustomEvent("setZettel", {detail: zettels});
+                dBoxZettel.dispatchEvent(setZettel);
+                dBox.appendChild(dBoxZettel);
+                let dBoxChildren = document.createElement("DIV");
+                dBox.appendChild(dBoxChildren);
+
+                dArt.appendChild(dBox);
+
+                // article in detail view
+                /*
+                if(!(article.sort_nr == 0 && article.parent_id == 0 && zettels.length == 0)){
+                    let word = keyWords.word(article.type, article.depth-1);
+                    if(article.parent_id == 0 && article.sort_nr == 0){sign = "";word = ""}
+                    let m = el.div(`
+                        <span class="artLvlMark">${sign}</span>
+                        <span>${article.name.substring(0, 20)}${article.name.length>20?"...":""}</span>
+                        <span class="artBoxZettelCount">${zettels.length>0?zettels.length:""}</i>
+                        (${article.parent_id} | ${article.sort_nr})
+                        `); 
+                    m.style.padding = "0 0 5px 10px";
+                    if(this.editMode){
+                        m.classList.add("editModeArticle");
+                        m.setAttribute("draggable", true);
+                    }
+                    m.dataset.parent_id = article.parent_id;
+                    m.dataset.atype = article.type;
+                    m.dataset.depth = article.depth-1;
+                    m.dataset.maxDepth = article.maxDepth;
+                    m.id = "m_"+article.id; m.classList.add("aMenu");
+                    m.dataset.sort_nr = article.sort_nr;
+                    m.ondragstart = (e) => {
+                        e.stopPropagation();
+                        m.querySelectorAll(".artInsert").forEach((e) => {
+                            e.style.visibility = "hidden";
+                        });
+                        this.currentDrag = m;
+                        this.currentDragiA = iA;
+                    }
+                    m.ondragend = (e) => {
+                        e.stopPropagation();
+                        m.querySelectorAll(".artInsert").forEach((e) => {
+                            e.style.visibility = "visible";
+                        });
+                        this.currentDrag = null;
+                        this.currentDragiA = null;
+                    }
+                    m.onclick = (e) => {
+                        e.stopPropagation();
+                        d.scrollIntoView();
+                        d.classList.add("selected");
+                        setTimeout(() => {d.classList.remove("selected")}, 500);
+                        
+                    }
+                    if(!(article.parent_id == 0 && article.sort_nr == 0)){
+                        let cDeleteButton = document.createElement("SPAN");
+                        cDeleteButton.style.marginRight = "20px";
+                        cDeleteButton.classList.add("artBoxDelete", "editMode");
+                        if(!this.editMode){cDeleteButton.classList.add("editModeOff")}
+                        cDeleteButton.innerHTML = "&#x2715;";
+                        cDeleteButton.onclick= async () => {
+                            if(confirm("Soll die Gruppe wirklich gelöscht werden? Alle Untergruppen und die darin befindlichen Zettel werden ebenfalls aus dem Projekt entfernt.")){
+                                let aLst = [article.id];
+                                let zLst = [];
+                                m.querySelectorAll(".aMenu").forEach((e) => {
+                                    aLst.push(parseInt(e.id.substring(2)));
+                                });
+                                d.querySelectorAll(".detail_zettel").forEach((e) => {
+                                    zLst.push(parseInt(e.dataset.lnk_id));
+                                });
+                                for(const a of aLst){await arachne.article.delete(a)}
+                                for(const z of zLst){await arachne.zettel_lnk.delete(z)}
+                                m.nextSibling.remove();
+                                m.remove();
+                                d.remove();
+                            }
+                        }; 
+                        m.appendChild(cDeleteButton);
+                    }
+                    // create insert boxes
+                    let iA = document.createElement("DIV");
+                    let iAD = document.createElement("DIV");
+                    iA.classList.add("artInsert", "editMode");
+                    if(!this.editMode){iA.classList.add("editModeOff")}
+                    iA.dataset.parent_id = article.parent_id;
+                    iA.textContent = "hinzufügen";
+                    iA.ondraenter = (e) => {return false;}
+                    iA.ondragover = (e) => {
+                        event.target.classList.add("dragOverArticle");
+                        event.target.textContent = "verschieben";
+                        return false;}
+                    iA.ondragleave = (e) => {
+                        try{
+                            event.target.classList.remove("dragOverArticle");
+                            event.target.textContent = "hinzufügen";
+                        }
+                        catch{}
+                    }
+                    let onDrop = async (iBox, iDBox, e) => {
+                        if(this.currentDrag != null){
+                            console.log("position saved...");
+                            let parentNode = iBox.parentNode;
+                            this.currentDragiA.dataset.parent_id = iBox.dataset.parend_id;
+                            iBox.after(this.currentDragiA);
+                            iBox.after(this.currentDrag);
+                            iDBox.after(document.getElementById(`d_${this.currentDrag.id.substring(2)}`));
+                            /*
+                            let prevM = iBox.previousSibling;
+                            let prevD = document.getElementById(`d_${prevM.id.substring(2)}`);
+                            if(prevD!=null){
+                                prevD.after();
+                            } else {
+                                let parentD = document.getElementById(`d_${parentNode.id.substring(2)}`);
+                                parentD.appendChild(document.getElementById(`d_${this.currentDrag.id.substring(2)}`));
+                            }
+                            *//*
+                            await arachne.article.save({
+                                id: this.currentDrag.id.substring(2),
+                                parent_id: iBox.dataset.parent_id
+                            });
+                            await this.resetSortNr(parentNode);
+                            console.log("drop finished!");
+                        }
+                    }
+                    iA.ondrop = async (e) => {await onDrop(iA, iAD, e)}
+                    let iCD=null;
+                    if(!(article.parent_id == 0 && article.sort_nr == 0)){
+                        let iC = iA.cloneNode(true);
+                        iCD = document.createElement("DIV");
+                        iC.dataset.parent_id = article.id;
+                        iC.ondraenter = (e) => {return false;}
+                        iC.ondragover = (e) => {
+                            event.target.classList.add("dragOverArticle");
+                            event.target.textContent = "verschieben";
+                            return false;
+                        }
+                        iC.ondragleave = (e) => {
+                            try{
+                                event.target.classList.remove("dragOverArticle");
+                                event.target.textContent = "hinzufügen";
+                            }
+                            catch{}
+                        }
+                        iC.ondrop = async (e) => {await onDrop(iC, iCD, e)}
+                        iC.onclick = async () => {
+                            let nArticle = await arachne.article.save({
+                                project_id: article.project_id,
+                                name: "Neue Gruppe",
+                                type: 0,
+                                sort_nr: 1,
+                                parent_id: m.id.substring(2)
+                            });
+                            nArticle.depth = article.depth+1;
+                            nArticle.maxDepth = article.maxDepth;
+                            const [cM, cD, cIA] = await designArticle(nArticle);
+                            iC.after(cM);
+                            dInsertMarker.after(cD);
+                            cM.after(cIA);
+                            await this.resetSortNr(m);
+                        }
+                        m.append(iC);
+                    }
+                    iA.onclick = async () => {
+                        let type = 0;
+                        let name = "Neue Gruppe";
+                        if(article.parent_id == 0){type = 1; name = "Neues Lemma"}
+                        let nArticle = await arachne.article.save({
+                            project_id: article.project_id,
+                            name: name,
+                            type: type,
+                            sort_nr: (article.sort_nr+1),
+                            parent_id: article.parent_id
+                        });
+                        nArticle.depth = article.depth;
+                        nArticle.maxDepth = article.maxDepth;
+                        const [cM, cD, cIA] = await designArticle(nArticle);
+                        document.getElementById(`d_${iA.previousSibling.id.substring(2)}`).after(cD);
+                        iA.after(cM);
+                        cM.after(cIA);
+                        await this.resetSortNr(m.parentNode);
+                    }
+
+                    // entry for detail box
+                    let d = el.div(`
+                        <span class="daKeyWord">${word}</span>
+                        <span class="da_article" id="${article.id}">${article.name}</span>  
+                        `);
+                    let dInsertMarker = document.createElement("SPAN");
+                    d.appendChild(dInsertMarker);
+                    d.style.padding = "0 0 0 10px";
+                    d.id = "d_"+article.id;
+                    if(iCD!=null){d.appendChild(iCD)}
+                    d.m = m;
+                    d.draw = () => {
+                        for(const zettel of zettels){
+                            let z = el.div(""); z.classList.add("detail_zettel");
+                            z.id = zettel.zettel_id; z.dataset.lnk_id = zettel.id;
+                            z.setAttribute("draggable", "true");
+                            z.ondragstart = () => {
+                                let evt = new MouseEvent("mouseup", {
+                                    bubbles: true,
+                                    cancelable: true,
+                                    view: window
+                                });
+                                z.dispatchEvent(evt);
+                            }
+                            z.onclick = () => {
+                                let cEvent = event.target.closest("div.detail_zettel");
+                                if(argos.main.o["project_zettel_preview"]!=null){
+                                    argos.main.o["project_zettel_preview"].close();
+                                }
+                                argos.loadEye("project_zettel_preview", cEvent.id)
+                            }
+                            if(zettel.type == 4){
+                                z.textContent = "* Literaturzettel";
+                            } else {
+                                z.innerHTML = html(`
+                            ∗ <span class="opus">${zettel.opus?zettel.opus:"<i>Werk</i>"}</span>;
+                            <span class="stelle">${zettel.stellenangabe?zettel.stellenangabe:"<i>Stelle</i>"}</span>
+                            &ldquo;<span class="exportText">${zettel.display_text?zettel.display_text:"..."}</span>&rdquo;`);
+                                if(zettel.include_export == 1){z.classList.add("zettelExported")}
+                            }
+                            d.appendChild(z);
+                        }
+                    }
+                    return [m, d, iA, iAD];
+                }
+                return [null, null, null, null];
+                */
+                return [mArt, dArt];
+            }
+
+            let cMaxDepth = 1;
+            for(const project of projects){
+                if(project.maxDepth != null){cMaxDepth = project.maxDepth}
+                else{project.maxDepth = cMaxDepth}
+                //const [m, d, iA, iAD] = await designArticle(project);
+                const [mArt, dArt] = await designArticle(project);
+                if(mArt!=null){
+                    //d.draw();
+                    if(project.parent_id === 0){
+                        menuBox.append(mArt);
+                        detailBox.append(dArt);
+                    } else {
+                        menuBox.querySelector(`#m_${project.parent_id}`).children[2].appendChild(mArt);
+                        detailBox.querySelector(`#d_${project.parent_id}`).children[2].appendChild(dArt);
+                    }
+                }
+            }
+
+            mainBody.appendChild(detailBox);
+            mainBody.appendChild(menuBox);
+            this.ctn.appendChild(mainBody);
+            /* 
+            console.log("wird im Cache gespeichert.");
+            localStorage.setItem(`p_${this.resId}`, this.ctn.innerHTML);
+            */
+        }
+
+        // set selection etc.
+        this.setSelection("main", "div.detail_zettel", true);
+        this.setSelection("opus", "span.opus", false, () => {
+            let obj = event.target;
+            setTimeout(() => {
+                obj.style.textShadow = "none";
+                //obj.style.color="initial";
+                if(obj.dataset.selected == "" || obj.dataset.selected == null){
+                    obj.innerHTML = "<i>Werk</i>";
+                }else{
+                    arachne.zettel.save({id: obj.parentNode.id, work_id: obj.dataset.selected}).
+                        then(re => {if(re>0){el.status("saved")}}).
+                        catch(e => {alert("Ein Fehler ist aufgetreten! "+e);argos.loadMain("project_overview");});
+                }
+            }, 200);
+        }, true);
+        this.setSelection("stelle", "span.stelle", false, () => {
+            if(event.target.textContent === ""){event.target.innerHTML = "<i>Stelle</i>"}
+            arachne.zettel.save({id: event.target.parentNode.id, stellenangabe: event.target.textContent}).
+                then(re => {if(re>0){el.status("saved")}}).
+                catch(e => {alert("Ein Fehler ist aufgetreten! "+e);argos.loadMain("project_overview");});
+        });
+        this.setSelection("exportText", "span.exportText", false, () => {
+            if(event.target.textContent === ""){event.target.innerHTML = "..."}
+            arachne.zettel_lnk.save({id: event.target.parentNode.dataset.lnk_id, display_text: event.target.textContent}).
+                then(re => {if(re>0){el.status("saved")}}).
+                catch(e => {alert("Ein Fehler ist aufgetreten! "+e);argos.loadMain("project_overview");});
+        });
+        this.setSelection("article", "span.da_article", false, () => {
+            let obj = event.target;
+            if(obj.textContent === ""){obj.innerHTML = "..."}
+            arachne.article.save({id: obj.id, name: obj.textContent}).
+                then(re => {if(re>0){
+                    el.status("saved");
+                    obj.parentNode.parentNode.mBox.children[0].children[1].innerHTML = `${obj.textContent.substring(0, 20)}${obj.textContent.length>20?"...":""}`;
+                }}).
+                catch(e => {alert("Ein Fehler ist aufgetreten! "+e);argos.loadMain("project_overview");});
+        });
         /*
         if(document.querySelector("div.detail_article[data-position='000'] > div.detail_zettel") == null){
             document.querySelector("div.detail_article[data-position='000']").remove();
@@ -411,42 +763,71 @@ class Project extends Oculus{
             }
         }
         */
-
-        /*
-        mainFrame.ondragstart = startDrag();
-        mainFrame.ondrop = onDragDrop("drop");
-        mainFrame.ondragover = onDragDrop();
-        mainFrame.ondragend = stopDrag();
-        */
-
-        const rule = new Rules();
+        /* const rule = new Rules();
         rule.check(this.ctn);
-
-        mainFrame.appendChild(detailView);
-        menuProjectBox.appendChild(menuView);
-        menuBox.appendChild(menuProjectBox);
-        mainFrame.appendChild(menuBox);
-        mainBody.appendChild(mainFrame);
-        this.ctn.appendChild(mainBody);
-
+        */
         // context menu
         let cContext = new ContextMenu();
         cContext.addEntry('div.detail_zettel', 'a', 'Detailansicht', function(){argos.load("zettel_detail", me.selMarker["main"]["lastRow"])});
         cContext.addEntry('div.detail_zettel', 'hr', '', null);
         cContext.addEntry('div.detail_zettel:not(.zettelExported)', 'a', 'In Export aufnehmen', function(){includeInExport(me)});
         cContext.addEntry('div.detail_zettel.zettelExported', 'a', 'Aus Export entfernen', function(){includeInExport(me)});
-        cContext.addEntry('div.detail_zettel', 'a', 'Zettel aus dem Projekt entfernen', function(){
+        cContext.addEntry('div.detail_zettel', 'a', 'Zettel aus dem Projekt entfernen', async () => {
             if(confirm("Soll der Zettel wirklich aus dem Projekt entfernt werden? Der Zettel bleibt allerdings in der Zettel-Datenbank erhalten.")){
-                let cLnkId = me.ctn.querySelector("div.detail_zettel[id='"+me.selMarker["main"]["lastRow"]+"']").dataset.lnk_id;
-                me._delete("/data/zettel_lnk/"+cLnkId, function(){me.refresh()});
+                let cZettel = this.ctn.querySelector("div.detail_zettel[id='"+this.selMarker.main.lastRow+"']");
+                await arachne.zettel_lnk.delete(cZettel.dataset.lnk_id);
+                let cParent = cZettel.parentNode;
+                cParent.querySelectorAll(".detail_zettel").forEach((e) => {
+                    e.remove();
+                });
+                cParent.draw();
             }
         });
-        cContext.addEntry('div.detail_zettel', 'a', 'Neuer Zettel erstellen', function(){argos.load("zettel_add")});
+        cContext.addEntry('div.detail_zettel', 'a', 'Neuen Zettel erstellen', function(){argos.load("zettel_add")});
         cContext.addEntry('div.detail_zettel', 'hr', '', null);
-        cContext.addEntry('*', 'a', 'Artikelstruktur bearbeiten', function(){editArticleStructure(me)});
+        cContext.addEntry('*', 'a', 'Artikelstruktur bearbeiten', () => {this.editArticleStructure()});
         cContext.addEntry('*', 'hr', '', null);
-        cContext.addEntry('*', 'a', 'Projekt exportieren', function(){argos.load("project_export", me.resId)});
+        cContext.addEntry('*', 'a', 'Projekt exportieren', () => {argos.loadEye("project_export", this.resId)});
         this.setContext = cContext.menu;
+    }
+
+    editArticleStructure(){
+        this.editMode = (this.editMode) ? false : true;
+        this.ctn.querySelectorAll(".editMode").forEach((e) => {e.classList.toggle("editModeOff")});
+        this.ctn.querySelectorAll(".mBox").forEach((e) => {
+            e.classList.toggle("editModeArticle");
+            e.setAttribute("draggable", this.editMode);
+        });
+        this.ctn.querySelectorAll(".detail_zettel").forEach((e) => {
+            e.setAttribute("draggable", !this.editMode);
+        });
+    }
+    async resetSortNr(){
+        /*
+        let children = box.children;
+        let j = 0;
+        for(let i = 0;i<children.length;i++){
+            if(children[i].classList.contains("aMenu")){
+                j++;
+                let cEl = children[i];
+                if(parseInt(cEl.dataset.sort_nr) != j){
+                    cEl.dataset.sort_nr = j;
+                    console.log("id", cEl.id.substring(2), "sort_nr", j);
+                    await arachne.article.save({
+                        id: cEl.id.substring(2),
+                        sort_nr: j
+                    }).
+                        catch(e => {throw e});
+                    const keyWords = new KeyWordSetter();
+                    console.log(cEl.dataset.atype, cEl.dataset.sort_nr,
+                        cEl.dataset.depth, cEl.dataset.maxDepth);
+                    const sign = keyWords.sign(parseInt(cEl.dataset.atype), parseInt(cEl.dataset.sort_nr)-1,
+                        parseInt(cEl.dataset.depth), parseInt(cEl.dataset.maxDepth));
+                    cEl.children[0].innerHTML = html(sign);
+                }
+            }
+        }
+        */
     }
 }
 
@@ -576,7 +957,7 @@ class KeyWordSetter{
                 return "<span title='"+errMsg+"' class='errMarked'>...</span>"
             } else {
                 if(maxDepth<4){return this.numbers[depth+1][number]}
-                else {return this.numbers[depth-1][number]}
+                else {return this.numbers[(depth-1<0)?0:depth-1][number]}
             }
         }
     }
@@ -595,7 +976,7 @@ class KeyWordSetter{
 }
 
 // ****************************************************
-// -II- asorted functions
+// -II- asorted functions OLD?!?
 // ****************************************************
 function includeInExport(me){
     let cObj = me.ctn.querySelector("div.detail_zettel[id='"+me.selMarker["main"]["lastRow"]+"']");
@@ -603,30 +984,6 @@ function includeInExport(me){
     let includeExport = 1;
     if(cObj.classList.contains("zettelExported")){includeExport=0}
     me._put("data/zettel_lnk/"+cLnkId, {"include_export": includeExport}, function(){me.refresh()});
-}
-function editArticleStructure(me){
-    let editMode = false;
-    if(me.ctn.querySelector(".editModeArticle") === null){editMode = true};
-    me.ctn.querySelectorAll(".editMode").forEach(function(e){e.classList.toggle("editModeOff")});
-    me.ctn.querySelectorAll(".artBox").forEach(function(e){
-        e.classList.toggle("editModeArticle");
-        e.setAttribute("draggable", editMode);
-    });
-    me.ctn.querySelectorAll(".detail_zettel").forEach(function(e){
-        e.setAttribute("draggable", !editMode);
-    });
-}
-function newEl(elText, elType = "SPAN"){
-    let newElement = document.createElement(elType);
-    newElement.innerHTML = elText;
-    return newElement;
-}
-
-function scrollToArticle(articleId){
-    var cElement = document.querySelector("div.detail_article#da_"+articleId);
-    cElement.scrollIntoView();
-    cElement.classList.add("selected");
-    setTimeout(function(){cElement.classList.remove("selected")}, 500);
 }
 
 function saveArticleName(artName, artId){
@@ -653,105 +1010,6 @@ function saveArticleName(artName, artId){
         cData.type = 5;
     }
     argos.o["project"]._put("data/article/"+artId, cData, function(){argos.o["project"].refresh()});
-}
-
-// ####################################################
-// -III- drag and drop
-// ####################################################
-function startDrag(){
-    argos.localDataTransfer = {}; // for local storage of drag values.
-    if (event.target.classList.contains("artBox")){
-        // start dragging articles
-        event.dataTransfer.setData("article", event.target.id);
-        argos.localDataTransfer["id"] = event.target.id;
-        argos.localDataTransfer["type"] = "article";
-        argos.localDataTransfer["position"] = event.target.dataset.position;
-        document.querySelectorAll(".artInsert").forEach(function(e){
-            e.textContent = "verschieben";
-        });
-        event.target.classList.add("artBoxDragged");
-        event.target.childNodes.forEach(function(e, j){
-            if(j!==1||e.tagName==="DIV"){e.style.visibility = "hidden"}
-        });
-    } else if (event.target.classList.contains("detail_zettel")){
-        // start dragging zettel
-        argos.localDataTransfer["type"] = "zettel";
-        event.dataTransfer.setData("lnkId", event.target.dataset.lnk_id);
-    }
-}
-
-function stopDrag(){
-    if (argos.localDataTransfer.type === "zettel"){
-        document.querySelectorAll(".dragOverArticle").forEach(function(e){
-            e.classList.remove("dragOverArticle");
-        });
-    }else if(argos.localDataTransfer.type === "article"){
-        document.querySelectorAll(".artInsert").forEach(function(e){
-            e.textContent = "hinzufügen";
-            e.style.visibility = "visible";
-        });
-        let cDragged = document.querySelector(".artBoxDragged");
-        cDragged.classList.remove("artBoxDragged");
-        cDragged.childNodes.forEach(function(e){
-            e.style.visibility = "visible";
-        });
-    }
-    argos.localDataTransfer = {}; // for local storage of drag values.
-}
-
-function onDragDrop(mode = "over"){
-    event.preventDefault();
-    // reset display 
-    document.querySelectorAll(".dragOverArticle").forEach(function(e){
-        e.classList.remove("dragOverArticle");
-    });
-
-    if(argos.localDataTransfer.type === "zettel"){
-        let cTarget = null;
-        if(event.target.classList.contains("artBox")){
-            cTarget = event.target;
-        }else if(event.target.parentNode.classList.contains("artBox")){
-            cTarget = event.target.parentNode;
-        }
-        if(cTarget !== null){
-            if(mode === "over"){
-                cTarget.classList.add("dragOverArticle");
-            }else{
-                // drop
-                argos.localDataTransfer = {};
-                let updateList = [];
-                const articleId = cTarget.id;
-                for(let cZettelId of argos.o.project.selMarker.main.ids){
-                    updateList.push({res_id: document.querySelector(`.detail_zettel[id="${cZettelId}"`).dataset.lnk_id,
-                        data: {article_id: articleId}
-                    });
-                }
-                argos.o.project._post("/batch",{res: "zettel_lnk", mode: "update",
-                    items: updateList}, function(){argos.o.project.refresh()});
-            }
-        }
-    }else if(argos.localDataTransfer.type === "article"){
-        let cTarget = null;
-        if(event.target.classList.contains("artInsert")){
-            cTarget = event.target;
-        }else if(event.target.parentNode.classList.contains("artInsert")){
-            cTarget = event.target.parentNode;
-        }
-        if(cTarget !== null && cTarget.id!==argos.localDataTransfer.id){
-            if(mode === "over"){
-                cTarget.classList.add("dragOverArticle");
-            }else{
-                let oldPosition = argos.localDataTransfer.position;
-                argos.localDataTransfer = {};
-                let me = argos.o.project;
-                me._put("/data/article_position", {project_id: me.resId,
-                    old_position: oldPosition,
-                    new_position: event.target.dataset.position}, function(){
-                        me.refresh();
-                    });
-            }
-        }
-    }
 }
 
 class ProjectZettelPreview extends Oculus{
@@ -798,6 +1056,57 @@ class ProjectZettelPreview extends Oculus{
             pmContent.appendChild(commentContainer);
             mainBody.appendChild(this.createBox("comment", "Kommentare", pmContent));
         }
+        /*
+        }, "project_zettel_preview": function(me){
+            me.ctn.querySelectorAll("div.projectMenuButton").forEach(function(e){
+                if(argos.o["project"].zettelPreviewId==e.parentNode.id){
+                    e.parentNode.querySelector("div.projectMenuContent").style.display = "block";
+                }
+                e.addEventListener("click", function(){
+                    let currentActive = null;
+                    me.ctn.querySelectorAll("div.projectMenuContent").forEach(function(f){
+                        if(f.style.display != "block" && f.parentNode.id == event.target.parentNode.id){
+                            f.style.display = "block";
+                            argos.o["project"].zettelPreviewId = event.target.parentNode.id;
+                        } else if(f.style.display == "block"){
+                            f.style.display = "none";
+                            argos.o["project"].zettelPreviewId = null;
+                        }
+                    });
+                });
+            });
+            // set event listener to create and delete comments
+            me.ctn.querySelector('input#newComment').addEventListener('click', function(){me.createData()});
+            me.ctn.querySelectorAll('i.deleteEntry').forEach(function(e){
+                e.addEventListener("click", function(){me.deleteData(function(){me.refresh();})});
+            });
+*/
+/*
+function openProjectMenuEntry(){
+    $('div.projectMenuContent').hide();
+    let cProjectMenuEntry = $(event.target).parent('div.projectMenuEntry');
+    if (typeof cEntryId !== 'undefined' && cEntryId == cProjectMenuEntry.attr('id')){
+        cEntryId = null;
+    } else {
+        cEntryId = cProjectMenuEntry.attr('id');
+        cProjectMenuEntry.find('div.projectMenuContent').show();
+    };
+};
+$(document).ready(function(){
+     if zettel.get('img_path'):
+        $('img#projectMenuImg').css('width', userDisplay['z_width']);
+     else:
+        $('.projectMenuDigitalImg').load('/zettel_loadmore_digital/{zettel['id']}');
+        $('div.projectMenuEntry#zettel').find('.projectMenuContent')
+            .css('width', userDisplay.z_width)
+            .css('height', userDisplay.z_width*0.71);
+    end
+
+    if (typeof cEntryId !== 'undefined'){
+        $('div.projectMenuEntry#'+cEntryId).find('div.projectMenuContent').show();
+    };
+});
+         */
         this.ctn.appendChild(mainBody);
     }
     createBox(id, button, content){
@@ -902,57 +1211,94 @@ class ProjectZettelPreview extends Oculus{
     </div>
 </div>
  */
-
-
 /*
-        }, "project_export": function(me){
-        }, "project_zettel_preview": function(me){
-            me.ctn.querySelectorAll("div.projectMenuButton").forEach(function(e){
-                if(argos.o["project"].zettelPreviewId==e.parentNode.id){
-                    e.parentNode.querySelector("div.projectMenuContent").style.display = "block";
-                }
-                e.addEventListener("click", function(){
-                    let currentActive = null;
-                    me.ctn.querySelectorAll("div.projectMenuContent").forEach(function(f){
-                        if(f.style.display != "block" && f.parentNode.id == event.target.parentNode.id){
-                            f.style.display = "block";
-                            argos.o["project"].zettelPreviewId = event.target.parentNode.id;
-                        } else if(f.style.display == "block"){
-                            f.style.display = "none";
-                            argos.o["project"].zettelPreviewId = null;
-                        }
-                    });
-                });
-            });
-            // set event listener to create and delete comments
-            me.ctn.querySelector('input#newComment').addEventListener('click', function(){me.createData()});
-            me.ctn.querySelectorAll('i.deleteEntry').forEach(function(e){
-                e.addEventListener("click", function(){me.deleteData(function(){me.refresh();})});
-            });
-*/
-/*
-function openProjectMenuEntry(){
-    $('div.projectMenuContent').hide();
-    let cProjectMenuEntry = $(event.target).parent('div.projectMenuEntry');
-    if (typeof cEntryId !== 'undefined' && cEntryId == cProjectMenuEntry.attr('id')){
-        cEntryId = null;
-    } else {
-        cEntryId = cProjectMenuEntry.attr('id');
-        cProjectMenuEntry.find('div.projectMenuContent').show();
-    };
-};
-$(document).ready(function(){
-     if zettel.get('img_path'):
-        $('img#projectMenuImg').css('width', userDisplay['z_width']);
-     else:
-        $('.projectMenuDigitalImg').load('/zettel_loadmore_digital/{zettel['id']}');
-        $('div.projectMenuEntry#zettel').find('.projectMenuContent')
-            .css('width', userDisplay.z_width)
-            .css('height', userDisplay.z_width*0.71);
-    end
+    # ################################################################
+    # OLD???
+    # ################################################################
+    def project_export(self, dock):
+        user = self.auth()
+        id=dock["res_id"]
+        if "editor" in user["access"]:
+            c_project = self.db.search("project", {"id": id}, ["user_id", "name"])[0]
+            if c_project["user_id"] == user["id"]:
+                articles = self.db.search("article", {"project_id": id},
+                        ["position", "name", "id", "type"], ["position"])
+                article_txt = ""
+                article_lst = []
+                c_article = ""
+                c_lvl = 0
+                for article in articles:
+                    if article["position"] != "000":
+                        # new article
+                        if article["position"].find(".") == -1 and article_txt != "":
+                            article_txt += f'AUTOR {user["last_name"]}'
+                            article_lst.append(article_txt)
+                            article_txt = ""
 
-    if (typeof cEntryId !== 'undefined'){
-        $('div.projectMenuEntry#'+cEntryId).find('div.projectMenuContent').show();
-    };
-});
-*/
+                        # new group inside of an article
+                        if article["position"] != c_article:
+                            c_article = article["position"]
+                            c_lvl = c_article.count(".")
+                            if article_txt != "":
+                                if article['type'] == 0:
+                                    if c_lvl == 1:
+                                        article_txt += "BEDEUTUNG"
+                                    elif c_lvl == 2:
+                                        article_txt += "\tUNTER_BEDEUTUNG"
+                                    elif c_lvl == 3:
+                                        article_txt += "\t\tUNTER_UNTER_BEDEUTUNG"
+                                    elif c_lvl >= 4:
+                                        article_txt += ("\t"*c_lvl) + ("U"*c_lvl) + "_BEDEUTUNG"
+                                elif article["type"] == 1:
+                                        article_txt += ("\t"*(c_lvl-1)) + "LEMMA"
+                                elif article["type"] == 2:
+                                        article_txt += ("\t"*(c_lvl-1)) + "ANHÄNGER"
+                                elif article["type"] == 3:
+                                        article_txt += ("\t"*(c_lvl-1)) + "???"
+                                elif article["type"] == 4:
+                                        article_txt += ("\t"*(c_lvl-1)) + "???"
+                                elif article["type"] == 5:
+                                        article_txt += ("\t"*(c_lvl-1)) + "//"
+                            else:
+                                article_txt = "LEMMA"
+                            article_txt += " " + article["name"] + "\n"
+
+                        zettels = self.db.search("zettel_lnk_view",
+                                {"article_id": article["id"]}, ["example_plain",
+                                    "display_text", "include_export", "comments",
+                                    "stellenangabe"],
+                                ["date_sort"])
+                        # collect zettels
+                        for zettel in zettels:
+                            if zettel.get("include_export", 0) == 1:
+                                article_txt += ("\t"*(c_lvl+1)) + "* "
+                                article_txt += f"{zettel.get('example_plain', '')}; {zettel.get('stellenangabe', '')} "
+                                article_txt += f"\"{zettel.get('display_text', '')}\"\n"
+                                if zettel.get("comments", None):
+                                    cmnts = json.loads(zettel["comments"])
+                                    for cmnt in cmnts:
+                                        article_txt += ("\t"*(c_lvl+1)) + f"/* {cmnt.get('user', '')}, am {cmnt.get('date', '')[:10]}: {cmnt.get('comment', '')} * /\n"
+                article_txt += f'AUTOR {user["last_name"]}'
+                article_lst.append(article_txt)
+
+                c_path = self.p + "/export_project/"
+                if path.exists(c_path) == False: mkdir(c_path)
+                export_path = c_path+c_project["name"].replace(" ", "_")+".zip"
+                export_url = "/export_project/"+c_project["name"].replace(" ", "_")+".zip"
+                if path.exists(export_path): remove(export_path)
+                ex_zip = zipfile.ZipFile(export_path, "w")
+                export_txt = ''
+                for article in article_lst:
+                    c_name = article.split("\n")[0][6:]
+                    c_file = open(c_path+c_name+".mlw", "w")
+                    c_file.write(article)
+                    export_txt += '<p>' + article.replace('\n', '<br />').replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;') + '</p>'
+                    c_file.close()
+                    ex_zip.write(c_path+c_name+".mlw", c_project["name"]+"/"+c_name+".mlw")
+                    #kompiliere_mlw(c_path+c_name+".mlw")
+                    remove(c_path+c_name+".mlw")
+                ex_zip.close()
+
+                return template("project/project_export", article_lst=article_lst,
+                        export_url=export_url, preview=export_txt)
+ */

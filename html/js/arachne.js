@@ -3,7 +3,6 @@ export { Arachne };
 const fetch = require("node-fetch");
 module.exports = Arachne;
 */
-
 class ArachneWrapper{
     constructor(tblName, dbName, dbVersion, optimize, token){
         this.worker = new Worker("/file/js/arachneWW.js");
@@ -184,6 +183,7 @@ class ArachneWrapper{
         });
     }
 }
+
 
 class Arachne{
     constructor(dbName){

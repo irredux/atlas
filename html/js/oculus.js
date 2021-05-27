@@ -30,7 +30,7 @@ class Oculus{
     /* **************************************** */
     /*               load and close             */
     /* **************************************** */
-    refresh(){
+    async refresh(){
         var newElement = document.createElement(this.type);
         newElement.id = this.res;
         newElement.classList = this.classList;
@@ -40,8 +40,10 @@ class Oculus{
             }else{document.body.appendChild(newElement)}
         }else{document.body.replaceChild(newElement, this.ctn)}
         this.ctn = newElement;
-        
-        this.load();
+        this.ctn.innerHTML = "<div id='loadLabel'>Inhalt wird geladen...</div>";
+        await this.load();
+        try{document.getElementById("loadLabel").remove()}
+        catch{}
     }
     open(res, resId = null, query=null, type=null){
         this.o[res] = new Oculus(res, {resId: resId, query: query, type: type});
@@ -115,7 +117,12 @@ class Oculus{
                         cTarget.style.outline = "none";
                         cTarget.style.userSelect = "text";
                         cTarget.style.webkitUserSelect = "text";
-
+                        /* *************** */
+                        if(dataList!=null){
+                            console.log("set AutoComplete!");
+                            me.bindAutoComplete(cTarget, "work", ["id", "example"]);
+                        }
+                        /* *************** */
                         cTarget.addEventListener("blur", function(){
                             cTarget.setAttribute("contenteditable", false);
                             if(onEdit!=null && !cTarget.classList.contains("selEditable")){
@@ -491,11 +498,20 @@ class AutoComplete{
 		let that = this;
 		// create div around input
 		let divContainer = document.createElement("DIV");
+		divContainer.style.position = "absolute";
+		//divContainer.style.display = "inline-block";
+        const pos = iEl.getBoundingClientRect();
+        divContainer.style.width = pos.width<200?"200px":`${pos.width}px`;
+        divContainer.style.left = `${pos.left}px`;
+        divContainer.style.top = `${pos.top+pos.height}px`;
+        document.body.appendChild(divContainer);
+        /*
 		divContainer.style.position = "relative";
 		divContainer.style.display = "inline-block";
         divContainer.style.width = "100%";
-		iEl.after(divContainer);
-		divContainer.appendChild(iEl);
+         */
+		//iEl.after(divContainer);
+		//divContainer.appendChild(iEl);
 		// change input value
 		iEl.addEventListener("input", function(e){
 			let a, b, i;

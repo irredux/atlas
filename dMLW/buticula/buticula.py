@@ -133,13 +133,8 @@ class Buticula(Bottle):
     # ################################################################
     # -I- routes
     # ################################################################
-        # login pages and account
-        self.route("/", callback=self.site)
-        #self.route("/logout", callback=self.logout)
-        #self.route("/account_create", callback=self.account_create)
-        #self.route("/account_create", callback=self.account_create, method="POST")
-
         # open argos 
+        self.route("/", callback=self.site)
         self.route("/site", callback=self.site)
         self.route("/site/<res>", callback=self.site)
         self.route("/site/<res>/<res_id>", callback=self.site)
@@ -152,11 +147,10 @@ class Buticula(Bottle):
         self.route("/session", callback=self.session_read, method="GET");
         self.route("/session", callback=self.session_delete, method="DELETE");
 
-        # user
+        # data
         self.route("/data/user", callback=self.user_create, method="POST")
         self.route("/data/user/<id:int>", callback=self.user_update, method="PATCH")
 
-        # data
         self.route("/data/<res>", callback=self.data_create, method="POST")
         self.route("/data/<res>", callback=self.data_read, method="GET")
         self.route("/data/<res>/<res_id:int>", callback=self.data_read, method="GET")
@@ -359,64 +353,6 @@ class Buticula(Bottle):
         #self.__server_settings["reloader"] = True
         super(Buticula, self).run(**self.__server_settings)
 
-    def project_calculate_article_position(self, user):
-        # calculates new position of child/sibling articles when article-position is changed.
-        project_id = request.json["project_id"]
-        old_position = request.json["old_position"]
-        new_position = request.json["new_position"]
-        article_type = request.json.get("type")
-        articles = self.db.search('article', {'project_id': project_id},
-                ['id', 'position'], ['position'])
-        # 1. separate the lists
-        mainLst = []
-        moveLst = []
-        if old_position == '':
-            mainLst = articles
-            n_id = self.db.save('article', {'name': 'Neue Gruppe',
-                'project_id': project_id, 'position': new_position,
-                'type': article_type, "user_id": user["id"]})
-            moveLst = [{'id': n_id, 'position': new_position}]
-        else:
-            for art in articles:
-                if art['position'].startswith(old_position):
-                    c_rest = art['position'][len(old_position):]
-                    moveLst.append({'id': art['id'],
-                        'position': f'{new_position}{c_rest}', 'changed': True})
-                else:
-                    mainLst.append(art)
-        # 2. find spot in lst.
-        spot = -1
-        for nr, art in enumerate(mainLst):
-            if art['position'] == new_position:
-                spot = nr
-        # 3. if there is a spot in the main lst, replace it; if not: add and order it.
-        if spot > -1:
-            # there is a spot in the main lst
-            moveLst.reverse()
-            for art in moveLst:
-                mainLst.insert(spot, art)
-        else:
-            # there is no spot in the main lst!
-            mainLst += moveLst
-            mainLst = sorted(mainLst, key=itemgetter('position'))
-        # 4. recalcuate the position
-        o_articles = []
-        c_path = ''
-        c_name = -1
-        c_depth = 0
-        for art in mainLst:
-            if c_depth < art['position'].count('.'):
-                c_depth = art['position'].count('.')
-                c_path = f'{c_path}{c_name}.'
-                c_name = '000'
-            elif c_depth > art['position'].count('.'):
-                c_name = c_path[-4*(c_depth-art['position'].count('.')):][:3]
-                c_path = c_path[:-4*(c_depth-art['position'].count('.'))]
-                c_depth = art['position'].count('.')
-            c_name = f'{int(c_name)+1}'.zfill(3)
-            if art['position'] != f'{c_path}{c_name}' or art.get('changed', False):
-                self.db.save('article', {'position': f'{c_path}{c_name}'}, art['id'])
-
     def zettel_delete(self, zettel):
         # removes imgs from directory
         if zettel.get("img_folder", None) != None and zettel.get("sibling", None) == None:
@@ -492,7 +428,6 @@ class Buticula(Bottle):
                 "email": request.json["email"],
                 "password": request.json["password"],
                 "access": []}
-        print(user)
         if (user["first_name"] != "" and user["last_name"] != "" and
                 user["email"] != "" and user["password"] != ""):
             c_email = self.db.search("user", {"email": user["email"]}, ["id"])
@@ -688,30 +623,10 @@ class Buticula(Bottle):
         r_id = self.db.save(res, {"deleted": 1}, res_id)
         return HTTPResponse(status=200) # ok 
 
-#    def data_batch(self):
-#        user = self.auth()
-#        res = request.json["res"]
-#        items = request.json["items"]
-#        mode = request.json["mode"]
-#        if res == None or items == None: return HTTPResponse(status=404)
-#        if mode == "create":
-#            for item in items:
-#                self.data_create(res, item["data"])
-#        elif mode == "update":
-#            for item in items:
-#                self.data_update(res, item["res_id"], item["data"])
-#        elif mode == "delete":
-#            # items is array with object: [{"res_id": x}, {"res_id": y}, ...]
-#            for item in items:
-#                self.data_delete(res, item["res_id"])
-#        else:
-#            return HTTPResponse(status=404)
-#
     def file_read(self, res, res_id):
         if res == "css":
             return static_file(res_id, root=self.p_html + "/css/")
         if res == "js":
-            print("here we go!", res_id)
             return static_file(res_id, root=self.p_html + "/js/")
         if res == "scan":
             user = self.auth()
@@ -719,8 +634,6 @@ class Buticula(Bottle):
                 page = self.db.search("scan", {"id": res_id}, ["path", "filename"])[0]
                 return static_file(page["filename"]+".png", root=self.p + "/content/scans/" + page["path"])
             else: return HTTPResponse(status=401)
-
-
 
     def site(self, res = None, res_id = None):
         if res == "opera":
@@ -745,139 +658,3 @@ class Buticula(Bottle):
     def f_zettel(self, letter, dir_nr, img):
         #self.auth()
         return static_file(img, root=self.p + f"/zettel/{letter}/{dir_nr}")
-
-    # ################################################################
-    # -IV- file requests
-    # ################################################################
-    def project_export(self, dock):
-        user = self.auth()
-        id=dock["res_id"]
-        if "editor" in user["access"]:
-            c_project = self.db.search("project", {"id": id}, ["user_id", "name"])[0]
-            if c_project["user_id"] == user["id"]:
-                articles = self.db.search("article", {"project_id": id},
-                        ["position", "name", "id", "type"], ["position"])
-                article_txt = ""
-                article_lst = []
-                c_article = ""
-                c_lvl = 0
-                for article in articles:
-                    if article["position"] != "000":
-                        # new article
-                        if article["position"].find(".") == -1 and article_txt != "":
-                            article_txt += f'AUTOR {user["last_name"]}'
-                            article_lst.append(article_txt)
-                            article_txt = ""
-
-                        # new group inside of an article
-                        if article["position"] != c_article:
-                            c_article = article["position"]
-                            c_lvl = c_article.count(".")
-                            if article_txt != "":
-                                if article['type'] == 0:
-                                    if c_lvl == 1:
-                                        article_txt += "BEDEUTUNG"
-                                    elif c_lvl == 2:
-                                        article_txt += "\tUNTER_BEDEUTUNG"
-                                    elif c_lvl == 3:
-                                        article_txt += "\t\tUNTER_UNTER_BEDEUTUNG"
-                                    elif c_lvl >= 4:
-                                        article_txt += ("\t"*c_lvl) + ("U"*c_lvl) + "_BEDEUTUNG"
-                                elif article["type"] == 1:
-                                        article_txt += ("\t"*(c_lvl-1)) + "LEMMA"
-                                elif article["type"] == 2:
-                                        article_txt += ("\t"*(c_lvl-1)) + "ANHÄNGER"
-                                elif article["type"] == 3:
-                                        article_txt += ("\t"*(c_lvl-1)) + "???"
-                                elif article["type"] == 4:
-                                        article_txt += ("\t"*(c_lvl-1)) + "???"
-                                elif article["type"] == 5:
-                                        article_txt += ("\t"*(c_lvl-1)) + "//"
-                            else:
-                                article_txt = "LEMMA"
-                            article_txt += " " + article["name"] + "\n"
-
-                        zettels = self.db.search("zettel_lnk_view",
-                                {"article_id": article["id"]}, ["example_plain",
-                                    "display_text", "include_export", "comments",
-                                    "stellenangabe"],
-                                ["date_sort"])
-                        # collect zettels
-                        for zettel in zettels:
-                            if zettel.get("include_export", 0) == 1:
-                                article_txt += ("\t"*(c_lvl+1)) + "* "
-                                article_txt += f"{zettel.get('example_plain', '')}; {zettel.get('stellenangabe', '')} "
-                                article_txt += f"\"{zettel.get('display_text', '')}\"\n"
-                                if zettel.get("comments", None):
-                                    cmnts = json.loads(zettel["comments"])
-                                    for cmnt in cmnts:
-                                        article_txt += ("\t"*(c_lvl+1)) + f"/* {cmnt.get('user', '')}, am {cmnt.get('date', '')[:10]}: {cmnt.get('comment', '')} */\n"
-                article_txt += f'AUTOR {user["last_name"]}'
-                article_lst.append(article_txt)
-
-                c_path = self.p + "/export_project/"
-                if path.exists(c_path) == False: mkdir(c_path)
-                export_path = c_path+c_project["name"].replace(" ", "_")+".zip"
-                export_url = "/export_project/"+c_project["name"].replace(" ", "_")+".zip"
-                if path.exists(export_path): remove(export_path)
-                ex_zip = zipfile.ZipFile(export_path, "w")
-                export_txt = ''
-                for article in article_lst:
-                    c_name = article.split("\n")[0][6:]
-                    c_file = open(c_path+c_name+".mlw", "w")
-                    c_file.write(article)
-                    export_txt += '<p>' + article.replace('\n', '<br />').replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;') + '</p>'
-                    c_file.close()
-                    ex_zip.write(c_path+c_name+".mlw", c_project["name"]+"/"+c_name+".mlw")
-                    #kompiliere_mlw(c_path+c_name+".mlw")
-                    remove(c_path+c_name+".mlw")
-                ex_zip.close()
-
-                return template("project/project_export", article_lst=article_lst,
-                        export_url=export_url, preview=export_txt)
-################################################################################
-    # OLD!
-    def module(self):
-        user = self.login_check(request.forms.user, request.forms.pw)
-        if user == None:
-            return "wrong username or password."
-        elif "module" not in user["access"]:
-            return "access not granted."
-        else:
-            if request.forms.mode == 'version':
-                r_date = ''
-                if request.forms.table in ['author', 'work', 'lemma']:
-                    r_date = self.db.search('stat', {'id': 1}, [request.forms.table])[0]
-                elif request.forms.table in ['lemma_view']:
-                    r_date = self.db.search('stat', {'id': 1}, ['lemma'])[0]
-                elif request.forms.table in ['opera_view']:
-                    opera_view = self.db.search('stat', {'id': 1}, ['author', 'work'])[0]
-                    if opera_view['author'] < opera_view['work']:
-                        r_date = opera_view['work']
-                    else:
-                        r_date = opera_view['author']
-                if r_date != '':
-                    return f'{r_date}'
-
-            elif request.forms.mode == 'search':
-                try:
-                    query = json.loads(request.forms.query)
-                except:
-                    query = request.forms.query
-                table = request.forms.table
-                cols = json.loads(request.forms.cols)
-                o_cols = json.loads(request.forms.o_cols)
-
-                if request.forms.html == "True":
-                    allow_html = True
-                else:
-                    allow_html = False
-                dump = self.db.search(table, query, cols, o_cols)
-
-                #dump = s_html(json.dumps(raw_dump))
-                #if allow_html == False:
-                #    rep_dict = {"&lt;": "<", "&gt;": ">", "&quote;": "'", "&#x27;": "'",
-                #            "<.*?>": ""}
-                #    for key, value in rep_dict.items():
-                #        dump = re.sub(key, value, dump)
-                return json.dumps(dump)

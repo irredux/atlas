@@ -118,7 +118,7 @@ class Zettel extends Oculus{
                     function(){argos.loadEye("zettel_batch")});
             }
             if(this.access.includes("z_edit")){
-                cContext.addEntry('*', 'a', 'Neuer Zettel erstellen',
+                cContext.addEntry('*', 'a', 'Neuen Zettel erstellen',
                     function(){argos.loadEye("zettel_add")});
             }
             if(this.access.includes("z_add")){
@@ -325,7 +325,7 @@ class ZettelAdd extends Oculus{
     async load(){
         let mainBody = document.createDocumentFragment();
         mainBody.appendChild(el.closeButton(this));
-        mainBody.appendChild(el.h("Neuer Zettel erstellen",3));
+        mainBody.appendChild(el.h("Neuen Zettel erstellen",3));
         let iLemma = el.text(""); iLemma.autocomplete = "off";
         this.bindAutoComplete(iLemma, "lemma", ["id", "lemma_display"]);
         let iType = el.select(5, {5: "Ausgeschriebener Zettel", 4: "Literatur"});
