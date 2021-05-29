@@ -1212,10 +1212,12 @@
         user-select:none;
     }
     .detail_zettel *{
-        filter: opacity(50%);
+        color: gray;
+        /*filter: opacity(50%);*/
     }
     .detail_zettel.zettelExported *{
-        filter: opacity(100%);
+        color: var(--mainTxtColor);
+        /*filter: opacity(100%);*/
     }
     .stelle, .exportText, .opus{
         padding: 2px 5px;

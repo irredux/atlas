@@ -100,6 +100,7 @@ class ArachneDatabase{
     }
 
     getAll(index=null){
+        // ATTENTION: DOESNT FILTER OUT DELETED OBJECTS!
         return this.getStore(index).then((oStore) => {
             return new Promise((resolve, reject) => {
                 let getAll = oStore.getAll();
@@ -297,63 +298,56 @@ class ArachneDatabase{
             if(limit!=null){return data.slice(0, limit)}
             else{return data}
         } else {
-            let oStore = await this.getStore(orderIndex);
-            return new Promise((resolve, reject) => {
-                query = stringToQuery(query);
-                let request = oStore.openCursor();
-                let results = [];
-                let i = 0;
-                request.onsuccess = () => {
-                    let cursor = request.result;
-                    if(cursor && (limit===null || i < limit)){
-                        let found = false;
-                        for (const q of query){
-                            found = false;
-                            if(q.col === "*"){
-                                // any row
-                                let re = null
-                                if(q.regex == true){re = new RegExp(q.value, "g")}
-                                for(const key in cursor.value){
-                                    if(q.negative === false && `${cursor.value[key]}`.indexOf(q.value)>-1){found = true}
-                                    else if(q.negative === true && `${cursor.value[key]}`.indexOf(q.value)===-1){found = true}
-                                    else if(q.regex === true && `${cursor.value[key]}`.match(re)){found = true}
-                                }
-                            } else if (Object.keys(cursor.value).includes(q.col)){
-                                // row given
-                                if(q.regex === false && q.negative === false  &&
-                                    q.greater === false && q.smaller === false &&
-                                    cursor.value[q.col] == q.value){found = true}
-                                else if(q.regex === false && q.negative === true &&
-                                    q.greater === false && q.smaller === false &&
-                                    cursor.value[q.col] != q.value){found = true}
-                                else if(q.regex === false && q.greater === true &&
-                                    cursor.value[q.col] > q.value){found = true}
-                                else if(q.regex === false && q.smaller === true &&
-                                    cursor.value[q.col] < q.value){found = true}
-                                else if(q.regex == true){
-                                    // regex
-                                    const re = new RegExp(q.value, "g");
-                                    if(cursor.value[q.col].match(re)){found = true}
-                                }
-                            }
-                            if(!found){break}
+            query = stringToQuery(query);
+            let results = [];
+            let i = 0;
+            for (const item of data){
+                let found = false;
+                for (const q of query){
+                    found = false;
+                    if(q.col === "*"){
+                        // any row
+                        let re = null
+                        if(q.regex == true){re = new RegExp(q.value, "g")}
+                        for(const key in item){
+                            if(q.negative === false && `${item[key]}`.indexOf(q.value)>-1){found = true}
+                            else if(q.negative === true && `${item[key]}`.indexOf(q.value)===-1){found = true}
+                            else if(q.regex === true && `${item[key]}`.match(re)){found = true}
                         }
-                        if(found){
-                            i++;
-                            if(returnCols==="*"){results.push(cursor.value)}
-                            else{
-                                let rItem = {};
-                                for(const returnCol of returnCols){
-                                    rItem[returnCol] = cursor.value[returnCol];
-                                }
-                                results.push(rItem);
-                            }
+                    } else if (Object.keys(item).includes(q.col)){
+                        // row given
+                        if(q.regex === false && q.negative === false  &&
+                            q.greater === false && q.smaller === false &&
+                            item[q.col] == q.value){found = true}
+                        else if(q.regex === false && q.negative === true &&
+                            q.greater === false && q.smaller === false &&
+                            item[q.col] != q.value){found = true}
+                        else if(q.regex === false && q.greater === true &&
+                            item[q.col] > q.value){found = true}
+                        else if(q.regex === false && q.smaller === true &&
+                            item[q.col] < q.value){found = true}
+                        else if(q.regex == true){
+                            // regex
+                            const re = new RegExp(q.value, "g");
+                            if(item[q.col].match(re)){found = true}
                         }
-                        cursor.continue();
-                    } else {resolve(results)}
+                    }
+                    if(!found){break}
                 }
-                request.onerror = () => {reject()}
-            });
+                if(found){
+                    i++;
+                    if(returnCols==="*"){results.push(item)}
+                    else{
+                        let rItem = {};
+                        for(const returnCol of returnCols){
+                            rItem[returnCol] = item[returnCol];
+                        }
+                        results.push(rItem);
+                    }
+                    if(limit!=null&&limit===i){break}
+                }
+            }
+            return results;
         }
     }
 }

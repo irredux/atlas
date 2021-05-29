@@ -7,7 +7,8 @@ class Zettel extends Oculus{
     constructor(res, resId=null, access=[], main=false){
         super(res, resId, access, main);
     }
-    async load(query="*"){
+    async load(){
+        if(this.query==null){this.query = "*"}
         const searchFields = {
             lemma: {name: "Lemma", des: "Durchsucht alle Lemmata nach einer bestimmten Zeichenfolge."},
             type: {name: "Typ", des: "Sucht nach Zetteltypen (1: verzettelt, 2: Exzerpt, 3: Index, 4: Literatur)"},
@@ -17,14 +18,13 @@ class Zettel extends Oculus{
             author_id: {name: "Autor-ID", des: "Durchsucht die verknüpften Autor-IDs."},
             id: {name: "ID", des: "Durchsucht die IDs"}
         };
-        const displayQuery = query;
+        const displayQuery = this.query;
         for(const field in searchFields){
             const reg = new RegExp(searchFields[field].name, "g");
-            query = query.replace(reg, field);
+            this.query = this.query.replace(reg, field);
         }
-        this.query = query; // export
 
-        this.results = await arachne.zettel.search(query, "*", "zettel", false);
+        this.results = await arachne.zettel.search(this.query, "*", "zettel", 10000);
         this.resultLst = [];
         for(const result of this.results){this.resultLst.push(result.id)};
         this.ctn.innerHTML = "";
@@ -37,7 +37,7 @@ class Zettel extends Oculus{
         searchBar.id = "searchBar"; searchBar.classList.add("card");
         let sbInput = document.createElement("INPUT");
         sbInput.type = "text";
-        (query === "*") ? sbInput.value = "" : sbInput.value = displayQuery;
+        (this.query === "*") ? sbInput.value = "" : sbInput.value = displayQuery;
         sbInput.id = "searchBarQuery";
         sbInput.spellcheck = "false"; sbInput.autocomplete = "off";
         sbInput.autocorrect = "off"; sbInput.autocapitalize = "off";
@@ -45,7 +45,9 @@ class Zettel extends Oculus{
             if(event.keyCode == 13){
                 let query = sbInput.value;
                 (query === "") ? query = "*" : query = query;
-                this.load(query);
+                this.query = query;
+                this.refresh();
+                //this.load(query);
             }
         }
 /*
@@ -62,7 +64,9 @@ class Zettel extends Oculus{
         sbButton.onclick = () => {
             let query = sbInput.value;
             (query === "") ? query = "*" : query = query;
-            this.load(query);
+            this.query = query;
+            this.refresh();
+            //this.load(query);
         }
         searchBar.appendChild(sbButton);
         let helpContent = `
@@ -413,7 +417,25 @@ class ZettelAdd extends Oculus{
                     }
                 }
                 arachne.zettel.save(data)
-                .then((r) => {this.refresh()})
+                .then((z) => {
+                    if(argos.main.res === "project"){
+                        const articleId = parseInt(argos.main.currentArticle.dataset.article_id);
+                        arachne.zettel_lnk.save({
+                            zettel_id: z.id,
+                            article_id: articleId
+                        }).
+                            then(() => arachne.zettel_lnk.bound(
+                                    [articleId, "", 0, 0, 0],
+                                    [(articleId+1), "?", 9999, 9999, 9999],
+                                    "zettel", false
+                                )).
+                            then(nZettels => {
+                                const setZettel = new CustomEvent("setZettel", {detail: nZettels});
+                                argos.main.currentArticle.dispatchEvent(setZettel);
+                            });
+                    }
+                    this.refresh();
+                })
                 .catch((e) => {throw e});
             } else {alert("Kein gültiges Lemma eingetragen!")}
         }
@@ -664,7 +686,7 @@ class ZettelDetail extends Oculus{
                     % end
                  */
                 let tbl2 = [["Datum (opera-Liste):", dateDisplay],
-                    ["Bsp. Stellenangabe", prevWork.citation], ["Edition:", prevEditions]];
+                    ["Bsp. Stellenangabe", html(prevWork.citation)], ["Edition:", prevEditions]];
                 /*<td style='width: 175px;'>Datum (<i>opera</i>-Liste):</td>*/
                 return el.table(tbl2);
             }
@@ -685,12 +707,12 @@ class ZettelDetail extends Oculus{
                         id: this.resId,
                         in_use: iMLW.value,
                         type: iType.value,
-                        lemma_id: iLemma.dataset.selected,
-                        work_id: iWork.dataset.selected,
                         stellenangabe: iStelle.value,
                         stellenangabe_bib: iBib.value,
                         txt: iTxt.value
                     };
+                    if(iWork.dataset.selected!="null"){data.work_id = iWork.dataset.selected}
+                    if(iLemma.dataset.selected!="null"){data.lemma_id = iLemma.dataset.selected}
                     if(iPageNr.value != "" && !isNaN(parseInt(iPageNr.value))){data.page_nr = iPageNr.value}
                     if(iDateOwn.value != "" && !isNaN(parseInt(iDateOwn.value))){
                         data.date_own = iDateOwn.value;
@@ -714,19 +736,35 @@ class ZettelDetail extends Oculus{
                         id: this.resId,
                         in_use: iMLW.value,
                         type: iType.value,
-                        lemma_id: iLemma.dataset.selected,
-                        work_id: iWork.dataset.selected,
                         stellenangabe: iStelle.value,
                         stellenangabe_bib: iBib.value,
                         txt: iTxt.value
                     };
+                    if(iWork.dataset.selected!="null"){data.work_id = iWork.dataset.selected}
+                    if(iLemma.dataset.selected!="null"){data.lemma_id = iLemma.dataset.selected}
                     if(iPageNr.value != "" && !isNaN(parseInt(iPageNr.value))){data.page_nr = iPageNr.value}
                     if(iDateOwn.value != "" && !isNaN(parseInt(iDateOwn.value))){
                         data.date_own = iDateOwn.value;
                         data.date_own_display = iDateOwnDisplay.value;
                     }
                     arachne.zettel.save(data).
-                        then(() => {el.status("saved");this.refresh();}).
+                        then(() => {
+                            el.status("saved");
+                            this.refresh();
+                            /*
+                            if(argos.main.res === "project"){
+                                let zBox = document.querySelector(`.detail_zettel[id="${this.resId}"]`).parentNode;
+                                console.log(zBox);
+                                arachne.zettel_lnk.bound([parseInt(zBox.dataset.article_id), "", 0, 0, 0], [(parseInt(zBox.dataset.article_id)+1), "?", 9999, 9999, 9999], "zettel", false).
+                                    then(nZettels => {
+                                        console.log(nZettels);
+                                        const setZettel = new CustomEvent("setZettel", {detail: nZettels});
+                                        console.log(zBox);
+                                        zBox.dispatchEvent(setZettel);
+                                    });
+                            }
+                            */
+                        }).
                         catch(e => {throw e});
                 }
             }

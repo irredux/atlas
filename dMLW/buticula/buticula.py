@@ -18,6 +18,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import asyncio
 from binascii import hexlify
 from configparser import ConfigParser
 from datetime import datetime, timedelta, date
@@ -28,6 +29,7 @@ from operator import itemgetter
 from os import path, urandom, mkdir, remove, listdir, rename
 import re
 from shutil import rmtree, move
+import subprocess
 import sys
 import tempfile
 from uuid import uuid4
@@ -163,6 +165,7 @@ class Buticula(Bottle):
 
         # functions
         self.route("/exec/<res>", callback=self.exec_on_server, method="GET");
+        self.route("/exec/<res>", callback=self.exec_on_server, method="POST");
 
         # OLD ROUTES!
         self.route("/export_project/<mlw_file>", callback=self.f_mlw)
@@ -171,6 +174,25 @@ class Buticula(Bottle):
     # ################################################################
     # -II- assorted methods
     # ################################################################
+    def create_mlw_file(self, i_data):
+        with open(self.p + "/MLW-Software/input.mlw", "wb") as i_file:
+            i_file.write(i_data)
+        #server_status = subprocess.run(f"python {self.p}/MLW-Software/MLWServer.py --status", shell=True)
+        #print("SERVER STATUS:", server_status)
+        subprocess.run(f"python {self.p}/MLW-Software/MLWServer.py --startserver&", shell=True)
+        if path.exists(self.p + "/MLW-Software/Ausgabe"):
+            rmtree(self.p + "/MLW-Software/Ausgabe");
+        subprocess.run(
+                f"python {self.p}/MLW-Software/MLWServer.py {self.p}/MLW-Software/input.mlw",
+                shell=True)
+        subprocess.run(f"python {self.p}/MLW-Software/MLWServer.py --stopserver", shell=True)
+        o_data = {}
+        with open(self.p + "/MLW-Software/Ausgabe/HTML-Vorschau/input.html", "r") as html_file:
+            o_data["html"] = html_file.read()
+        with open(self.p + "/MLW-Software/Ausgabe/Fehlermeldungen_fuer_die_Autoren/input.txt", "r") as err_file:
+            o_data["err"] = err_file.read()
+        return json.dumps(o_data)
+
     def add_view_path(self, path):
         # used in secondary version
         TEMPLATE_PATH.insert(0, path)
@@ -466,12 +488,14 @@ class Buticula(Bottle):
     def exec_on_server(self, res):
         user = self.auth()
         if res == "opera_update" and "o_edit" in user["access"]:
-            self.create_opera();
+            self.create_opera()
             return HTTPResponse(status=200) # OK
-        if res == "library_update" and "l_edit" in user["access"]:
-            self.db.command("CALL update_library");
-            self.create_opera();
+        elif res == "library_update" and "l_edit" in user["access"]:
+            self.db.command("CALL update_library")
+            self.create_opera()
             return HTTPResponse(status=200) # OK
+        elif res == "mlw_preview" and "editor" in user["access"]:
+            return self.create_mlw_file(request.body.read())
         else: return HTTPResponse(status=404) # not found 
 
 

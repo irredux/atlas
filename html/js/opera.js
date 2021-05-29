@@ -21,7 +21,7 @@ class Library extends Oculus{
             const reg = new RegExp(searchFields[field].name, "g");
             query = query.replace(reg, field);
         }
-        let results = await arachne.edition.search(query, "*", null, false);
+        let results = await arachne.edition.search(query, "*", null);
         this.ctn.innerHTML = "";
         let mainBody = document.createDocumentFragment();
 

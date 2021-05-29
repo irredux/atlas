@@ -191,8 +191,8 @@ class Arachne(object):
         r_id = self.command(query, values=html_vals, commit=True)
 
         # save datetime of change
-        if (table == "work" or table == "author") and save_stat == True:
-            self.save("stat", {table: datetime.now()}, 1)
+        #if (table == "work" or table == "author") and save_stat == True:
+        #    self.save("stat", {table: datetime.now()}, 1)
 
         # lastrowid returns  0 on "UPDATE"
         if id == None:

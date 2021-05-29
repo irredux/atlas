@@ -499,6 +499,7 @@ class AutoComplete{
 		// create div around input
 		let divContainer = document.createElement("DIV");
 		divContainer.style.position = "absolute";
+        divContainer.style.zIndex = "999999999";
 		//divContainer.style.display = "inline-block";
         const pos = iEl.getBoundingClientRect();
         divContainer.style.width = pos.width<200?"200px":`${pos.width}px`;

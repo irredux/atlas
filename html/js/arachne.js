@@ -11,14 +11,18 @@ class ArachneWrapper{
         this.dbVersion = dbVersion;
         this.optimize = optimize;
         this.token = token;
+        this.workId = 0;
     }
     load(){
+        this.workId ++;
+        const cWorkId = this.workId;
         return new Promise((resolve, reject) => {
             this.worker.onmessage = msg => {
-                if(msg.data){resolve()}
+                if(msg.data.workId === cWorkId){resolve()}
                 else{reject()}
             }
             this.worker.postMessage({
+                workId: this.workId,
                 request: "LOAD",
                 tblName: this.tblName,
                 dbName: this.dbName,
@@ -29,65 +33,100 @@ class ArachneWrapper{
             });
         });
     }
-    version(){
+    update(){
+        this.workId ++;
+        const cWorkId = this.workId;
         return new Promise((resolve, reject) => {
             this.worker.onmessage = msg => {
-                let data = msg.data;
-                switch(data.status){
-                    case 200:
-                        resolve(data.version);
-                        break;
-                    case 401:
-                        argos.loadMain("login");
-                        break;
-                    default:
-                        reject();
-                }
-            }
-            this.worker.postMessage({request: "VERSION"});
-        });
-    }
-    search(query, returnCols="*", orderIndex = null){
-        return new Promise((resolve, reject) => {
-            this.worker.onmessage = msg => {
-                let data = msg.data;
-                resolve(data);
-                /*
-                switch(data.status){
-                    case 200:
-                        resolve(data.results);
-                        break;
-                    case 401:
-                        argos.loadMain("login");
-                        break;
-                    default:
-                        reject();
-                }*/
+                if(msg.data.workId === cWorkId){resolve()}
+                else{reject()}
             }
             this.worker.postMessage({
+                workId: this.workId,
+                request: "UPDATE",
+                tblName: this.tblName,
+                dbName: this.dbName,
+                dbVersion: this.dbVersion,
+                optimize: this.optimize, 
+                sOrder: argos.userDisplay.sOrder,
+                token: this.token
+            });
+        });
+    }
+    version(){
+        this.workId ++;
+        const cWorkId = this.workId;
+        return new Promise((resolve, reject) => {
+            this.worker.onmessage = msg => {
+                if(msg.data.workId === cWorkId){
+                    let data = msg.data;
+                    switch(data.status){
+                        case 200:
+                            resolve(data.version);
+                            break;
+                        case 401:
+                            argos.loadMain("login");
+                            break;
+                        default:
+                            reject();
+                    }
+                }
+            }
+            this.worker.postMessage({workId: this.workId, request: "VERSION"});
+        });
+    }
+    search(query, returnCols="*", orderIndex = null, limit=null){
+        this.workId ++;
+        const cWorkId = this.workId;
+        return new Promise((resolve, reject) => {
+            this.worker.onmessage = msg => {
+                if(msg.data.workId === cWorkId){
+                    let data = msg.data;
+                    resolve(data.results);
+                    /*
+                    switch(data.status){
+                        case 200:
+                            resolve(data.results);
+                            break;
+                        case 401:
+                            argos.loadMain("login");
+                            break;
+                        default:
+                            reject();
+                    }*/
+                }
+            }
+            this.worker.postMessage({
+                workId: this.workId,
                 request: "SEARCH",
                 query: query,
                 returnCols: returnCols,
-                orderIndex: orderIndex
+                orderIndex: orderIndex,
+                limit: limit
             });
         });
     }
     is(searchValue, index=null, removeArray = true){
+        this.workId ++;
+        const cWorkId = this.workId;
         return new Promise((resolve, reject) => {
             this.worker.onmessage = msg => {
-                let data = msg.data;
-                switch(data.status){
-                    case 200:
-                        resolve(data.results);
-                        break;
-                    case 401:
-                        argos.loadMain("login");
-                        break;
-                    default:
-                        reject();
+                if(msg.data.workId === cWorkId){
+                    let data = msg.data;
+                    switch(data.status){
+                        case 200:
+                            resolve(data.results);
+                            break;
+                        case 401:
+                            argos.loadMain("login");
+                            break;
+                        default:
+                            reject();
+                    }
                 }
             }
             this.worker.postMessage({
+                workId: this.workId,
                 request: "IS",
                 searchValue: searchValue,
                 index: index,
@@ -96,21 +135,26 @@ class ArachneWrapper{
         });
     }
     bound(lowerSearch, upperSearch, index=null, removeArray = false){
+        this.workId ++;
+        const cWorkId = this.workId;
         return new Promise((resolve, reject) => {
             this.worker.onmessage = msg => {
-                let data = msg.data;
-                switch(data.status){
-                    case 200:
-                        resolve(data.results);
-                        break;
-                    case 401:
-                        argos.loadMain("login");
-                        break;
-                    default:
-                        reject();
+                if(msg.data.workId === cWorkId){
+                    let data = msg.data;
+                    switch(data.status){
+                        case 200:
+                            resolve(data.results);
+                            break;
+                        case 401:
+                            argos.loadMain("login");
+                            break;
+                        default:
+                            reject();
+                    }
                 }
             }
             this.worker.postMessage({
+                workId: this.workId,
                 request: "BOUND",
                 lowerSearch: lowerSearch,
                 upperSearch: upperSearch,
@@ -120,63 +164,78 @@ class ArachneWrapper{
         });
     }
     delete(rowId){
+        this.workId ++;
+        const cWorkId = this.workId;
         return new Promise((resolve, reject) => {
             this.worker.onmessage = msg => {
-                let data = msg.data;
-                switch(data.status){
-                    case 200:
-                        resolve(data.result);
-                        break;
-                    case 401:
-                        argos.loadMain("login");
-                        break;
-                    default:
-                        reject();
+                if(msg.data.workId === cWorkId){
+                    let data = msg.data;
+                    switch(data.status){
+                        case 200:
+                            resolve(data.result);
+                            break;
+                        case 401:
+                            argos.loadMain("login");
+                            break;
+                        default:
+                            reject();
+                    }
                 }
             }
             this.worker.postMessage({
+                workId: this.workId,
                 request: "DELETE",
                 rowId: rowId
             });
         });
     }
     save(newValues){
+        this.workId ++;
+        const cWorkId = this.workId;
         return new Promise((resolve, reject) => {
             this.worker.onmessage = msg => {
-                let data = msg.data;
-                switch(data.status){
-                    case 200:
-                        resolve(data.result);
-                        break;
-                    case 401:
-                        argos.loadMain("login");
-                        break;
-                    default:
-                        reject();
+                if(msg.data.workId === cWorkId){
+                    let data = msg.data;
+                    switch(data.status){
+                        case 200:
+                            resolve(data.result);
+                            break;
+                        case 401:
+                            argos.loadMain("login");
+                            break;
+                        default:
+                            reject();
+                    }
                 }
             }
             this.worker.postMessage({
+                workId: this.workId,
                 request: "SAVE",
                 newValues: newValues
             });
         });
     }
     getAll(index=null){
+        this.workId ++;
+        const cWorkId = this.workId;
         return new Promise((resolve, reject) => {
             this.worker.onmessage = msg => {
-                let data = msg.data;
-                switch(data.status){
-                    case 200:
-                        resolve(data.results);
-                        break;
-                    case 401:
-                        argos.loadMain("login");
-                        break;
-                    default:
-                        reject();
+                if(msg.data.workId === cWorkId){
+                    let data = msg.data;
+                    switch(data.status){
+                        case 200:
+                            resolve(data.results);
+                            break;
+                        case 401:
+                            argos.loadMain("login");
+                            break;
+                        default:
+                            reject();
+                    }
                 }
             }
             this.worker.postMessage({
+                workId: this.workId,
                 request: "GETALL",
                 index: index
             });
