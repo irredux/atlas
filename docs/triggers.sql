@@ -167,8 +167,8 @@ DELIMITER ;
 /* ***************************************************** */
 
 DELIMITER //
-CREATE OR REPLACE TRIGGER scan_create
-BEFORE INSERT ON scan
+CREATE OR REPLACE TRIGGER scan_lnk_create
+BEFORE INSERT ON scan_lnk
 FOR EACH ROW
     BEGIN
         SET new.c_date = NOW(6);
@@ -177,8 +177,8 @@ FOR EACH ROW
 DELIMITER ;
 
 DELIMITER //
-CREATE OR REPLACE TRIGGER scan_update
-BEFORE UPDATE ON scan
+CREATE OR REPLACE TRIGGER scan_lnk_update
+BEFORE UPDATE ON scan_lnk
 FOR EACH ROW
     BEGIN
         SET new.u_date = NOW(6);
