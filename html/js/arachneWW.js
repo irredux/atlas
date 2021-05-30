@@ -100,6 +100,7 @@ class ArachneDatabase{
     }
 
     getAll(index=null){
+        this.update();
         return this.getStore(index).then((oStore) => {
             return new Promise((resolve, reject) => {
                 let getAll = oStore.getAll();
@@ -131,6 +132,7 @@ class ArachneDatabase{
     }
 
     bound(lowerSearch, upperSearch, index=null, removeArray = false){
+        this.update();
         return this.getStore(index).then((oStore) => {
             return new Promise((resolve, reject) => {
                 let cursorRequest  = oStore.openCursor(IDBKeyRange.bound(lowerSearch, upperSearch));
@@ -156,6 +158,7 @@ class ArachneDatabase{
     }
 
     is(searchValue, index=null, removeArray = true){
+        this.update();
         return this.getStore(index).then((oStore) => {
             return new Promise((resolve, reject) => {
                 let cursorRequest  = oStore.openCursor(IDBKeyRange.only(searchValue));
@@ -203,44 +206,46 @@ class ArachneDatabase{
         });
     }
 
-    async update(){
-        const startTime = Date.now();
-        const url = `/data/${this.tblName}?u_date=${await this.version()}`;
-        const newData = await fetch(url, {
-            headers: {"Authorization": `Bearer ${this.token}`}
-        })
-            .then(response => {
-                if(response.status === 401){postMessage({status:401})}
-                else if(response.status === 200){return response.json()}
+    async update(forceUpdate = false){
+        if(forceUpdate === true || (Date.now()-this.lastUpdated)>60000){
+            this.lastUpdated = Date.now()
+            const url = `/data/${this.tblName}?u_date=${await this.version()}`;
+            const newData = await fetch(url, {
+                headers: {"Authorization": `Bearer ${this.token}`}
             })
-            .then(items => { return new Promise((resolve, reject) => {
-                if(items.length>0){
-                    let request = indexedDB.open(this.dbName, this.dbVersion);
-                    request.onerror = e => {reject(e)}
-                    request.onsuccess = () => {
-                        let db = request.result;
-                        let tAction = db.transaction(this.tblName, "readwrite");
-                        let oStore = tAction.objectStore(this.tblName);
-                        for(const item of items){oStore.put(item)}
-                        tAction.oncomplete = () => {
-                            resolve(true);
+                .then(response => {
+                    if(response.status === 401){postMessage({status:401})}
+                    else if(response.status === 200){return response.json()}
+                })
+                .then(items => { return new Promise((resolve, reject) => {
+                    if(items.length>0){
+                        let request = indexedDB.open(this.dbName, this.dbVersion);
+                        request.onerror = e => {reject(e)}
+                        request.onsuccess = () => {
+                            let db = request.result;
+                            let tAction = db.transaction(this.tblName, "readwrite");
+                            let oStore = tAction.objectStore(this.tblName);
+                            for(const item of items){oStore.put(item)}
+                            tAction.oncomplete = () => {
+                                resolve(true);
+                            }
                         }
+                    }else{
+                        resolve(false);
                     }
-                }else{
-                    resolve(false);
-                }
-            })})
-            .catch(e => {throw e});
+                })})
+                .catch(e => {throw e});
 
-        // remove "deleted"
-        if(newData){await this.removeDeleted()}
-        
-        // optimize?
-        if(this.optimize && (newData || this.data == null)){
-            this.data = null;
-            let sIndex = null;
-            if(this.sOrder!=1){sIndex=this.tblName}
-            this.getAll(sIndex).then(all => {this.data = all}).catch(e => {throw e});
+            // remove "deleted"
+            if(newData){await this.removeDeleted()}
+            
+            // optimize?
+            if(this.optimize && (newData || this.data == null)){
+                this.data = null;
+                let sIndex = null;
+                if(this.sOrder!=1){sIndex=this.tblName}
+                this.getAll(sIndex).then(all => {this.data = all}).catch(e => {throw e});
+            }
         }
     }
 
@@ -250,7 +255,7 @@ class ArachneDatabase{
             headers: {"Authorization": `Bearer ${this.token}`}
         });
         if(response.status===200){
-            await this.update();
+            await this.update(true);
             return true;
         } else {
             throw `DB ERROR: entry not deleted. Status: ${response.status}`
@@ -277,10 +282,10 @@ class ArachneDatabase{
         });
         if(response.status===201 && method==="POST"){
             const newId = parseInt(await response.text());
-            await this.update();
+            await this.update(true);
             return await this.is(newId)
         } else if(response.status===200 && method==="PATCH"){
-            await this.update();
+            await this.update(true);
             return rId;
         } else {
             throw `DB ERROR: entry not saved. Status: ${response.status}`
@@ -288,6 +293,7 @@ class ArachneDatabase{
     }
 
     async search(query, returnCols="*", orderIndex = null, limit=null){
+        this.update();
         // query: object containing cols/value pairs as key/value
         // if query === "*" all data will be returned
         let data = []
@@ -365,8 +371,14 @@ onmessage = async (input) => {
     switch(data.request){
         case "LOAD":
             athene.load(data.tblName, data.dbName, data.dbVersion, data.optimize, data.sOrder, data.token);
-            await athene.update();
+            await athene.update(true);
             postMessage({workId: data.workId});
+            break;
+        case "STRINGTOQUERY":
+            postMessage({
+                workId: data.workId,
+                query: stringToQuery(data.string)
+            });
             break;
         case "VERSION":
             postMessage({

@@ -24,7 +24,7 @@ class Zettel extends Oculus{
             this.query = this.query.replace(reg, field);
         }
 
-        this.results = await arachne.zettel.search(this.query, "*", "zettel", 10000);
+        this.results = await arachne.zettel.search(this.query, "*", "zettel", 10001);
         this.resultLst = [];
         for(const result of this.results){this.resultLst.push(result.id)};
         this.ctn.innerHTML = "";
@@ -100,9 +100,14 @@ class Zettel extends Oculus{
         } else {
             let resultTxt = document.createElement("DIV");
             resultTxt.classList.add("minorTxt");
-            resultTxt.textContent = (this.results.length === 1)
-                ? "1 Resultat."
-                : `${this.results.length} Resultate.`;
+            if(this.results.length === 1){
+                resultTxt.textContent = "1 Resultat.";
+            } else if(this.results.length < 10001){
+                resultTxt.textContent = `${this.results.length} Resultate.`;
+            } else {
+                resultTxt.textContent =  "+10000 Resultate.";
+                this.results.pop();
+            }
             resultTxt.style.paddingLeft = "20px";
             resultBox.appendChild(resultTxt);
             let zettelBox = document.createElement("DIV");
@@ -470,9 +475,11 @@ class ZettelBatch extends Oculus{
             if(iLemma.dataset.selected == null){alert("Kein gültiges Lemma ausgewählt!")
             } else if(argos.main.selMarker.main.ids.length == 0){alert("Keine Zettel ausgewählt!")
             } else {
+                document.body.style.cursor = "wait";
                 for(const id of argos.main.selMarker.main.ids){
                     await arachne.zettel.save({ id: id, lemma_id: iLemma.dataset.selected});
                 }
+                document.body.style.cursor = "initial";
                 el.status("saved");
             }
         }
@@ -486,9 +493,11 @@ class ZettelBatch extends Oculus{
             if(iWork.dataset.selected == null){alert("Kein gültiges Werk ausgewählt!")
             } else if(argos.main.selMarker.main.ids.length == 0){alert("Keine Zettel ausgewählt!")
             } else {
+                document.body.style.cursor = "wait";
                 for(const id of argos.main.selMarker.main.ids){
                     await arachne.zettel.save({ id: id, work_id: iWork.dataset.selected});
                 }
+                document.body.style.cursor = "initial";
                 el.status("saved");
             }
         }
@@ -497,6 +506,17 @@ class ZettelBatch extends Oculus{
         let zbZType = el.tabContainer("zb_zTyp");
         let iType = el.select(1, {1: "verzettelt", 2: "Exzerpt", 3: "Index", 4: "Literatur"});
         let submitType = el.button("übernehmen");
+        submitType.onclick = async () => {
+            if(argos.main.selMarker.main.ids.length == 0){alert("Keine Zettel ausgewählt!")}
+            else {
+                document.body.style.cursor = "wait";
+                for(const id of argos.main.selMarker.main.ids){
+                    await arachne.zettel.save({ id: id, type: iType.value});
+                }
+                document.body.style.cursor = "initial";
+                el.status("saved");
+            }
+        }
         zbZType.appendChild(el.table([["Zettel-Typ:", iType], ["", submitType]]));
         tBody.appendChild(zbZType);
 
@@ -511,6 +531,20 @@ class ZettelBatch extends Oculus{
                 }
                 let iProject = el.select(projects[0].id, selData);
                 let submitProject = el.button("übernehmen");
+                submitProject.onclick = async () => {
+                    if(argos.main.selMarker.main.ids.length == 0){alert("Keine Zettel ausgewählt!")}
+                    else {
+                        document.body.style.cursor = "wait";
+                        const defaultArticle = await arachne.article.is([parseInt(iProject.value), 0, 0], "article");
+                        for(const id of argos.main.selMarker.main.ids){
+                            await arachne.zettel_lnk.save({
+                                zettel_id: id,
+                                article_id: defaultArticle.id});
+                        }
+                        el.status("saved");
+                        document.body.style.cursor = "initial";
+                    }
+                }
                 zbProject.appendChild(el.table([["Zu Projekt hinzufügen:", iProject], ["", submitProject]]));
             } else {
                 zbProject.textContent = "Keine aktiven Projekte verfügbar. Erstellen Sie ein neues Projekt im Menü 'Editor'.";
@@ -521,47 +555,12 @@ class ZettelBatch extends Oculus{
         mainBody.appendChild(tHeader);
         mainBody.appendChild(tBody);
         this.ctn.appendChild(mainBody);
+        this.ctn.style.padding = "15px 10px 0 10px";
 
         this.setTabs = true;
-        /*
-        me.ctn.querySelector("input#typeBatchSubmit").addEventListener("click", function(){
-            if(argos.o["zettel"].selMarker["main"]["ids"].length == 0){alert("Keine Zettel ausgewählt!")
-            } else {me.batchUpdateData(argos.o["zettel"].selMarker["main"]["ids"])}
-        });
-        */
     }
 }
-/*
-    }, "zettel_batch": function(me){
 
-        // set select of project
-        var cSelect = me.ctn.querySelector("select[name=article_id]");
-        cSelect.textContent = "";
-        for(var project of argos.dataList["projects"].filter({"status": 1})){
-            let cOption = document.createElement("OPTION");
-            cOption.id = project["article_id"];
-            cOption.textContent = project["name"];
-            cSelect.appendChild(cOption);
-        }
-        if(cSelect.textContent == ""){
-            let cWarning = document.createElement("DIV");
-            cWarning.textContent = "Erstellen Sie zuerst ein Projekt in der Projektübersicht.";
-            cWarning.style.padding = "20px 10px";
-            me.ctn.querySelector(".tab_container[name=zb_project]").textContent = "";
-            me.ctn.querySelector(".tab_container[name=zb_project]").appendChild(cWarning);
-        } else {
-            me.ctn.querySelector("input#projectBatchSubmit").addEventListener("click", function(){
-                if(argos.o["zettel"].selMarker["main"]["ids"].length == 0){alert("Keine Zettel ausgewählt!")
-                } else {
-                var addList = [];
-                for (var item of argos.o["zettel"].selMarker["main"]["ids"]){
-                    addList.push({"data": {"article_id": me.ctn.querySelector("select[name=article_id] option:checked").id, "zettel_id": item}});
-                }
-                me._post("/batch", {"res": "zettel_lnk", "mode": "create", "items": addList}, function(){me.refresh()});
-                }
-            });
-        }
-    */
 class ZettelDetail extends Oculus{
     constructor(res, resId=null, access=[], main=false){
         super(res, resId, access, main);

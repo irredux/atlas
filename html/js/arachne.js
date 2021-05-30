@@ -13,6 +13,20 @@ class ArachneWrapper{
         this.token = token;
         this.workId = 0;
     }
+    stringToQuery(string){
+        this.workId ++;
+        const cWorkId = this.workId;
+        return new Promise((resolve, reject) => {
+            this.worker.onmessage = msg => {
+                if(msg.data.workId === cWorkId){resolve(msg.data.query)}
+            }
+            this.worker.postMessage({
+                workId: this.workId,
+                request: "STRINGTOQUERY",
+                string: string
+            });
+        });
+    }
     load(){
         this.workId ++;
         const cWorkId = this.workId;
@@ -190,6 +204,7 @@ class ArachneWrapper{
         });
     }
     save(newValues){
+        console.log("lets go...");
         this.workId ++;
         const cWorkId = this.workId;
         return new Promise((resolve, reject) => {

@@ -312,17 +312,18 @@ class LemmaToProject extends Oculus{
         else{mainBody.appendChild(el.p(`Es werden ${zettels.length} Zettel hinzugefügt.`))}
         let submitB = el.button("hinzufügen");
         submitB.onclick = async () => {
-            const article = await arachne.article.is([parseInt(proSelect.value), "000"], "default");
+            const article = await arachne.article.is([parseInt(proSelect.value), 0, 0], "article");
             const articleId = article.id;
             if(articleId > 0){
+                document.body.style.cursor = "wait";
                 for(const zettel of zettels){
                     const data = {
                         zettel_id: zettel.id,
-                        article_id: articleId,
-                        user_id: argos.userId
+                        article_id: articleId
                     };
                     await arachne.zettel_lnk.save(data);
                 }
+                document.body.style.cursor = "initial";
                 el.status("saved");
                 this.close();
             } else {

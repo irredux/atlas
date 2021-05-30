@@ -153,6 +153,7 @@ class Logout extends Oculus{
     }
     async load(){
         sessionStorage.removeItem("token");
+        localStorage.removeItem("t");
         // remove token from server
         location.href = "/";
     }

@@ -93,7 +93,8 @@ class ProjectOverview extends Oculus{
             arachne.project.save({"name": "Neues Projekt", "status": 1}).
                 then(project => arachne.article.save({
                     project_id: project.id,
-                    position: "000",
+                    sort_nr: 0,
+                    parent_id: 0,
                     name: "Unsortierte Zettel"
                 })).
                 then(() => {this.refresh()}).
@@ -103,6 +104,7 @@ class ProjectOverview extends Oculus{
         cContext.addEntry('div.projectItems.projectTrash', 'a', 'Papierkorb leeren', async () => {
             const projects = await arachne.project.is(3, "status", false);
             if(projects.length > 0 && confirm("Papierkorb wirklich leeren? Dieser Schritt kann nicht rückgängig gemacht werden.")){
+                document.body.style.cursor = "wait";
                 for(const project of projects){
                     const articles = await arachne.article.is(project.id, "project", false);
                     for(const article of articles){
@@ -112,6 +114,7 @@ class ProjectOverview extends Oculus{
                     }
                     await arachne.project.delete(project.id);
                 }
+                document.body.style.cursor = "initial";
                 this.refresh();
             }
         });
@@ -258,6 +261,7 @@ class Project extends Oculus{
             mBoxDelete.innerHTML = "&#x2715;";
             mBoxDelete.onclick= async () => {
                 if(confirm("Soll die Gruppe wirklich gelöscht werden? Alle Untergruppen und die darin befindlichen Zettel werden ebenfalls aus dem Projekt entfernt.")){
+                    document.body.style.cursor = "wait";
                     let aLst = [article.id];
                     let zLst = [];
                     mBox.querySelectorAll(".mBox").forEach((e) => {
@@ -271,6 +275,7 @@ class Project extends Oculus{
                     mBox.remove();
                     mBoxAfter.remove();
                     dBox.remove();
+                    document.body.style.cursor = "initial";
                 }
             } 
             mBoxText.appendChild(mBoxDelete);
@@ -509,12 +514,16 @@ class Project extends Oculus{
                 }}).
                 catch(e => {alert("Ein Fehler ist aufgetreten! "+e);argos.loadMain("project_overview");});
         });
-        /*
-let cWarning = document.createElement("DIV");
-cWarning.classList.add("msgLabel");
-cWarning.style.padding = "80px";
-cWarning.textContent = "Um mit der Arbeit zu beginnen, fügen Sie dem Projekt Zettel hinzu! Z.B. aus der Zettel-Datenbank.";
-        */
+        console.log(document.querySelectorAll(".dBox").length === 0);
+        if(document.querySelectorAll(".dBox").length===0){
+            let cWarning = document.createElement("DIV");
+            cWarning.classList.add("msgLabel");
+            cWarning.style.padding = "80px";
+            cWarning.textContent = "Das Projekt ist leer. Um mit der Arbeit zu beginnen, fügen Sie dem Projekt Zettel hinzu! Z.B. aus der Zettel-Datenbank oder der Lemma-Liste.";
+            this.ctn.innerHTML = "";
+            this.ctn.style.backgroundColor = "var(--mainBG)";
+            this.ctn.appendChild(cWarning);
+        }
         /* const rule = new Rules();
         rule.check(this.ctn);
         */

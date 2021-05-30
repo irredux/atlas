@@ -53,11 +53,13 @@ class Viewer extends Oculus{
                 .then(newImg => {
                     let nURL = URL.createObjectURL(newImg);
                     img.src = nURL;
-                    document.getElementById("fullTextArea").value = "";
-                    for(const scan of scans){
-                        if(pageSelect.value == scan.id){
-                            document.getElementById("fullTextArea").value = scan.full_text;
-                            break;
+                    if(this.editMode === true){
+                        document.getElementById("fullTextArea").value = "";
+                        for(const scan of scans){
+                            if(pageSelect.value == scan.id){
+                                document.getElementById("fullTextArea").value = scan.full_text;
+                                break;
+                            }
                         }
                     }
                 })
@@ -80,6 +82,7 @@ class Viewer extends Oculus{
         if(argos.access.includes("e_edit")){
             let editModeButton = el.button("Volltext bearbeiten");
             editModeButton.onclick = () => {
+                this.editMode = true;
                 imgDisplay.style.width="50%";
                 let fullText = document.createElement("DIV");
                 fullText.classList.add("fullText");

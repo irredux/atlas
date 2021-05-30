@@ -23,15 +23,24 @@ export class ShortCuts{
         this.add("user_access", "w", arg.popEye);
         // project
         this.add("project", "w", arg.popEye);
-        this.add("project", "a", function(){editArticleStructure(argos.o.project)});
+        this.add("project", "a", function(){argos.main.editArticleStructure()});
         this.add("project", "d", function(){
-            if(argos.o.project.selMarker.main.lastRow!==0){
-                arg.loadEye("zettel_detail", argos.o.project.selMarker.main.lastRow);
+            if(argos.main.selMarker.main.lastRow!==0){
+                argos.main.resultLst = [];
+                for(const id of argos.main.selMarker.main.ids){
+                    argos.main.resultLst.push(parseInt(id));
+                }
+                arg.loadEye("zettel_detail", argos.main.selMarker.main.lastRow);
         }});
-        this.add("project", "p", function(){arg.loadEye("project_export",argos.o.project.resId)});
-        this.add("project", "n", function(){arg.loadEye("zettel_add")});
+        this.add("project", "p", function(){arg.loadEye("project_export",argos.main.resId)});
+        this.add("project", "m", function(){
+            if(argos.main.selMarker.main.lastRow!==0){
+                argos.main.currentArticle = document.querySelector(".detail_zettel[id='"+argos.main.selMarker.main.lastRow+"']").parentNode;
+                argos.loadEye("zettel_add");
+            }
+        });
         this.add("project", "i", function(){
-            if(argos.o.project.selMarker.main.lastRow!==0){includeInExport(argos.o.project)}
+            if(argos.main.selMarker.main.lastRow!==0){argos.main.includeInExport()}
         });
         this.add("project", "e", function(){
             const cObj = document.getElementById("edition");

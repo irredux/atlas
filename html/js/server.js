@@ -1,6 +1,5 @@
 import { Oculus } from "/file/js/oculus.js";
 import { ContextMenu } from "/file/js/contextmenu.js";
-//import { stringToQuery } from "/file/js/arachneWW.js";
 import "/file/js/chart.js";
 
 export { Administration, AdministrationDetail, Statistics, Tests };
@@ -243,7 +242,7 @@ class Tests extends Oculus{
         describe("Arachne", () => {
             describe("Umwandlungen (StQ):", () => {
                 it("Prüfe: einfach", async () => {
-                    chai.expect(stringToQuery("test")).to.deep.equal([{
+                    chai.expect(await arachne.zettel.stringToQuery("test")).to.deep.equal([{
                         col: "*",
                         negative: false,
                         operator: "&&",
@@ -252,7 +251,7 @@ class Tests extends Oculus{
                         greater: false,
                         smaller: false
                     }]);
-                    chai.expect(stringToQuery("teste mich")).to.deep.equal([
+                    chai.expect(await arachne.zettel.stringToQuery("teste mich")).to.deep.equal([
                         {
                             col: "*",
                             negative: false,
@@ -274,7 +273,7 @@ class Tests extends Oculus{
                     ]);
                 });
                 it("Prüfe: einfach negativ", async () => {
-                    chai.expect(stringToQuery("-test")).to.deep.equal([{
+                    chai.expect(await arachne.zettel.stringToQuery("-test")).to.deep.equal([{
                         col: "*",
                         negative: true,
                         operator: "&&",
@@ -285,7 +284,7 @@ class Tests extends Oculus{
                     }]);
                 });
                 it("Prüfe: einfach grösser als", async () => {
-                    chai.expect(stringToQuery(">test")).to.deep.equal([{
+                    chai.expect(await arachne.zettel.stringToQuery(">test")).to.deep.equal([{
                         col: "*",
                         negative: false,
                         operator: "&&",
@@ -296,7 +295,7 @@ class Tests extends Oculus{
                     }]);
                 });
                 it("Prüfe: einfach kleiner als", async () => {
-                    chai.expect(stringToQuery("<test")).to.deep.equal([{
+                    chai.expect(await arachne.zettel.stringToQuery("<test")).to.deep.equal([{
                         col: "*",
                         negative: false,
                         operator: "&&",
@@ -307,7 +306,7 @@ class Tests extends Oculus{
                     }]);
                 });
                 it("Prüfe: Feldnamen", async () => {
-                    chai.expect(stringToQuery("id:test")).to.deep.equal([{
+                    chai.expect(await arachne.zettel.stringToQuery("id:test")).to.deep.equal([{
                         col: "id",
                         negative: false,
                         operator: "&&",
@@ -316,7 +315,7 @@ class Tests extends Oculus{
                         greater: false,
                         smaller: false
                     }]);
-                    chai.expect(stringToQuery("id:test lemma:rest")).to.deep.equal([
+                    chai.expect(await arachne.zettel.stringToQuery("id:test lemma:rest")).to.deep.equal([
                         {
                             col: "id",
                             negative: false,
@@ -338,7 +337,7 @@ class Tests extends Oculus{
                     ]);
                 });
                 it("Prüfe: Feldnamen grösser/kleiner", async () => {
-                    chai.expect(stringToQuery("id:>test")).to.deep.equal([{
+                    chai.expect(await arachne.zettel.stringToQuery("id:>test")).to.deep.equal([{
                         col: "id",
                         negative: false,
                         operator: "&&",
@@ -347,7 +346,7 @@ class Tests extends Oculus{
                         greater: true,
                         smaller: false
                     }]);
-                    chai.expect(stringToQuery("id:<test")).to.deep.equal([{
+                    chai.expect(await arachne.zettel.stringToQuery("id:<test")).to.deep.equal([{
                         col: "id",
                         negative: false,
                         operator: "&&",
@@ -358,7 +357,7 @@ class Tests extends Oculus{
                     }]);
                 });
                 it("Prüfe: Feldnamen negativ", async () => {
-                    chai.expect(stringToQuery("id:-test")).to.deep.equal([{
+                    chai.expect(await arachne.zettel.stringToQuery("id:-test")).to.deep.equal([{
                         col: "id",
                         negative: true,
                         operator: "&&",
@@ -367,7 +366,7 @@ class Tests extends Oculus{
                         greater: false,
                         smaller: false
                     }]);
-                    chai.expect(stringToQuery("id:test lemma:-rest")).to.deep.equal([
+                    chai.expect(await arachne.zettel.stringToQuery("id:test lemma:-rest")).to.deep.equal([
                         {
                             col: "id",
                             negative: false,
@@ -389,7 +388,7 @@ class Tests extends Oculus{
                     ]);
                 });
                 it("Prüfe: einfach/Feldnamen gemischt", async () => {
-                    chai.expect(stringToQuery("test lemma:rest")).to.deep.equal([
+                    chai.expect(await arachne.zettel.stringToQuery("test lemma:rest")).to.deep.equal([
                         {
                             col: "*",
                             negative: false,
@@ -411,7 +410,7 @@ class Tests extends Oculus{
                     ]);
                 });
                 it("Prüfe: Sternchen", async () => {
-                    chai.expect(stringToQuery("lemma:stern*")).to.deep.equal([
+                    chai.expect(await arachne.zettel.stringToQuery("lemma:stern*")).to.deep.equal([
                         {
                             col: "lemma",
                             negative: false,
@@ -477,7 +476,7 @@ class Tests extends Oculus{
                     let speed = await arachne.zettel.search("id:3");
                     chai.expect(speed.length).to.equal(1);
                     chai.expect(speed[0].id).to.equal(3);
-                });
+                }).timeout(10000);
                 /*
                 it("Prüfe: is() (index)", async () => {
                     let speed = await arachne.zettel.is(3, "zettel");
@@ -487,7 +486,7 @@ class Tests extends Oculus{
                     let speed = await arachne.zettel.search("id:3", "*", "zettel");
                     chai.expect(speed.length).to.equal(1);
                     chai.expect(speed[0].id).to.equal(3);
-                });
+                }).timeout(10000);
                 it("Prüfe: Array", async () => {
                     let results = [];
                     for(const sT of speedTest){
