@@ -486,7 +486,7 @@ class Tests extends Oculus{
                     let speed = await arachne.zettel.search("id:3", "*", "zettel");
                     chai.expect(speed.length).to.equal(1);
                     chai.expect(speed[0].id).to.equal(3);
-                }).timeout(10000);
+                }).timeout(20000);
                 it("Prüfe: Array", async () => {
                     let results = [];
                     for(const sT of speedTest){
