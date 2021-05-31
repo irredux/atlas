@@ -33,8 +33,8 @@ export class Argos{
             if(cToken == null){mlwChannel.postMessage("token?")}
         } catch {
             // no BroadCastChannel
-            if(cToken!=null){localStorage.setItem("t", cToken)}
-            else{cToken = localStorage.getItem("t")}
+            //if(cToken!=null){localStorage.setItem("t", cToken)}
+            //else{cToken = localStorage.getItem("t")}
         }
 
         if(cToken != null){
