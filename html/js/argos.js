@@ -23,6 +23,14 @@ export class Argos{
         this.docker = new Docker();
 
         // get token
+        let cToken = null;
+        if(document.cookie != ""){
+            cToken = document.cookie.split("; ")
+            .find(row => row.startsWith("token="))
+            .split("=")[1];
+        }
+
+        /*
         let cToken = sessionStorage.getItem("token");
         try{
             const mlwChannel = new BroadcastChannel("mlwChannel");
@@ -37,6 +45,7 @@ export class Argos{
             //if(cToken!=null){localStorage.setItem("t", cToken)}
             //else{cToken = localStorage.getItem("t")}
         }
+        */
 
         if(cToken != null){
             this.login(cToken);
@@ -80,14 +89,20 @@ export class Argos{
     }
 
     async login(token){
-        sessionStorage.setItem("token", token);
+        //sessionStorage.setItem("token", token);
+        document.cookie = "token="+token;
         arachne.token = token;
         this.token = token;
 
         document.body.textContent = "";
         const lastFullUpdate = localStorage.getItem("lastFullUpdate");
         await arachne.createDB();
-        if(1 > 0 || lastFullUpdate <= this.serverUpdate){ // disable background-update on startup!
+        /*
+                let path = location.pathname;
+                if(path.startsWith("/site")){
+         */
+        if(!location.pathname.startsWith("/site/viewer/")){
+        //if(1 > 0 || lastFullUpdate <= this.serverUpdate){ // disable background-update on startup!
             // reset DB and full update
             let loadLabel = document.createElement("DIV"); loadLabel.id = "loadLabel";
             loadLabel.textContent = "Datenbank wird aktualisiert... ";
@@ -96,62 +111,69 @@ export class Argos{
             loadLabel.appendChild(loadLabelCurrent);
             document.body.appendChild(loadLabel);
             await arachne.loadDB(loadLabelCurrent, true);
+            fetch("/config/access", {headers: {"Authorization": `Bearer ${this.token}`}})
+                .then(re => {if(re.status === 200){return re.json()}})
+                .then((access) => {
+                    this.access = access;
+                    return fetch("/config/menu", {headers: {"Authorization": `Bearer ${this.token}`}});
+                })
+                .then(re => {if(re.status === 200){return re.json()}})
+                .then((items) => {
+                    let headerMenu = document.createElement("DIV");
+                    headerMenu.id = "headerMenu";
+                     // GET mainMenu -> display here!
+                    for(const item of items){
+                        let mainMenuEntry = document.createElement("DIV");
+                        mainMenuEntry.classList.add("mainMenuEntry");
+                        let mainMenuButton = document.createElement("DIV");
+                        mainMenuButton.classList.add("mainMenuButton");
+                        mainMenuButton.textContent = item[0];
+                        mainMenuEntry.appendChild(mainMenuButton);
+
+                        let mainMenuContent = document.createElement("DIV");
+                        mainMenuContent.classList.add("mainMenuContent");
+                        for(const subItem of item[1]){
+                            let subMenu = document.createElement("DIV");
+                            let subMenuA = document.createElement("A");
+                            subMenuA.innerHTML = subItem.caption;
+                            subMenuA.onclick = () => {argos.loadMain(subItem.onClick)};
+                            subMenu.appendChild(subMenuA);
+                            mainMenuContent.appendChild(subMenu);
+                        }
+                        mainMenuEntry.appendChild(mainMenuContent);
+
+                        headerMenu.appendChild(mainMenuEntry);
+                    }
+                    document.body.appendChild(headerMenu);
+                    let res = null;
+                    let resId = null;
+                    let path = location.pathname;
+                    if(path.startsWith("/site")){
+                        path = path.slice(6);
+                        path = path.split("/");
+                        if(path[0]===""){
+                        } else if(path.length===1){
+                            res = path[0];
+                        } else if(path.length===2){
+                            res = path[0];
+                            resId = path[1];
+                        }
+                    }
+                    if(res!==null){this.loadMain(res, resId)}
+                })
+                .catch(e => {throw e});
         } else {
-            // only download new data
+            // start up viewer
             await arachne.loadDB(null, false)
+            fetch("/config/access", {headers: {"Authorization": `Bearer ${this.token}`}})
+                .then(re => {if(re.status === 200){return re.json()}})
+                .then((access) => {
+                    this.access = access;
+                    console.log(location.pathname.substring(13));
+                    this.loadMain("viewer", location.pathname.substring(13));
+                })
+                .catch(e => {throw e});
         }
-
-        fetch("/config/access", {headers: {"Authorization": `Bearer ${this.token}`}})
-            .then(re => {if(re.status === 200){return re.json()}})
-            .then((access) => {
-                this.access = access;
-                return fetch("/config/menu", {headers: {"Authorization": `Bearer ${this.token}`}});
-            })
-            .then(re => {if(re.status === 200){return re.json()}})
-            .then((items) => {
-                let headerMenu = document.createElement("DIV");
-                headerMenu.id = "headerMenu";
-                 // GET mainMenu -> display here!
-                for(const item of items){
-                    let mainMenuEntry = document.createElement("DIV");
-                    mainMenuEntry.classList.add("mainMenuEntry");
-                    let mainMenuButton = document.createElement("DIV");
-                    mainMenuButton.classList.add("mainMenuButton");
-                    mainMenuButton.textContent = item[0];
-                    mainMenuEntry.appendChild(mainMenuButton);
-
-                    let mainMenuContent = document.createElement("DIV");
-                    mainMenuContent.classList.add("mainMenuContent");
-                    for(const subItem of item[1]){
-                        let subMenu = document.createElement("DIV");
-                        let subMenuA = document.createElement("A");
-                        subMenuA.innerHTML = subItem.caption;
-                        subMenuA.onclick = () => {argos.loadMain(subItem.onClick)};
-                        subMenu.appendChild(subMenuA);
-                        mainMenuContent.appendChild(subMenu);
-                    }
-                    mainMenuEntry.appendChild(mainMenuContent);
-
-                    headerMenu.appendChild(mainMenuEntry);
-                }
-                document.body.appendChild(headerMenu);
-                let res = null;
-                let resId = null;
-                let path = location.pathname;
-                if(path.startsWith("/site")){
-                    path = path.slice(6);
-                    path = path.split("/");
-                    if(path[0]===""){
-                    } else if(path.length===1){
-                        res = path[0];
-                    } else if(path.length===2){
-                        res = path[0];
-                        resId = path[1];
-                    }
-                }
-                if(res!==null){this.loadMain(res, resId)}
-            })
-            .catch(e => {throw e});
     }
 
     /* **************************************** */
