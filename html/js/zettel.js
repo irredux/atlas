@@ -290,7 +290,7 @@ class ZettelImport extends Oculus{
             data.append("type", iType.value);
             data.append("user_id_id", iEditor.value);
             fetch("/file/zettel", {method: "POST", body: data,
-            headers: {"Authorization": `Bearer ${argos.token}`}}).
+            headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
                 then(re => {el.status("saved", "Import erfolgreich.")}).
                 catch(e => {throw e});
             /*
@@ -314,7 +314,7 @@ class ZettelImport extends Oculus{
             for(const uItem of uploadGroup){
                 console.log("Uploading next group...");
                 await fetch("/file/zettel", {method: "POST", body: uItem}).//,
-                //headers: {"Authorization": `Bearer ${argos.token}`}}).
+                //headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
                     then(re => {console.log(re.status)}).
                     catch(e => {throw e});
             }

@@ -1014,7 +1014,7 @@ class ProjectExport extends Oculus{
         let HTMLPreviewData = await fetch("/exec/mlw_preview", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${argos.token}`},
+                "Authorization": `Bearer ${arachne.key.token}`},
             body: eTxt
         }).then(re => re.json());
         let HTMLPreview = document.createElement("IFRAME");

@@ -216,7 +216,7 @@ class Tests extends Oculus{
     }
     async load(){
         const serverStats = await fetch("/config/server_stats", {
-            headers: {"Authorization": `Bearer ${argos.token}`}}).
+            headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
             then(re => re.json()).
             catch(e => {throw e});
         document.getElementById("headerMenu").style.opacity = "0";

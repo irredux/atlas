@@ -31,7 +31,7 @@ class Login extends Oculus{
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(data)
             }).then(response => response.text()).then(token => {
-                if(token!=""){argos.login(token)}
+                if(token!=""){arachne.key.token = token; argos.login()}
                 else {el.status("error", "Login fehlgeschlagen.")}
             });
 
@@ -152,8 +152,7 @@ class Logout extends Oculus{
         super(res, resId, access, main);
     }
     async load(){
-        sessionStorage.removeItem("token");
-        localStorage.removeItem("t");
+        arachne.key.removeToken();
         // remove token from server
         location.href = "/";
     }

@@ -1,6 +1,7 @@
 import { Docker } from "/file/js/docker.js";
 import { ShortCuts } from "/file/js/shortcuts.js";
 
+
 export class Argos{
     // windows handler; holds an controls DOM elements 'Oculus'
     constructor(requestedLastFullUpdate){
@@ -22,59 +23,17 @@ export class Argos{
         // set main eye
         this.docker = new Docker();
 
-        // get token
-        let cToken = null;
-        if(document.cookie != ""){
-            cToken = document.cookie.split("; ")
-            .find(row => row.startsWith("token="))
-            .split("=")[1];
-        }
-
-        /*
-        let cToken = sessionStorage.getItem("token");
-        try{
-            const mlwChannel = new BroadcastChannel("mlwChannel");
-            mlwChannel.onmessage = e => {
-                if(e.data === "token?" && cToken != null){mlwChannel.postMessage(cToken)}
-                else if(this.token==null){this.login(e.data)}
-            }
-            if(cToken == null){mlwChannel.postMessage("token?")}
-        } catch {
-            // no BroadCastChannel
-            console.log("no BroadCastChannel");
-            //if(cToken!=null){localStorage.setItem("t", cToken)}
-            //else{cToken = localStorage.getItem("t")}
-        }
-        */
-
-        if(cToken != null){
-            this.login(cToken);
-        } else {
+        // set token timeout
+        arachne.key.ontimeout = () => {
             let res = "login";
             let resId = null;
             this.loadMain(res, resId)
-            /*
-            this.mainId = this.getQuery('main')
-            if (this.mainId != null){
-                this.o[this.mainId] = new Oculus(this.mainId, {classList: ['main'],
-                query: this.getQuery('query')});
-                this.shortCuts.load(this.mainId);
-            }
-            // datalists
-            this.dataList = {};
-            if(this.access.includes("z_edit")){this.dataList["lemma_data"] = new DataList("lemma_data")}
-            if(this.access.includes("z_edit")){this.dataList["work_data"] = new DataList("work_data")}
-            if(this.access.includes("o_edit")){this.dataList["author_data"] = new DataList("author_data")}
-            if(this.access.includes("editor")){this.dataList["projects"] = new DataList("project_data")}
-            for(var dl in this.dataList){
-                this.dataList[dl].load();
-            }
-            */
-        }
+        };
+        if(arachne.key.token!=null){this.login()}
     }
     
     user(){
-        return fetch("/session", {headers: {"Authorization": `Bearer ${this.token}`}}).
+        return fetch("/session", {headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
             then(re => re.json()).
             catch(e => {throw e});
     }
@@ -88,22 +47,11 @@ export class Argos{
         return Date.UTC(year, month, day, hours, minutes, seconds);
     }
 
-    async login(token){
-        //sessionStorage.setItem("token", token);
-        document.cookie = "token="+token;
-        arachne.token = token;
-        this.token = token;
-
+    async login(){
         document.body.textContent = "";
         const lastFullUpdate = localStorage.getItem("lastFullUpdate");
         await arachne.createDB();
-        /*
-                let path = location.pathname;
-                if(path.startsWith("/site")){
-         */
         if(!location.pathname.startsWith("/site/viewer/")){
-        //if(1 > 0 || lastFullUpdate <= this.serverUpdate){ // disable background-update on startup!
-            // reset DB and full update
             let loadLabel = document.createElement("DIV"); loadLabel.id = "loadLabel";
             loadLabel.textContent = "Datenbank wird aktualisiert... ";
             let loadLabelCurrent = document.createElement("SPAN");
@@ -111,11 +59,11 @@ export class Argos{
             loadLabel.appendChild(loadLabelCurrent);
             document.body.appendChild(loadLabel);
             await arachne.loadDB(loadLabelCurrent, true);
-            fetch("/config/access", {headers: {"Authorization": `Bearer ${this.token}`}})
+            fetch("/config/access", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
                 .then(re => {if(re.status === 200){return re.json()}})
                 .then((access) => {
                     this.access = access;
-                    return fetch("/config/menu", {headers: {"Authorization": `Bearer ${this.token}`}});
+                    return fetch("/config/menu", {headers: {"Authorization": `Bearer ${arachne.key.token}`}});
                 })
                 .then(re => {if(re.status === 200){return re.json()}})
                 .then((items) => {
@@ -165,7 +113,7 @@ export class Argos{
         } else {
             // start up viewer
             await arachne.loadDB(null, false)
-            fetch("/config/access", {headers: {"Authorization": `Bearer ${this.token}`}})
+            fetch("/config/access", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
                 .then(re => {if(re.status === 200){return re.json()}})
                 .then((access) => {
                     this.access = access;

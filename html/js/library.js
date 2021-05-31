@@ -23,7 +23,7 @@ class Viewer extends Oculus{
         imgDisplay.id = "display_img";
         let img = document.createElement("IMG");
         imgDisplay.appendChild(img);
-        fetch(`/file/scan/${scans[0].id}`, {headers: {"Authorization": `Bearer ${argos.token}`}})
+        fetch(`/file/scan/${scans[0].id}`, {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
             .then(re => re.blob())
             .then(newImg => {
                 let nURL = URL.createObjectURL(newImg);
@@ -48,7 +48,7 @@ class Viewer extends Oculus{
         let pageSelect = el.select(cIndex, pages);
         pageSelect.style.width = "200px";
         pageSelect.onchange = () => {
-            fetch(`/file/scan/${pageSelect.value}`, {headers: {"Authorization": `Bearer ${argos.token}`}})
+            fetch(`/file/scan/${pageSelect.value}`, {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
                 .then(re => re.blob())
                 .then(newImg => {
                     let nURL = URL.createObjectURL(newImg);

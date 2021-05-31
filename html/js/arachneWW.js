@@ -69,10 +69,10 @@ function stringToQuery(input){
 
 class ArachneDatabase{
     constructor(){
+        this.token = null;
     }
 
-    load(tblName, dbName, dbVersion, optimize, sOrder, token){
-        this.token = token;
+    load(tblName, dbName, dbVersion, optimize, sOrder){
         this.tblName = tblName;
         this.dbName = dbName;
         this.dbVersion = dbVersion;
@@ -368,9 +368,10 @@ let athene = new ArachneDatabase();
 
 onmessage = async (input) => {
     const data = input.data;
+    athene.token = data.token;
     switch(data.request){
         case "LOAD":
-            athene.load(data.tblName, data.dbName, data.dbVersion, data.optimize, data.sOrder, data.token);
+            athene.load(data.tblName, data.dbName, data.dbVersion, data.optimize, data.sOrder);
             await athene.update(true);
             postMessage({workId: data.workId});
             break;

@@ -3,14 +3,53 @@ export { Arachne };
 const fetch = require("node-fetch");
 module.exports = Arachne;
 */
+class Key{
+    constructor(h=0, m=0, s=0){
+        this.TimeLimit = (h*3600000)+(m*60000)+(s*1000);
+        this.ontimeout = null;
+        //replace token with BroadCastChannel!
+        /*
+        try{
+            const mlwChannel = new BroadcastChannel("mlwChannel");
+            mlwChannel.onmessage = e => {
+                if(e.data === "token?" && cToken != null){mlwChannel.postMessage(cToken)}
+                else if(this.token==null){this.login(e.data)}
+            }
+            if(cToken == null){mlwChannel.postMessage("token?")}
+        } catch {// not supported in safari}
+         */
+        if(localStorage.getItem("key") != null){
+            let cKey = JSON.parse(localStorage.getItem("key"));
+            if(cKey.timeOut>Date.now()){
+                this.myToken = cKey.token;
+                this.timeOut = cKey.timeOut;
+            }
+        }
+    }
+    removeToken(){
+        this.myToken = null;
+        localStorage.removeItem("key");
+        this.timeOut = 0;
+    }
+    get token(){
+        if(this.timeOut > Date.now()){return this.myToken}
+        else if(this.ontimeout!=null){this.ontimeout()}
+        else{return null}
+    }
+    set token(nToken){
+        this.myToken = nToken;
+        this.timeOut = Date.now()+this.TimeLimit;
+        localStorage.setItem("key", JSON.stringify({timeOut: this.timeOut, token: this.myToken}));
+    }
+}
+
 class ArachneWrapper{
-    constructor(tblName, dbName, dbVersion, optimize, token){
+    constructor(tblName, dbName, dbVersion, optimize){
         this.worker = new Worker("/file/js/arachneWW.js");
         this.tblName = tblName;
         this.dbName = dbName;
         this.dbVersion = dbVersion;
         this.optimize = optimize;
-        this.token = token;
         this.workId = 0;
     }
     stringToQuery(string){
@@ -43,7 +82,7 @@ class ArachneWrapper{
                 dbVersion: this.dbVersion,
                 optimize: this.optimize, 
                 sOrder: argos.userDisplay.sOrder,
-                token: this.token
+                token: arachne.key.token
             });
         });
     }
@@ -63,7 +102,7 @@ class ArachneWrapper{
                 dbVersion: this.dbVersion,
                 optimize: this.optimize, 
                 sOrder: argos.userDisplay.sOrder,
-                token: this.token
+                token: arachne.key.token
             });
         });
     }
@@ -86,7 +125,10 @@ class ArachneWrapper{
                     }
                 }
             }
-            this.worker.postMessage({workId: this.workId, request: "VERSION"});
+            this.worker.postMessage({
+                workId: this.workId,
+                request: "VERSION"
+            });
         });
     }
     search(query, returnCols="*", orderIndex = null, limit=null){
@@ -116,7 +158,8 @@ class ArachneWrapper{
                 query: query,
                 returnCols: returnCols,
                 orderIndex: orderIndex,
-                limit: limit
+                limit: limit,
+                token: arachne.key.token
             });
         });
     }
@@ -144,7 +187,8 @@ class ArachneWrapper{
                 request: "IS",
                 searchValue: searchValue,
                 index: index,
-                removeArray: removeArray
+                removeArray: removeArray,
+                token: arachne.key.token
             });
         });
     }
@@ -173,7 +217,8 @@ class ArachneWrapper{
                 lowerSearch: lowerSearch,
                 upperSearch: upperSearch,
                 index: index,
-                removeArray: removeArray
+                removeArray: removeArray,
+                token: arachne.key.token
             });
         });
     }
@@ -199,7 +244,8 @@ class ArachneWrapper{
             this.worker.postMessage({
                 workId: this.workId,
                 request: "DELETE",
-                rowId: rowId
+                rowId: rowId,
+                token: arachne.key.token
             });
         });
     }
@@ -225,7 +271,8 @@ class ArachneWrapper{
             this.worker.postMessage({
                 workId: this.workId,
                 request: "SAVE",
-                newValues: newValues
+                newValues: newValues,
+                token: arachne.key.token
             });
         });
     }
@@ -251,7 +298,8 @@ class ArachneWrapper{
             this.worker.postMessage({
                 workId: this.workId,
                 request: "GETALL",
-                index: index
+                index: index,
+                token: arachne.key.token
             });
         });
     }
@@ -261,13 +309,15 @@ class ArachneWrapper{
 class Arachne{
     constructor(dbName){
         // set up DB
+        this.key = new Key(4);
+        //set "this.key.ontimeout" to set callback for when token expires
         this.dbName = dbName;
         this.dbVersion = 1;
     }
 
     async createDB(){
         this.oStoresSchema = await fetch("/config/oStores", {
-            headers: {"Authorization": `Bearer ${this.token}`}
+            headers: {"Authorization": `Bearer ${this.key.token}`}
         })
             .then((r) => r.json())
             .catch((e) => {throw e});
@@ -298,7 +348,7 @@ class Arachne{
         this.optimize = argos.userDisplay.optimize;
         for(const tbl of this.oStores){
             if(loadLabel!=null){loadLabel.textContent = tbl}
-            this[tbl] = new ArachneWrapper(tbl, this.dbName, this.dbVersion, (this.optimize.includes(tbl) ? true : false), this.token);
+            this[tbl] = new ArachneWrapper(tbl, this.dbName, this.dbVersion, (this.optimize.includes(tbl) ? true : false), this.key.token);
             if(sync){await this[tbl].load()}
             else{this[tbl].load()}
         }

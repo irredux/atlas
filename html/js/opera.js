@@ -287,7 +287,7 @@ class LibrarySelector extends Oculus{
             imgSelectPage.id = scan.id;
             imgSelectPage.textContent = scan.filename;
             imgSelectPage.onclick = () => {
-                fetch(`/file/scan/${scan.id}`, {headers: {"Authorization": `Bearer ${argos.token}`}})
+                fetch(`/file/scan/${scan.id}`, {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
                     .then(re => re.blob())
                     .then(newImg => {
                         let nURL = URL.createObjectURL(newImg);
@@ -414,7 +414,7 @@ class LibraryUpdate extends Oculus{
         let updateButton = el.button("aktualisieren");
         updateButton.onclick = () => {
             this.ctn.innerHTML = "<div id='loadLabel'>Bibliothek wird aktualisiert...</div>";
-            fetch("/exec/library_update", {headers: {"Authorization": `Bearer ${argos.token}`}}).
+            fetch("/exec/library_update", {headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
                 then(re => {this.refresh();
                     if(re.status == 200){alert("Die Listen wurden auf dem Server aktualisiert.")}
                     else {alert("Ein Fehler is aufgetreten. Bitte versuchen Sie es erneut.")}
@@ -472,7 +472,7 @@ class Opera extends Oculus{
         this.setContext = cContext.menu;
         
         await fetch(`/site/opera/${list}`, {
-            headers: {"Authorization": `Bearer ${argos.token}`}
+            headers: {"Authorization": `Bearer ${arachne.key.token}`}
         })
             .then(response => response.text())
             .then(table => {
@@ -805,7 +805,7 @@ class OperaUpdate extends Oculus{
         einige Momente dauern.`));
         let updateButton = el.button("aktualisieren");
         updateButton.onclick = () => {
-            fetch("/exec/opera_update", {headers: {"Authorization": `Bearer ${argos.token}`}}).
+            fetch("/exec/opera_update", {headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
                 then(() => {alert("Die Listen wurden auf dem Server aktualisiert.")}).
                 catch(e => {throw e});
         }
