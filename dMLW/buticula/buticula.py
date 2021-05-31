@@ -613,7 +613,7 @@ class Buticula(Bottle):
             if(len(results) == 50001):
                 last_date = results[-1]["u_date"]
                 nResults = []
-                for result in results
+                for result in results:
                     if result["u_date"] != last_date:
                         nResults.append(result)
                 return json.dumps(nResults, default=str)
