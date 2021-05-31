@@ -60,7 +60,7 @@ class Buticula(Bottle):
         self.Tiro.log(f"\t... html path: {self.p_html}")
         self.template = template
         self.request = request
-        self.full_update = "2021-05-16 19:56:17" # local client-sided database
+        self.full_update = "2021-05-31 09:54:00" # local client-sided database
 
         # set session parameters
         self.s_hours = 4
