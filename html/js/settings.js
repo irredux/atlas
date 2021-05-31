@@ -100,6 +100,9 @@ class Account extends Oculus{
             arachne.deleteDB().then(() => {location.reload()});
         }
         cardDB.appendChild(setupB);
+        let DBHelpTxt = el.p("Andere Möglichkeiten, um die lokale Datenbank zu löschen, finden Sie ");
+        DBHelpTxt.innerHTML += " <a href='https://gitlab.lrz.de/haeberlin/dmlw/-/wikis/10-WikiHow:-Datenbank-neu-generieren'>&rarr; in unserem Wiki</a>.";
+        cardDB.appendChild(DBHelpTxt);
         mainBody.appendChild(cardDB);
 
         this.ctn.appendChild(mainBody);
@@ -115,31 +118,14 @@ class Help extends Oculus{
         let helpText = document.createElement("DIV");
         helpText.classList.add("card");
         helpText.innerHTML = `
-        <h2>Hilfe</h2>
+        <h2>Hilfe und Informationen</h2>
         <p>
         <a href="https://gitlab.lrz.de/haeberlin/dmlw/-/wikis/00-Start">Hilfe und Informationen</a> zu dMLW finden Sie auf unsererer
         <a href="https://gitlab.lrz.de/haeberlin/dmlw">GitLab-Seite</a>.</p>
+        <p>Informationen zu der aktuellen Version von dMLW und den Veränderungen finden Sie <a href='https://gitlab.lrz.de/haeberlin/dmlw/-/blob/master/CHANGELOG.md'>in unserem Changelog</a>.</p>
         <p>Informationen zum Wörterbuch-Projekt auf <a href="www.mlw.badw.de">www.mlw.badw.de</a></p>
             `;
         mainBody.appendChild(helpText);
         this.ctn.appendChild(mainBody);
-    }
-}
-
-class Version extends Oculus{
-    constructor(res, resId=null, access=[], main=false){
-        super(res, resId, access, main);
-    }
-    async load(){
-        let url = `/page/${this.res}`;
-        if (this.resId != null){url += "/"+this.resId}
-        arachne.getPage(url, this.ctn)
-            .then(text => {this.ctn.innerHTML=text})
-            .then(rest => {this.loadScript()})
-            .catch(e => {throw e});
-    }
-
-    loadScript(){
-        this.setTabs = true;
     }
 }

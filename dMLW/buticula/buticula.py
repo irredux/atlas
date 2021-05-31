@@ -58,8 +58,8 @@ class Buticula(Bottle):
         self.add_view_path(self.p_html + "/views")
         self.Tiro.log(f"\t... main path: {self.p}")
         self.Tiro.log(f"\t... html path: {self.p_html}")
-        self.template = template
-        self.request = request
+        #self.template = template
+        #self.request = request
         self.full_update = "2021-05-31 09:54:00" # local client-sided database
 
         # set session parameters

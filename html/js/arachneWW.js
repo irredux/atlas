@@ -336,7 +336,7 @@ class ArachneDatabase{
                                     cursor.value[q.col] > q.value){found = true}
                                 else if(q.regex === false && q.smaller === true &&
                                     cursor.value[q.col] < q.value){found = true}
-                                else if(q.regex == true){
+                                else if(q.regex == true && cursor.value[q.col]!=null){
                                     // regex
                                     const re = new RegExp(q.value, "g");
                                     if(cursor.value[q.col].match(re)){found = true}

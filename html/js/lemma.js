@@ -90,9 +90,11 @@ class Lemma extends Oculus{
             resultTable.classList.add("card");
             let lemmaTbl = document.createElement("TABLE");
             lemmaTbl.innerHTML = `
-            <th style='width: 25%'>Lemmaansatz</th>
-            <th style='width: 25%'>Wörterbücher</th>
-            <th style='width: 50%'>Kommentar</th>
+            <th style='width: 20%'>Lemmaansatz</th>
+            <th style='width: 20%'>Wörterbücher</th>
+            <th style='width: 40%'>Kommentar</th>
+            <th style='width: 10%'>Notizen</th>
+            <th style='width: 10%'>Anz. Zettel</th>
             `;
             resultTable.appendChild(lemmaTbl);
             resultBox.appendChild(resultTable);
@@ -129,13 +131,26 @@ class Lemma extends Oculus{
         this.ctn.appendChild(mainBody);
     }
 
-    contentLoadMore(values){
+    async contentLoadMore(values){
         let tr = document.createElement("TR");
         tr.id = values.id; tr.classList.add("loadMore");
-        const tdContents = [values.lemma_display, values.dicts, values.comment];
+        let commentsDisplay = "";
+        let comments = await arachne.comment.is(values.id, "lemma", false);
+        if(comments.length > 0){
+            commentsDisplay = document.createElement("A");
+            commentsDisplay.innerHTML = "☜";
+            commentsDisplay.onclick = () => {
+                    argos.loadEye("lemma_comment", values.id);
+            }
+        }
+
+        let zettelCount = await arachne.zettel.is(values.id, "lemma", false);
+        zettelCount = `${zettelCount.length}`;
+        const tdContents = [values.lemma_display, values.dicts, values.comment, commentsDisplay, zettelCount];
         for(const tdContent of tdContents){
             let td = document.createElement("TD");
-            td.innerHTML = html(tdContent);
+            if(typeof tdContent == "string"){td.innerHTML = html(tdContent)}
+            else if(tdContent != null){td.appendChild(tdContent)}
             tr.appendChild(td);
         }
         return tr;
@@ -251,7 +266,6 @@ class LemmaEdit extends Oculus{
                     el.status("saved");
                     if(argos.main.o.zettel_detail != null){
                         this.close();
-                        console.log(rTxt.id);
                         argos.main.o.zettel_detail.iLemmaInput.dataset.selected = rTxt.id;
                         argos.main.o.zettel_detail.saveButton.click();
                     }

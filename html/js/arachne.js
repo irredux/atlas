@@ -204,7 +204,6 @@ class ArachneWrapper{
         });
     }
     save(newValues){
-        console.log("lets go...");
         this.workId ++;
         const cWorkId = this.workId;
         return new Promise((resolve, reject) => {

@@ -219,7 +219,6 @@ class Tests extends Oculus{
             headers: {"Authorization": `Bearer ${argos.token}`}}).
             then(re => re.json()).
             catch(e => {throw e});
-        console.log(serverStats);
         document.getElementById("headerMenu").style.opacity = "0";
         let speedTest = await arachne.zettel.getAll();
         let mochaDIV = document.createElement("DIV");
