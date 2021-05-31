@@ -215,6 +215,12 @@ class Tests extends Oculus{
         super(res, resId, access, main);
     }
     async load(){
+        /*
+        const info = await fetch("/info/"+tbl, {
+            headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
+            then(re => re.json()).
+            catch(e => {throw e});
+         */
         const serverStats = await fetch("/config/server_stats", {
             headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
             then(re => re.json()).

@@ -149,6 +149,9 @@ class Buticula(Bottle):
         self.route("/session", callback=self.session_read, method="GET");
         self.route("/session", callback=self.session_delete, method="DELETE");
 
+        # info 
+        self.route("/info/<res>", callback=self.info_read, method="GET")
+
         # data
         self.route("/data/user", callback=self.user_create, method="POST")
         self.route("/data/user/<id:int>", callback=self.user_update, method="PATCH")
@@ -573,6 +576,29 @@ class Buticula(Bottle):
                     }
             return json.dumps(server_stats, default=str)
         else: return HTTPResponse(status=404) # not found
+
+    def info_read(self, res, res_id=None):
+        user = self.auth()
+
+        if res not in self.accessREAD.keys(): return HTTPResponse(status=404) # not found
+        for permission in self.accessREAD[res]:
+            if permission["access"] in user["access"]:
+                if permission.get("restricted", "") == "user_id":
+                    pass
+                break
+        else:
+            return HTTPResponse(status=403) # forbidden
+        if res_id == None:
+            max_date = self.db.command(f"SELECT MAX(u_date) FROM {res}")[0]["MAX(u_date)"];
+            length = self.db.command(f"SELECT COUNT(*) FROM {res}")[0]["COUNT(*)"];
+            return json.dumps({
+                "max_date": max_date,
+                "length": length
+                }, default=str)
+        else:
+            u_date = self.db.command(f"SELECT u_date FROM {res} WHERE id = {res_id}");
+            return u_date
+
 
     def data_create(self, res):
         user = self.auth()
