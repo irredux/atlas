@@ -206,7 +206,6 @@ async load(){
             }
         });
 
-        document.getElementById("loadLabel").style.display = "none";
         document.getElementById("statBox").style.display = "flex";
     }
 }
