@@ -609,7 +609,7 @@ class Buticula(Bottle):
         if res_id == None:
             u_date = request.query.get("u_date", "2020-01-01 01:00:00")
             v_cols.append(u_date);
-            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC LIMIT 100000", v_cols);
+            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC LIMIT 50000", v_cols);
             return json.dumps(results, default=str)
         else:
             v_cols.append(res_id);
