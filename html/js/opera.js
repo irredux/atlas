@@ -11,17 +11,18 @@ class Library extends Oculus{
     constructor(res, resId=null, access=[], main=false){
         super(res, resId, access, main);
     }
-    async load(query="*"){
+    async load(){
+        if(this.query==null){this.query = "*"}
         const searchFields = {
             work_id: {name: "Werk-ID", des: "Durchsucht die verknüpften Werke."},
             id: {name: "ID", des: "Durchsucht die IDs"}
         };
-        const displayQuery = query;
+        const displayQuery = this.query;
         for(const field in searchFields){
             const reg = new RegExp(searchFields[field].name, "g");
-            query = query.replace(reg, field);
+            this.query = this.query.replace(reg, field);
         }
-        let results = await arachne.edition.search(query, "*", null);
+        let results = await arachne.edition.search(this.query, "*", null);
         this.ctn.innerHTML = "";
         let mainBody = document.createDocumentFragment();
 
@@ -32,15 +33,14 @@ class Library extends Oculus{
         searchBar.id = "searchBar"; searchBar.classList.add("card");
         let sbInput = document.createElement("INPUT");
         sbInput.type = "text";
-        (query === "*") ? sbInput.value = "" : sbInput.value = query;
+        (this.query === "*") ? sbInput.value = "" : sbInput.value = this.query;
         sbInput.id = "searchBarQuery";
         sbInput.spellcheck = "false"; sbInput.autocomplete = "off";
         sbInput.autocorrect = "off"; sbInput.autocapitalize = "off";
         sbInput.onkeyup = () => {
             if(event.keyCode == 13){
-                let query = sbInput.value;
-                (query === "") ? query = "*" : query = displayQuery;
-                this.load(query);
+                this.query = sbInput.value;
+                this.refresh();
             }
         }
 
@@ -49,9 +49,8 @@ class Library extends Oculus{
         let sbButton = el.button("suchen");
         sbButton.style.position = "absolute";
         sbButton.onclick = () => {
-            let query = sbInput.value;
-            (query === "") ? query = "*" : query = query;
-            this.load(query);
+            this.query = sbInput.value;
+            this.refresh();
         }
         searchBar.appendChild(sbButton);
         let helpContent = `
@@ -115,6 +114,16 @@ class Library extends Oculus{
                     argos.loadEye("library_edit", this.selMarker.main.lastRow)
                 });
                 cContext.addEntry('tr.edition', 'a', 'Edition erstellen', () => {argos.loadEye("library_edit")});
+                cContext.addEntry('tr.edition', 'hr', '', null);
+                cContext.addEntry('tr.edition', 'a', 'Edition löschen', async () => {
+                    if(window.confirm("Soll die Edition wirklich gelöscht werden? Die verknüpften Scans werden nicht gelöscht! Dieser Schritt kann nicht rückgängig gemacht werden!")){
+                        const editionId = parseInt(this.selMarker.main.lastRow);
+                        const scan_lnks = await arachne.scan_lnk.is(editionId, "edition", false);
+                        for(const scan_lnk of scan_lnks){await arachne.scan_lnk.delete(scan_lnk.id)}
+                        await arachne.edition.delete(editionId);
+                        this.refresh();
+                    }
+                });
                 cContext.addEntry('tr.edition', 'hr', '', null);
                 cContext.addEntry('tr.edition', 'a', 'Opera-Listen aktualisieren', () => {argos.loadEye("library_update")});
                 this.setContext = cContext.menu;
@@ -345,33 +354,6 @@ class LibrarySelector extends Oculus{
         lPart.appendChild(previewImg);
         mainBody.appendChild(lPart);
         let lPartBottom = el.div(null, {class: "lPartBottom"});
-        /*
-    <table class='minorTxt'>
-        <tr style='text-align:center;'>
-            <td width='33%'>
-                <a class="resultBrowser" data-target='first' title='erster Treffer'>|&lt;</a>
-                &nbsp;&nbsp;
-                <a class="resultBrowser" data-target="-100" title='-100'>&lt;&lt;&lt;</a>
-                &nbsp;&nbsp;
-                <a class="resultBrowser" data-target="-10" title='-10'>&lt;&lt;</a>
-                &nbsp;&nbsp;
-                <a class="resultBrowser" data-target="-1" title='-1'>&lt;</a>
-            </td>
-            <td width='33%'>
-                <span id='resultBrowserCurrent'></span> von <span id='resultBrowserTotal'></span>
-            </td>
-            <td width='34%'>
-                <a class="resultBrowser" data-target="1" title='+1'>&gt;</a>
-                &nbsp;&nbsp;
-                <a class="resultBrowser" data-target="10" title='+10'>&gt;&gt;</a>
-                &nbsp;&nbsp;
-                <a class="resultBrowser" data-target="100" title='+100'>&gt;&gt;&gt;</a>
-                &nbsp;&nbsp;
-                <a class="resultBrowser" data-target='last' title='letzter Treffer'>&gt;|</a>
-            </td>
-        </tr>
-    </table>
-         */
 
         mainBody.appendChild(lPartBottom);
         /*
@@ -381,23 +363,6 @@ class LibrarySelector extends Oculus{
          */
         mainBody.appendChild(el.closeButton(this));
         this.ctn.appendChild(mainBody);
-        /*
-        }, "library_selector": function(me){
-            if(me.ctn.querySelector("input#editionIdList").value != "[]"){ 
-                // set resultBrowser
-                me.resultIds = JSON.parse(me.ctn.querySelector("input#editionIdList").value);
-                me.setResultBrowser(me.resultIds[0], function(){
-                    me.setResultBrowser(event.target.id);
-                    me.ctn.querySelector("img.previewImg").src = "/library_edition/"+event.target.id;
-                });
-                me.ctn.querySelector("img.previewImg").src = "/library_edition/"+me.resultIds[0];
-                me.ctn.querySelectorAll("div.imgSelectPage").forEach(function(e){
-                    e.addEventListener("click", function(){
-                    me.refreshResultBrowser(e.id);
-                    me.ctn.querySelector("img.previewImg").src = "/library_edition/"+e.id;
-                    });
-                });
-         */
     }
 }
 class LibraryUpdate extends Oculus{

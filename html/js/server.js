@@ -126,87 +126,233 @@ class AdministrationDetail extends Oculus{
 }
 
 class Statistics extends Oculus{
-constructor(res, resId=null, access=[], main=false){
-    super(res, resId, access, main);
-}
-async load(){
-        this.ctn.innerHTML = `
-<div class='card'>
-    <h2>Server-Statistik</h3>
-    <div id="loadLabel">Statistik wird geladen...</div>
-    <div style="display:none;" id="statBox">
-        <div style="width: 400px;">
-            <h3>Zettel</h3>
-            <canvas id="zettelChart"></canvas>
-        </div>
-        <div style="width: 400px;">
-            <h3>Lemmata</h3>
-            <canvas id="lemmaChart"></canvas>
-        </div>
-    </div>
-</div>
-`;
-        this.loadScript();
+    constructor(res, resId=null, access=[], main=false){
+        super(res, resId, access, main);
     }
+    async load(){
+        let mainBody = document.createDocumentFragment();
+        // zettel in progress
+        const zettels = await arachne.zettel.getAll();
 
-    async loadScript(){
-        const zettels = await arachne.zettel.search("*");
-        let results = [0, 0, 0, 0];
+        let zettelOverview = el.card(); 
+        zettelOverview.appendChild(el.h("Zettel", 2));
+        zettelOverview.appendChild(el.h("Zettel nach Bearbeitungsstand", 3));
+        let results = {open: 0, just_lemma: 0, just_work: 0, done: 0};
+        let resultsType = {"ohne Typ": 0, "verzettelt": 0, "Index": 0, "Exzerpt": 0, "Literatur": 0, "ausgeschrieben": 0};
         for(const zettel of zettels){
-            if(zettel.lemma_id!=null && zettel.work_id!=null){
-                results[0]++;
+            switch (zettel.type){
+                case 1:
+                    resultsType.verzettelt ++;
+                    break;
+                case 2:
+                    resultsType.Index ++;
+                    break;
+                case 3:
+                    resultsType.Exzerpt ++;
+                    break;
+                case 4:
+                    resultsType.Literatur ++;
+                    break;
+                case 5:
+                    resultsType.ausgeschrieben ++;
+                    break;
+                default:
+                    resultsType["ohne Typ"] ++;
+            }
+            if((zettel.lemma_id!=null && zettel.work_id!=null) ||
+                (zettel.type === 4 && zettel.lemma_id!=null)){
+                results.done ++;
             } else if(zettel.lemma_id!=null){
-                results[1]++;
+                results.just_lemma ++;
             } else if (zettel.work_id!=null){
-                results[2]++;
+                results.just_work ++;
             } else {
-                results[3]++;
+                results.open ++;
             }
         }
-        new Chart(document.getElementById("zettelChart"), {
+        const zLength = results.done+results.just_lemma+results.just_work+results.open;
+        let zettelChartBox = document.createElement("DIV");
+        zettelChartBox.style.width = "700px";
+        zettelChartBox.style.margin = "auto";
+        let zettelChart = document.createElement("CANVAS");
+        zettelChartBox.appendChild(zettelChart);
+        new Chart(zettelChart, {
             type: "pie",
             data: {
-                labels: ['abgeschlossen', 'nur mit Lemma verknüpft', 'nur mit Werk verknüpft', "unbearbeitet"],
+                labels: [`abgeschlossen (${Math.round(100/zLength*results.done)}%)`, `nur mit Lemma verknüpft (${Math.round(100/zLength*results.just_lemma)}%)`, `nur mit Werk verknüpft (${Math.round(100/zLength*results.just_work)}%)`, `unbearbeitet (${Math.round(100/zLength*results.open)}%)`],
                 datasets: [{
-                    label: '# of Votes',
-                    data: [results[0], results[1], results[2], results[3]],
-                    backgroundColor: [
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)'
-                    ],
-                    borderWidth: 1
+                    label: '',
+                    data: [results.done, results.just_lemma, results.just_work, results.open],
+                    backgroundColor: ["#537727", "#84B34B", "#BFCF5B", "#E1D658", "#F9F8ED"],
+                    borderColor: ["#213409", "#7FBD32", "#CBE432", "#FDED2A", "#F7F4D4"],
+                    borderWidth: 1.5
                 }]
-            }
+            },
+            options: {plugins: {legend: {position: "bottom", labels: {font: {size: "15px"}}}}}
         });
+        zettelOverview.appendChild(zettelChartBox);
 
-        const lemmata = await arachne.lemma.search("*");
-        new Chart(document.getElementById("lemmaChart"), {
+        // zettel type
+        let zettelTypeBox = document.createElement("DIV");
+        zettelTypeBox.style.width = "700px";
+        zettelTypeBox.style.margin = "auto";
+        let zettelType = document.createElement("CANVAS");
+        zettelTypeBox.appendChild(zettelType);
+        new Chart(zettelType, {
             type: "pie",
             data: {
-                labels: ["Lemmata"],
+                labels: [`verzettelt (${Math.round(100/zLength*resultsType.verzettelt)}%)`, `Index (${Math.round(100/zLength*resultsType.Index)}%)`, `Exzerpt (${Math.round(100/zLength*resultsType.Exzerpt)}%)`, `Literatur (${Math.round(100/zLength*resultsType.Literatur)}%)`, `ohne Typ (${Math.round(100/zLength*resultsType["ohne Typ"])}%)`],
                 datasets: [{
-                    label: '# of Votes',
-                    data: [lemmata.length],
-                    backgroundColor: [
-                        'rgba(54, 162, 235, 0.2)',
-                    ],
-                    borderColor: [
-                        'rgba(54, 162, 235, 1)',
-                    ],
-                    borderWidth: 1
+                    label: '',
+                    data: [resultsType.verzettelt, resultsType.Index, resultsType.Exzerpt, resultsType.Literatur, resultsType["ohne Typ"]],
+                    backgroundColor: ["#537727", "#84B34B", "#BFCF5B", "#E1D658", "#F9F8ED"],
+                    borderColor: ["#213409", "#7FBD32", "#CBE432", "#FDED2A", "#F7F4D4"],
+                    borderWidth: 1.5
                 }]
-            }
+            },
+            options: {plugins: {legend: {position: "bottom", labels: {font: {size: "15px"}}}}}
         });
+        zettelOverview.appendChild(zettelTypeBox);
+        
+        // zettel add
+        let allUsers = await arachne.user.getAll();
+        let users = {};
+        for(const user of allUsers){users[user.id] = user.last_name}
+        users[0] = "alle";
 
-        document.getElementById("statBox").style.display = "flex";
+        let zettelAddBox = document.createElement("DIV");
+        zettelOverview.appendChild(el.h("Zettel nach Erstelldatum (pro Monat)", 3));
+        let userAdd = el.select(0, users);
+        userAdd.onchange = () => {
+            zettelAddBox.innerHTML = "";
+            this.drawZettelAdd(zettels, zettelAddBox, parseInt(userAdd.value));
+        }
+        zettelOverview.appendChild(userAdd);
+        this.drawZettelAdd(zettels, zettelAddBox, 0);
+        zettelOverview.appendChild(zettelAddBox);
+
+
+        // zettel changed
+        let zettelChangeBox = document.createElement("DIV");
+        zettelOverview.appendChild(el.h("Zettel nach Änderungsdatum (pro Monat)", 3));
+        let userChange = el.select(0, users);
+        userChange.onchange = () => {
+            zettelChangeBox.innerHTML = "";
+            this.drawZettelChange(zettels, zettelChangeBox, parseInt(userChange.value));
+        }
+        this.drawZettelChange(zettels, zettelChangeBox, 0);
+        zettelOverview.appendChild(userChange);
+        zettelOverview.appendChild(zettelChangeBox);
+
+        mainBody.appendChild(zettelOverview);
+
+        // lemma letters
+        let lemmaOverview = el.card(); 
+        lemmaOverview.appendChild(el.h("Lemmata", 2));
+        lemmaOverview.appendChild(el.h("Lemmata nach Buchstaben", 3));
+
+        mainBody.appendChild(lemmaOverview);
+        let lemmaLetterBox = document.createElement("DIV");
+        let lemmaLetter = document.createElement("CANVAS");
+        lemmaLetterBox.appendChild(lemmaLetter);
+        let lemmaLetterData = {};
+        const lemmata = await arachne.lemma.getAll();
+        for(const lemma of lemmata){
+            const zLetter = lemma.lemma_search.substring(0, 1);
+            if(zLetter in lemmaLetterData){lemmaLetterData[zLetter] ++;}
+            else{lemmaLetterData[zLetter] = 1}
+        }
+        let lemmaLetterDataArray = [];
+        for(const addData in lemmaLetterData){
+            lemmaLetterDataArray.push([addData, lemmaLetterData[addData]]);
+        }
+        lemmaLetterDataArray.sort((a, b) => a[0]>b[0]);
+        lemmaLetterData = {};
+        for(const addData of lemmaLetterDataArray){lemmaLetterData[addData[0]] = addData[1]}
+
+        new Chart(lemmaLetter, {
+            type: "bar",
+            data: {
+                labels: Object.keys(lemmaLetterData),
+                datasets: [{
+                    label: null,
+                    backgroundColor: '#537727',
+                    borderColor: '#213409',
+                    data: Object.values(lemmaLetterData)
+                }]
+            },
+            options: {plugins: {legend: {display: false}}}
+        });
+        lemmaOverview.appendChild(lemmaLetterBox);
+
+        this.ctn.appendChild(mainBody);
+    }
+    drawZettelAdd(zettels, zettelAddBox, userId){
+        let zettelAdd = document.createElement("CANVAS");
+        zettelAddBox.appendChild(zettelAdd);
+        let zettelAddData = {};
+        for(const zettel of zettels){
+            if(zettel.c_date!=null && (userId === 0 || userId === zettel.user_id)){
+                const zDate = zettel.c_date.substring(0, 7);
+                if(zDate in zettelAddData){zettelAddData[zDate] ++;}
+                else{zettelAddData[zDate] = 1}
+            }
+        }
+        let zettelAddDataArray = [];
+        for(const addData in zettelAddData){
+            zettelAddDataArray.push([addData, zettelAddData[addData]]);
+        }
+        zettelAddDataArray.sort((a, b) => a[0]>b[0]);
+        zettelAddData = {};
+        for(const addData of zettelAddDataArray){zettelAddData[addData[0]] = addData[1]}
+
+        new Chart(zettelAdd, {
+            type: "bar",
+            data: {
+                labels: Object.keys(zettelAddData),
+                datasets: [{
+                    label: null,
+                    backgroundColor: '#537727',
+                    borderColor: '#213409',
+                    data: Object.values(zettelAddData)
+                }]
+            },
+            options: {plugins: {legend: {display: false}}}
+        });
+    }
+    drawZettelChange(zettels, zettelChangeBox, userId){
+        let zettelChange = document.createElement("CANVAS");
+        zettelChangeBox.appendChild(zettelChange);
+        let zettelChangeData = {};
+        for(const zettel of zettels){
+            if(zettel.u_date!=null && (userId === 0 || zettel.user_id === userId)){
+                const zDate = zettel.u_date.substring(0, 7);
+                if(zDate in zettelChangeData){zettelChangeData[zDate] ++;}
+                else{zettelChangeData[zDate] = 1}
+            }
+        }
+        let zettelChangeDataArray = [];
+        for(const addData in zettelChangeData){
+            zettelChangeDataArray.push([addData, zettelChangeData[addData]]);
+        }
+        zettelChangeDataArray.sort((a, b) => a[0]>b[0]);
+        zettelChangeData = {};
+        for(const addData of zettelChangeDataArray){zettelChangeData[addData[0]] = addData[1]}
+
+        new Chart(zettelChange, {
+            type: "line",
+            data: {
+                labels: Object.keys(zettelChangeData),
+                datasets: [{
+                    label: null,
+                    data: Object.values(zettelChangeData),
+                    fill: true,
+                    borderColor: "#537727",
+                    tension: 0.1
+                }]
+            },
+            options: {plugins: {legend: {display: false}}}
+        });
     }
 }
 
