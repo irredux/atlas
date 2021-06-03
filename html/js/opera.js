@@ -256,6 +256,7 @@ class LibraryEdit extends Oculus{
                 ressource: iRessource.value
             };
             if(this.resId > 0){data.id = this.resId}
+            if(iPath.value != ""){data.path = iPath.value}
             if(iType == 0){
                 // scan
                 data.url = "";

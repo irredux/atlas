@@ -329,6 +329,10 @@ class ArachneDatabase{
                                 if(q.regex === false && q.negative === false  &&
                                     q.greater === false && q.smaller === false &&
                                     cursor.value[q.col] == q.value){found = true}
+                                if(q.regex === false && q.negative === false  &&
+                                    q.greater === false && q.smaller === false &&
+                                    q.value === "NULL" &&
+                                    cursor.value[q.col] == null){found = true}
                                 else if(q.regex === false && q.negative === true &&
                                     q.greater === false && q.smaller === false &&
                                     cursor.value[q.col] != q.value){found = true}

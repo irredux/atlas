@@ -500,21 +500,14 @@ class AutoComplete{
 		let divContainer = document.createElement("DIV");
 		divContainer.style.position = "absolute";
         divContainer.style.zIndex = "999999999";
-		//divContainer.style.display = "inline-block";
-        const pos = iEl.getBoundingClientRect();
-        divContainer.style.width = pos.width<200?"200px":`${pos.width}px`;
-        divContainer.style.left = `${pos.left}px`;
-        divContainer.style.top = `${pos.top+pos.height}px`;
-        document.body.appendChild(divContainer);
-        /*
-		divContainer.style.position = "relative";
-		divContainer.style.display = "inline-block";
-        divContainer.style.width = "100%";
-         */
-		//iEl.after(divContainer);
-		//divContainer.appendChild(iEl);
-		// change input value
 		iEl.addEventListener("input", function(e){
+            delete iEl.dataset.selected;
+            const pos = iEl.getBoundingClientRect();
+            divContainer.style.width = pos.width<200?"200px":`${pos.width}px`;
+            divContainer.style.left = `${pos.left}px`;
+            divContainer.style.top = `${pos.top+pos.height}px`;
+            document.body.appendChild(divContainer);
+
 			let a, b, i;
 			let val = ""
 			if(this.tagName === "INPUT"){val=this.value}

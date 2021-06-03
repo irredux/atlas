@@ -591,8 +591,8 @@ class Tests extends Oculus{
                     chai.expect(search.length).to.equal(1);
                 });
                 it("Prüfe: Feldname grösser", async () => {
-                    let search = await arachne.lemma.search("id:>9000");
-                    chai.expect(search.length).to.equal(486);
+                    let search = await arachne.author.search("id:>900");
+                    chai.expect(search.length).to.equal(62);
                 });
                 it("Prüfe: Feldname (2 Resultate)", async () => {
                     let search = await arachne.lemma.search("lemma:syrupus");
@@ -607,6 +607,10 @@ class Tests extends Oculus{
                     let search = await arachne.lemma.search("lemma:syrupus lemma_nr:-2");
                     chai.expect(search.length).to.equal(1);
                     chai.expect(search[0].id).to.equal(8883);
+                });
+                it("Prüfe: Feldname NULL", async () => {
+                    let search = await arachne.author.search("full:NULL");
+                    chai.expect(search.length).to.equal(317);
                 });
                 it("Prüfe: normal + Sternchen", async () => {
                     let search = await arachne.lemma.search("syrup*");

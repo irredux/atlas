@@ -2,6 +2,15 @@
 Hier finden Sie alle wichtigen Änderungen im Projekt.
  
  
+## [Beta 7.2] - 2020-06-xx (noch nicht veröffentlicht)
+
+## [Beta 7.1] - 2020-06-01
+### Hinzugefügt
+- Statistiken für Zettel- und Lemmata-Tabelle.
+
+### Verändert
+- Kleinere Verbesserungen in der Bibliothek.
+
 ## [Beta 7] - 2020-05-30
   
 Neu überarbeitete Version zu Beta 5.

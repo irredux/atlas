@@ -196,7 +196,7 @@ class ZettelExport extends Oculus{
         super(res, resId, access, main);
     }
     async load(){
-        const zettels = await arachne.zettel.search(argos.main.query, "*", "zettel", false);
+        const zettels = await arachne.zettel.search(argos.main.query, "*", "zettel", 2001);
         let mainBody = document.createDocumentFragment();
         let noPrint = el.div(null, {class: "noPrint"});
         noPrint.appendChild(el.h("Zettel exportieren", 3));
@@ -689,7 +689,16 @@ class ZettelDetail extends Oculus{
                 /*<td style='width: 175px;'>Datum (<i>opera</i>-Liste):</td>*/
                 return el.table(tbl2);
             }
-            edit.appendChild(await preview(zettel.work_id));
+            let previewBox = document.createElement("DIV");
+            previewBox.appendChild(await preview(zettel.work_id));
+            edit.appendChild(previewBox);
+            iWork.addEventListener("change", () => {
+                const eTarget = event.target;
+                setTimeout(async () => {
+                    previewBox.innerHTML = "";
+                    previewBox.appendChild(await preview(parseInt(eTarget.dataset.selected)));
+                }, 300);
+            });
 
             let iDateOwn = el.text(zettel.date_own);
             let iDateOwnDisplay = el.text(zettel.date_own_display);
@@ -725,6 +734,7 @@ class ZettelDetail extends Oculus{
 
             let iSave = el.button("speichern");
             iSave.onclick = () => {
+                console.log(iLemma.value, iLemma.dataset.selected);
                 if(iLemma.value != "" && iLemma.dataset.selected == null){
                     this.newLemma = iLemma.value;
                     this.iLemmaInput = iLemma;
