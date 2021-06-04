@@ -50,8 +50,8 @@ class Login extends Oculus{
         deleteDB.onclick = () => {
             return new Promise((resolve, reject) => {
                 let request = indexedDB.deleteDatabase("dmlw");
-                request.onerror = () => {reject()}
-                request.onsuccess = () => {el.status("updated", "Datenbank gelöscht");resolve()}
+                request.onerror = () => {el.status("error");reject()}
+                request.onsuccess = () => {el.status("updated", "Datenbank gelöscht.");resolve()}
             });
         }
         createAccount.appendChild(deleteDB);

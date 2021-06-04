@@ -58,6 +58,18 @@ export class Argos{
             loadLabelCurrent.style.fontStyle = "italic";
             loadLabel.appendChild(loadLabelCurrent);
             document.body.appendChild(loadLabel);
+            let backToLogin = document.createElement("DIV");
+            backToLogin.textContent = "Logout";
+            backToLogin.style.color = "var(--mainColor)";
+            backToLogin.style.fontSize = "14px";
+            backToLogin.style.position = "fixed";
+            backToLogin.style.bottom = "10px";
+            backToLogin.style.left = "10px";
+            backToLogin.onclick = () => {
+                localStorage.removeItem("key");
+                location.reload();
+            }
+            document.body.appendChild(backToLogin);
             await arachne.loadDB(loadLabelCurrent, true);
             fetch("/config/access", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
                 .then(re => {if(re.status === 200){return re.json()}})

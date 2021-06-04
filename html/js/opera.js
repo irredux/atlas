@@ -313,8 +313,8 @@ class LibrarySelector extends Oculus{
             if(scanLnkId > 0){
                 imgSelectPage.classList.add("selMarked");
                 imgSelectPage.dataset.scan_lnk_id = scanLnkId;
-                this.selMarker.main.lastRow = scan.id;
-                this.selMarker.main.ids.push(scan.id);
+                argos.main.o.library_selector.selMarker.main.lastRow = `${scan.id}`;
+                argos.main.o.library_selector.selMarker.main.ids.push(`${scan.id}`);
             }
             if(scan_lnks.length === 1){
                 imgSelectPage.appendChild(el.i(" (in 1 Edition)", {class: "minorTxt"}));
@@ -495,8 +495,7 @@ class AuthorEdit extends Oculus{
             ["in Benutzung:", iInUse, "", ""],
             ["Kommentar:", iTxtInfo, "", ""]
         ];
-        /*18-32-17-32*/
-        mainBody.appendChild(el.table(tblContent));
+        mainBody.appendChild(el.table(tblContent), ["18%", "32%", "18%", "32%"]);
         if(this.resId>0){
             let iSave = el.button("Änderungen speichern");
             iSave.style.margin = "10px";
@@ -529,9 +528,19 @@ class AuthorEdit extends Oculus{
             }
             let iDelete = el.button("Autor löschen");
             iDelete.style.margin = "10px";
-            iDelete.onclick = () => {
-                if(confirm("Soll der Autor wirklich gelöscht werden? Dieser Schritt kann nicht rückgängig gemacht werden!")){
-                    arachne.author.delete(this.resId);
+            iDelete.onclick = async () => {
+                if(confirm("Soll der Autor wirklich gelöscht werden? Alle verknüpften Werke werden ebenfalls gelöscht. Dieser Schritt kann nicht rückgängig gemacht werden!")){
+                    const works = await arachne.work.is(this.resId, "author", false);
+                    for(const work of works){
+                        console.log(work.id);
+                        await arachne.work.delete(work.id);
+                    }
+                    await arachne.author.delete(this.resId);
+                    this.ctn.innerHTML="<div id='loadLabel'>Liste wird vorbereitet...</div>";
+                    fetch("/exec/opera_update", {headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
+                        then(() => {this.close();argos.main.refresh()}).
+                        catch(e => {throw e});
+
                 }
             }
             mainBody.appendChild(iSave);
@@ -613,8 +622,7 @@ class WorkEdit extends Oculus{
             ["Referenz:", iReference, "in Benutzung:", iInUse],
             ["Kommentar:", iTxtInfo, "Bibliographie:", iBib]
         ];
-        mainBody.appendChild(el.table(tblContent));
-        /*18-32-17-32*/
+        mainBody.appendChild(el.table(tblContent), ["18%", "32%", "18%", "32%"]);
         if(this.resId>0){
             let iSave = el.button("Änderungen speichern");
             iSave.style.margin = "10px";

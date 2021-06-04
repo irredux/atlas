@@ -237,7 +237,7 @@ class Buticula(Bottle):
         with open(self.p + '/html/views/opera/opera_mai_sheet.tpl', 'w+') as sheet_file:
             pass
         with open(self.p + '/html/views/opera/opera_mai_sheet.tpl', 'w+') as sheet_file:
-            opera = self.db.search('opera_table_view', {'work_is_maior': 1}, ['id',
+            opera = self.db.search('opera_table_view', {'work_is_maior': 1, 'deleted': 'NULL'}, ['id',
                 'author_id', 'work_abbr', 'author_abbr', 'work_full', 'author_full',
                 'work_date_display', 'author_date_display', 'work_bibliography',
                 'work_txt_info', 'author_txt_info', 'work_citation', 'editions',
@@ -322,7 +322,7 @@ class Buticula(Bottle):
         with open(self.p + '/html/views/opera/opera_min_sheet.tpl', 'w+') as sheet_file:
             pass
         with open(self.p + '/html/views/opera/opera_min_sheet.tpl', 'w+') as sheet_file:
-            opera = self.db.search('opera_table_view', {'work_is_maior': 0}, ['id',
+            opera = self.db.search('opera_table_view', {'work_is_maior': 0, 'deleted': 'NULL'}, ['id',
                 'author_id', 'work_date_display', 'editions', 'opus', 'work_txt_info'],
                 ['author_abbr_sort', 'work_abbr_sort'])
             row_count = 0
