@@ -59,7 +59,7 @@ export class Argos{
             loadLabel.appendChild(loadLabelCurrent);
             document.body.appendChild(loadLabel);
             let backToLogin = document.createElement("DIV");
-            backToLogin.textContent = "abmelden";
+            backToLogin.textContent = "abbrechen";
             backToLogin.style.color = "var(--mainColor)";
             backToLogin.style.fontSize = "14px";
             backToLogin.style.position = "fixed";

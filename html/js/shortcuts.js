@@ -58,6 +58,10 @@ export class ShortCuts{
             const cObj = document.getElementById("zettel");
             if(cObj!=null){cObj.querySelector(".projectMenuButton").click()}
         });
+        // viewer 
+        this.add("viewer", "e", () => {
+            if(argos.access.includes("l_edit")){argos.loadEye("library_edit", argos.main.resId)}
+        });
     }
 
     add(res, key, onEvent){

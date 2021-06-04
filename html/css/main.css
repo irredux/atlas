@@ -1422,13 +1422,13 @@
 
     /* popover windows */
     .popOver{
+        display: inline;
         position: absolute;
         z-index: 80000;
     }
 
     .popOverContent{
         display: none;
-        position: absoute;
         background-color: var(--mainBG);
         min-width: 200px;
         max-width: 800px;

@@ -166,13 +166,15 @@ class LibraryEdit extends Oculus{
     async load(){
         let mainBody = document.createDocumentFragment();
         let edition = {};
+        let work = {};
         if(this.resId > 0){
             edition = await arachne.edition.is(this.resId);
-            mainBody.appendChild(el.h(`${edition.opus} <i class="minorTxt">(ID: ${edition.id})</i>`, 3));
+            work = await arachne.work.is(edition.work_id);
+            mainBody.appendChild(el.h(`${work.opus} <i class="minorTxt">(ID: ${edition.id})</i>`, 3));
         } else {
             mainBody.appendChild(el.h("Neue Edition erstellen", 3));
         }
-        let iWork = el.text(edition.example);
+        let iWork = el.text(work.example);
         iWork.dataset.selected = edition.work_id;
         this.bindAutoComplete(iWork, "work", ["id", "example"]);
         let iEditionName = el.area(edition.edition_name);
@@ -202,10 +204,12 @@ class LibraryEdit extends Oculus{
             else{linkDIV.style.display = "none"; scanDIV.style.display = "block"}
         }
         // 20-80
+        let openScans = `<a class="minorTxt" href="/site/viewer/${edition.id}" target="_blank">Digitalisat öffnen</a>`;
+        if(this.res = "viewer"){openScans = ""}
         let tbl1 = [
             ["Verknüpftes Werk:", iWork],
-            ["", `<span class="minorTxt">${edition.bibliography}</span>`],
-            ["", `<a class="minorTxt" href="/site/viewer/${edition.id}" target="_blank">Digitalisat öffnen</a>`],
+            ["", `<span class="minorTxt">${work.bibliography}</span>`],
+            ["", openScans],
             ["Edition:", iEditionName],
             ["Editor:", iEditor],
             ["Jahr:", iYear],
@@ -488,10 +492,61 @@ class AuthorEdit extends Oculus{
         let iDateType = el.text(author.date_type);
         let iInUse = el.select(author.in_use);
         let iTxtInfo = el.area(author.txt_info);
+        let dateOwnDes = el.span("Sortierdatum: ");
+        const helpContentSort = `
+<h3>Hilfe bei der Datierung</h3>
+<p class="minorTxt">Damit die Autoren und Werke richtig sortiert werden, muss das Datum in arabischen Zahlen umgestzt werden. Grundsätzlich ist immer das spätere Datum zu wählen. In der folgenden Liste finden Sie einige Beispiele.</p>
+<table class="minorTxt">
+<tr><td width="20%"><b>Anzeigedatum</b></td><td><b>Sortierdatum</b></td></tr>
+<tr><td>1230</td><td>1230</td></tr>
+<tr><td>1098/99</td><td>1099</td></tr>
+<tr><td>1254-60</td><td>1260</td></tr>
+<tr><td>† 1268</td><td>	1268</td></tr>
+<tr><td></td><td></td></tr>
+<tr><td>c. 980</td><td>980</td></tr>
+<tr><td>c. 1000-18</td><td>1018</td></tr>
+<tr><td>c. 650-747/51</td><td>751</td></tr>
+<tr><td></td><td></td></tr>
+<tr><td>695 ?</td><td>695</td></tr>
+<tr><td></td><td></td></tr>
+<tr><td>ante 897</td><td>897</td></tr>
+<tr><td>post 922</td><td>942 (+ 20 Jahre)</td></tr>
+<tr><td>paulo post 727</td><td>727</td></tr>
+<tr><td></td><td></td></tr>
+<tr><td>s. XII.</td><td>1200</td></tr>
+<tr><td>c. s. XII.</td><td>1200</td></tr>
+<tr><td>s. XI.-XII.</td><td>1200</td></tr>
+<tr><td>s. XII.<sup>in.</sup></td><td>1120</td></tr>
+<tr><td>s. XII.<sup>med.</sup></td><td>1160</td></tr>
+<tr><td>s. XII.<sup>ex.</sup></td><td>1200</td></tr>
+<tr><td>s. XII.<sup></sup>1</td><td>1150</td></tr>
+<tr><td>s. XII.<sup>2</sup></td><td>1200</td></tr>
+<tr><td>s. XII.med. ?</td><td>1150</td></tr>
+</table>
+        `;
+        dateOwnDes.appendChild(el.pop("(?)", helpContentSort, "left", "relative"));
+        let dateOwnDesType = el.span("Sortierdatum-Typ: ");
+        const helpContentSortType = `
+<h3>Hilfe bei der Datierung</h3>
+<p class="minorTxt">Um die verschieden grossen Zeiträume zu unterscheiden, wird ein Sortierdatum-Typ gesetzt.</p>
+<table class="minorTxt">
+<tr><td><b>Nummer</b></td><td><b>Gruppe</b></td><td><b>Beispiel</b></td></tr>
+<tr><td>1</td><td><i>genaues Jahr</i></td><td>1230</td></tr>
+<tr><td>2</td><td>c. <i>Jahr</i>, paulo post</td><td>c. 980<br />paulo post 727</td></tr>
+<tr><td>3</td><td><i>Zeitspanne</i>, ante</td><td>1254-60<br />1098/99<br />ante 897</td></tr>
+<tr><td>4</td><td>s.<sup>in.</sup>, s.<sup>med.</sup>, s.<sup>ex.</sup>; post</td><td>s. XII.<sup>in.</sup><br />s. XII.<sup>med.</sup><br />s. XII.<sup>ex.</sup><br />post 922</td></tr>
+<tr><td>5</td><td>s.<sup>1</sup> s.<sup>2</sup></td><td>s. XII.<sup>1</sup><br />s. XII.<sup>2</sup></td></tr>
+<tr><td>6</td><td>s.</td><td>s. XII.</td></tr>
+<tr><td>7</td><td>c. s.</td><td>c. s. XII.</td></tr>
+<tr><td>8</td><td>s.–s.</td><td>s. XI.-s.XII.</td></tr>
+<tr><td>9</td><td><i>eigene Datierung nötig</i></td><td></td></tr>
+</table>
+        `;
+        dateOwnDesType.appendChild(el.pop("(?)", helpContentSortType, "left", "relative"));
         const tblContent = [
             ["Name:", iFull, "Anzeigedatum:", iDateDisplay],
             ["Abkürzung:", iAbbr, "Abkürzung (Sortierung):", iAbbrSort],
-            ["Sortierdatum:", iDateSort, "Sortierdatum-Typ:", iDateType],
+            [dateOwnDes, iDateSort, dateOwnDesType, iDateType],
             ["in Benutzung:", iInUse, "", ""],
             ["Kommentar:", iTxtInfo, "", ""]
         ];
@@ -611,10 +666,61 @@ class WorkEdit extends Oculus{
         let iInUse = el.select(work.in_use);
         let iTxtInfo = el.area(work.txt_info);
         let iBib = el.area(work.bibliography);
+        let dateOwnDes = el.span("Sortierdatum: ");
+        const helpContentSort = `
+<h3>Hilfe bei der Datierung</h3>
+<p class="minorTxt">Damit die Autoren und Werke richtig sortiert werden, muss das Datum in arabischen Zahlen umgestzt werden. Grundsätzlich ist immer das spätere Datum zu wählen. In der folgenden Liste finden Sie einige Beispiele.</p>
+<table class="minorTxt">
+<tr><td width="20%"><b>Anzeigedatum</b></td><td><b>Sortierdatum</b></td></tr>
+<tr><td>1230</td><td>1230</td></tr>
+<tr><td>1098/99</td><td>1099</td></tr>
+<tr><td>1254-60</td><td>1260</td></tr>
+<tr><td>† 1268</td><td>	1268</td></tr>
+<tr><td></td><td></td></tr>
+<tr><td>c. 980</td><td>980</td></tr>
+<tr><td>c. 1000-18</td><td>1018</td></tr>
+<tr><td>c. 650-747/51</td><td>751</td></tr>
+<tr><td></td><td></td></tr>
+<tr><td>695 ?</td><td>695</td></tr>
+<tr><td></td><td></td></tr>
+<tr><td>ante 897</td><td>897</td></tr>
+<tr><td>post 922</td><td>942 (+ 20 Jahre)</td></tr>
+<tr><td>paulo post 727</td><td>727</td></tr>
+<tr><td></td><td></td></tr>
+<tr><td>s. XII.</td><td>1200</td></tr>
+<tr><td>c. s. XII.</td><td>1200</td></tr>
+<tr><td>s. XI.-XII.</td><td>1200</td></tr>
+<tr><td>s. XII.<sup>in.</sup></td><td>1120</td></tr>
+<tr><td>s. XII.<sup>med.</sup></td><td>1160</td></tr>
+<tr><td>s. XII.<sup>ex.</sup></td><td>1200</td></tr>
+<tr><td>s. XII.<sup></sup>1</td><td>1150</td></tr>
+<tr><td>s. XII.<sup>2</sup></td><td>1200</td></tr>
+<tr><td>s. XII.med. ?</td><td>1150</td></tr>
+</table>
+        `;
+        dateOwnDes.appendChild(el.pop("(?)", helpContentSort, "left", "relative"));
+        let dateOwnDesType = el.span("Sortierdatum-Typ: ");
+        const helpContentSortType = `
+<h3>Hilfe bei der Datierung</h3>
+<p class="minorTxt">Um die verschieden grossen Zeiträume zu unterscheiden, wird ein Sortierdatum-Typ gesetzt.</p>
+<table class="minorTxt">
+<tr><td><b>Nummer</b></td><td><b>Gruppe</b></td><td><b>Beispiel</b></td></tr>
+<tr><td>1</td><td><i>genaues Jahr</i></td><td>1230</td></tr>
+<tr><td>2</td><td>c. <i>Jahr</i>, paulo post</td><td>c. 980<br />paulo post 727</td></tr>
+<tr><td>3</td><td><i>Zeitspanne</i>, ante</td><td>1254-60<br />1098/99<br />ante 897</td></tr>
+<tr><td>4</td><td>s.<sup>in.</sup>, s.<sup>med.</sup>, s.<sup>ex.</sup>; post</td><td>s. XII.<sup>in.</sup><br />s. XII.<sup>med.</sup><br />s. XII.<sup>ex.</sup><br />post 922</td></tr>
+<tr><td>5</td><td>s.<sup>1</sup> s.<sup>2</sup></td><td>s. XII.<sup>1</sup><br />s. XII.<sup>2</sup></td></tr>
+<tr><td>6</td><td>s.</td><td>s. XII.</td></tr>
+<tr><td>7</td><td>c. s.</td><td>c. s. XII.</td></tr>
+<tr><td>8</td><td>s.–s.</td><td>s. XI.-s.XII.</td></tr>
+<tr><td>9</td><td><i>eigene Datierung nötig</i></td><td></td></tr>
+</table>
+        `;
+        dateOwnDesType.appendChild(el.pop("(?)", helpContentSortType, "left", "relative"));
         const tblContent = [
             ["Name:", iFull, "Anzeigedatum:", iDateDisplay],
             ["Abkürzung:", iAbbr, "Abkürzung (Sortierung):", iAbbrSort],
-            ["Sortierdatum:", iDateSort, "Sortierdatum-Typ", iDateType],
+            [dateOwnDes, iDateSort, dateOwnDesType, iDateType],
             ["Abweichender Autorenname<br />(z.B. bei VITA):", iAuthorDisplay, "", ""],
             ["", "", "", ""],
             ["Stellenangabe (Bsp.):", iCitation, "Autor:", iAuthor],

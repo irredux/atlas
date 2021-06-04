@@ -1,5 +1,5 @@
 import { Oculus } from "/file/js/oculus.js";
-//import { ContextMenu } from "/file/js/contextmenu.js";
+import { ContextMenu } from "/file/js/contextmenu.js";
 //import { html } from "/file/js/elements.js";
 export { Viewer };
 
@@ -146,9 +146,17 @@ class Viewer extends Oculus{
             if (e.which == 37 && menuLeft.style.display != "none") {menuLeft.click()}
             else if (e.which == 39 && menuRight.style.display != "none") {menuRight.click()}
         }
-        document.body.textContent = "";
+        //document.body.textContent = "";
         document.body.appendChild(mainBody);
         this.setZoom();
+        // contextmenu
+        let cContext = new ContextMenu();
+        if(this.access.includes("l_edit")){
+            cContext.addEntry('*', 'a', 'Edition bearbeiten', () => {
+                argos.loadEye("library_edit", this.resId);
+            });
+        }
+        this.setContext = cContext.menu;
     }
     setZoom(){
         let img = document.querySelector("img");

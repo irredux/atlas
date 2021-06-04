@@ -9,6 +9,12 @@ class Elements {
     constructor(){
         //this.ctn = ctn;
     }
+    span(content=null, attr = {}){
+        let span = document.createElement("span");
+        if(content!=null){span.innerHTML = html(content)}
+        if(attr.class!=null){span.classList.add(attr.class)}
+        return span;
+    }
     div(content=null, attr = {}){
         let div = document.createElement("DIV");
         if(content!=null){div.innerHTML = html(content)}
@@ -22,12 +28,14 @@ class Elements {
         if(attr.class!=null){i.classList.add(attr.class)}
         return i;
     }
-    pop(button, content, direction = "left"){
+    pop(button, content, direction = "right", position = "absolute"){
         let box = document.createElement("DIV");
+        box.style.position = position;
         box.classList.add("popOver");
         box.innerHTML = html(`<a>${button}</a>`);
         let boxContent = document.createElement("DIV");
         boxContent.classList.add("popOverContent");
+        if(position === "relative"){boxContent.style.position = "absolute"}
         boxContent.style.textAlign = direction;
         boxContent.innerHTML = html(content);
         box.appendChild(boxContent);
