@@ -43,8 +43,18 @@ class Login extends Oculus{
         let createAccount = el.p("");
         createAccount.innerHTML = `<br />
                     Noch kein Benutzerkonto? <a onclick="argos.loadMain('account_create')">hier klicken</a><!--<br />
-                    Passwort vergessen? <a onclick="argos.loadMain('account_forgotten')">hier klicken</a>-->
+                    Passwort vergessen? <a onclick="argos.loadMain('account_forgotten')">hier klicken</a>--><br />
         `;
+        let deleteDB = document.createElement("A");
+        deleteDB.textContent = "Lokale Datenbank zurücksetzen";
+        deleteDB.onclick = () => {
+            return new Promise((resolve, reject) => {
+                let request = indexedDB.deleteDatabase("dmlw");
+                request.onerror = () => {reject()}
+                request.onsuccess = () => {el.status("updated", "Datenbank gelöscht");resolve()}
+            });
+        }
+        createAccount.appendChild(deleteDB);
         createAccount.classList.add("minorTxt");
         login.appendChild(createAccount);
         login.appendChild(submitLogin);
