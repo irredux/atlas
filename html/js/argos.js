@@ -79,6 +79,7 @@ export class Argos{
                 })
                 .then(re => {if(re.status === 200){return re.json()}})
                 .then((items) => {
+                    backToLogin.remove();
                     let headerMenu = document.createElement("DIV");
                     headerMenu.id = "headerMenu";
                      // GET mainMenu -> display here!
