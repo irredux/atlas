@@ -204,6 +204,9 @@ class ArachneDatabase{
 
     async update(forceUpdate = false){
         if(forceUpdate === true || (Date.now()-this.lastUpdated)>60000){
+            const dbName = this.dbName;
+            const dbVersion = this.dbVersion;
+            const tblName = this.tblName;
             this.lastUpdated = Date.now()
             const url = `/data/${this.tblName}?u_date=${await this.version()}`;
             return new Promise((resolve, reject) => {
@@ -224,7 +227,7 @@ class ArachneDatabase{
                                             return;
                                         }
                                         count ++;
-                                        console.log(this.tblName, "- receiving from server -", count);
+                                        console.log(tblName, "- receiving from server -", count);
                                         const txt = restOfChunk+decoder.decode(value);
                                         const parts = txt.split('}, {"');
                                         const lastPart = parts[parts.length-1];
@@ -269,13 +272,13 @@ class ArachneDatabase{
                                             return;
                                         }
                                         count ++;
-                                        console.log(this.tblName, "- saving to DB -", count, value.length);
-                                        let request = indexedDB.open(this.dbName, this.dbVersion);
+                                        console.log(tblName, "- saving to DB -", count, value.length);
+                                        let request = indexedDB.open(dbName, dbVersion);
                                         request.onerror = e => {throw e}
                                         request.onsuccess = () => {
                                             let db = request.result;
-                                            let tAction = db.transaction(this.tblName, "readwrite");
-                                            let oStore = tAction.objectStore(this.tblName);
+                                            let tAction = db.transaction(tblName, "readwrite");
+                                            let oStore = tAction.objectStore(tblName);
                                             let delList = [];
                                             for(const item of value){
                                                 if(item.deleted != null){delList.push(item.id)}
@@ -305,13 +308,13 @@ class ArachneDatabase{
                                             return;
                                         }
                                         count ++;
-                                        console.log(this.tblName, "- removing deleted items -", count);
-                                        let request = indexedDB.open(this.dbName, this.dbVersion);
+                                        console.log(tblName, "- removing deleted items -", count);
+                                        let request = indexedDB.open(dbName, dbVersion);
                                         request.onerror = e => {throw e}
                                         request.onsuccess = () => {
                                             let db = request.result;
-                                            let tAction = db.transaction(this.tblName, "readwrite");
-                                            let oStore = tAction.objectStore(this.tblName);
+                                            let tAction = db.transaction(tblName, "readwrite");
+                                            let oStore = tAction.objectStore(tblName);
                                             for(const delId of value){oStore.delete(delId)}
                                             tAction.oncomplete = () => {pump()}
                                         }
