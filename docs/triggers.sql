@@ -3,8 +3,8 @@ CREATE OR REPLACE TRIGGER article_create
 BEFORE INSERT ON article 
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -13,7 +13,7 @@ CREATE OR REPLACE TRIGGER article_update
 BEFORE UPDATE ON article 
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -24,8 +24,8 @@ CREATE OR REPLACE TRIGGER author_create
 BEFORE INSERT ON author 
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -34,7 +34,7 @@ CREATE OR REPLACE TRIGGER author_update
 BEFORE UPDATE ON author
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -45,8 +45,8 @@ CREATE OR REPLACE TRIGGER comment_create
 BEFORE INSERT ON comment 
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
         SET new.user = (
             SELECT CONCAT(LEFT(user.first_name, 1), ". ", user.last_name)
             FROM user
@@ -60,7 +60,7 @@ CREATE OR REPLACE TRIGGER comment_update
 BEFORE UPDATE ON comment 
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
         SET new.user = (
             SELECT CONCAT(LEFT(user.first_name,1), ". ", user.last_name)
             FROM user
@@ -76,8 +76,8 @@ CREATE OR REPLACE TRIGGER edition_create
 BEFORE INSERT ON edition 
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -86,7 +86,7 @@ CREATE OR REPLACE TRIGGER edition_update
 BEFORE UPDATE ON edition
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -97,8 +97,8 @@ CREATE OR REPLACE TRIGGER lemma_create
 BEFORE INSERT ON lemma
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
         SET new.zettel_count = 0;
         SET new.comments_count = 0;
         SET new.lemma_search = LOWER(new.lemma);
@@ -110,7 +110,7 @@ CREATE OR REPLACE TRIGGER lemma_update
 BEFORE UPDATE ON lemma
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
         SET new.lemma_search = LOWER(new.lemma);
         UPDATE zettel
         SET
@@ -129,8 +129,8 @@ CREATE OR REPLACE TRIGGER project_create
 BEFORE INSERT ON project
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -139,7 +139,7 @@ CREATE OR REPLACE TRIGGER project_update
 BEFORE UPDATE ON project
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -150,8 +150,8 @@ CREATE OR REPLACE TRIGGER scan_create
 BEFORE INSERT ON scan
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -160,7 +160,7 @@ CREATE OR REPLACE TRIGGER scan_update
 BEFORE UPDATE ON scan
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -171,8 +171,8 @@ CREATE OR REPLACE TRIGGER scan_lnk_create
 BEFORE INSERT ON scan_lnk
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -181,7 +181,7 @@ CREATE OR REPLACE TRIGGER scan_lnk_update
 BEFORE UPDATE ON scan_lnk
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -192,8 +192,8 @@ CREATE OR REPLACE TRIGGER user_create
 BEFORE INSERT ON user
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -202,7 +202,7 @@ CREATE OR REPLACE TRIGGER user_update
 BEFORE UPDATE ON user
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;
 
@@ -213,8 +213,8 @@ CREATE OR REPLACE TRIGGER work_create
 BEFORE INSERT ON work
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
         SET new.example = (
             SELECT CONCAT(
                 IF(new.in_use=1, '', '['),
@@ -235,7 +235,7 @@ CREATE OR REPLACE TRIGGER work_update
 BEFORE UPDATE ON work
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
         SET new.example = (
             SELECT CONCAT(
                 IF(new.in_use=1, '', '['),
@@ -279,8 +279,8 @@ CREATE OR REPLACE TRIGGER zettel_create
 BEFORE INSERT ON zettel
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
         SET new.img_path = CONCAT('/zettel/',
             new.letter, '/',
             new.img_folder, '/',
@@ -336,7 +336,7 @@ CREATE OR REPLACE TRIGGER zettel_update
 BEFORE UPDATE ON zettel
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
         IF new.lemma_id != old.lemma_id OR (old.lemma_id IS NULL AND new.lemma_id IS NOT NULL) THEN
             SET new.lemma = (SELECT lemma FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_nr = (SELECT lemma_nr FROM lemma WHERE new.lemma_id = lemma.id);
@@ -400,8 +400,8 @@ CREATE OR REPLACE TRIGGER zettel_lnk_create
 BEFORE INSERT ON zettel_lnk
 FOR EACH ROW
     BEGIN
-        SET new.c_date = NOW(6);
-        SET new.u_date = NOW(6);
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
         SET new.date_sort = (SELECT zettel.date_sort FROM zettel WHERE new.zettel_id = zettel.id);
         SET new.date_type = (SELECT zettel.date_type FROM zettel WHERE new.zettel_id = zettel.id);
         SET new.lemma_search = (SELECT zettel.lemma_search FROM zettel WHERE new.zettel_id = zettel.id);
@@ -418,6 +418,6 @@ CREATE OR REPLACE TRIGGER zettel_lnk_update
 BEFORE UPDATE ON zettel_lnk
 FOR EACH ROW
     BEGIN
-        SET new.u_date = NOW(6);
+        SET new.u_date = SYSDATE(6);
     END; //
 DELIMITER ;

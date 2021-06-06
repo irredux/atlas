@@ -208,44 +208,142 @@ class ArachneDatabase{
 
     async update(forceUpdate = false){
         if(forceUpdate === true || (Date.now()-this.lastUpdated)>60000){
+            const dbName = this.dbName;
+            const dbVersion = this.dbVersion;
+            const tblName = this.tblName;
             this.lastUpdated = Date.now()
             const url = `/data/${this.tblName}?u_date=${await this.version()}`;
-            const newData = await fetch(url, {
-                headers: {"Authorization": `Bearer ${this.token}`}
-            })
-                .then(response => {
-                    if(response.status === 401){postMessage({status:401})}
-                    else if(response.status === 200){return response.json()}
+            return new Promise((resolve, reject) => {
+                fetch(url, {
+                    headers: {"Authorization": `Bearer ${this.token}`}
                 })
-                .then(items => { return new Promise((resolve, reject) => {
-                    if(items.length>0){
-                        let request = indexedDB.open(this.dbName, this.dbVersion);
-                        request.onerror = e => {reject(e)}
-                        request.onsuccess = () => {
-                            let db = request.result;
-                            let tAction = db.transaction(this.tblName, "readwrite");
-                            let oStore = tAction.objectStore(this.tblName);
-                            for(const item of items){oStore.put(item)}
-                            tAction.oncomplete = () => {
-                                resolve(true);
+                    .then(response => {
+                        let count = 0;
+                        let restOfChunk = "";
+                        let decoder = new TextDecoder();
+                        const reader = response.body.getReader();
+                        return new ReadableStream({
+                            start(controller){
+                                let pump = () => {
+                                    reader.read().then( ({done, value}) => {
+                                        if (done) {
+                                            controller.close();
+                                            return;
+                                        }
+                                        count ++;
+                                        console.log(tblName, "- receiving from server -", count);
+                                        const txt = restOfChunk+decoder.decode(value);
+                                        const parts = txt.split('}, {"');
+                                        // preserve last item, if not last chunk
+                                        if(!(txt.endsWith('"}]') || txt.endsWith('null}]'))){
+                                            restOfChunk = parts.pop();
+                                        } else {restOfChunk = ""}
+                                        let items = [];
+                                        for(const part of parts){
+                                            if(part.startsWith("[")){
+                                                //first element of table
+                                                items.push(JSON.parse(part.substring(1)+'}'));
+                                            } else if (part.endsWith("]")){
+                                                // last element of table
+                                                items.push(JSON.parse('{"'+part.substring(0,part.length-1)));
+                                            } else if (part != ""){
+                                                try{
+                                                    items.push(JSON.parse('{"'+part+'}'));
+                                                } catch {
+                                                    console.log(parts);
+                                                    throw part;
+                                                }
+                                            } else {
+                                                console.log(parts);
+                                                throw part;
+                                            }
+                                        }
+                                        if(items.length > 0){controller.enqueue(items)}
+                                        pump();
+                                    });
+                                }
+                                pump();
                             }
-                        }
-                    }else{
-                        resolve(false);
-                    }
-                })})
-                .catch(e => {throw e});
+                        });
+                    }).
+                    then(stream => {
+                        let count = 0;
+                        const reader = stream.getReader();
+                        return new ReadableStream({
+                            start(controller){
+                                let pump = () => {
+                                    reader.read().then( ({done, value}) => {
+                                        if (done) {
+                                            controller.close();
+                                            return;
+                                        }
+                                        count ++;
+                                        console.log(tblName, "- saving to DB -", count, value.length);
+                                        let request = indexedDB.open(dbName, dbVersion);
+                                        request.onerror = e => {throw e}
+                                        request.onsuccess = () => {
+                                            let db = request.result;
+                                            let tAction = db.transaction(tblName, "readwrite");
+                                            let oStore = tAction.objectStore(tblName);
+                                            let delList = [];
+                                            for(const item of value){
+                                                if(item.deleted != null){delList.push(item.id)}
+                                                oStore.put(item);
+                                            }
+                                            tAction.oncomplete = () => {
+                                                if(delList.length > 0){controller.enqueue(delList)}
+                                                pump();
+                                            }
+                                        }
+                                    });
+                                }
+                                pump();
+                            }
+                        });
+                    }).
+                    then(stream => {
+                        let count = 0;
+                        const reader = stream.getReader();
+                        return new ReadableStream({
+                            start(controller){
+                                let pump = () => {
+                                    reader.read().then( ({done, value}) => {
+                                        if (done) {
+                                            controller.close();
+                                            resolve();
+                                            return;
+                                        }
+                                        count ++;
+                                        console.log(tblName, "- removing deleted items -", count);
+                                        let request = indexedDB.open(dbName, dbVersion);
+                                        request.onerror = e => {throw e}
+                                        request.onsuccess = () => {
+                                            let db = request.result;
+                                            let tAction = db.transaction(tblName, "readwrite");
+                                            let oStore = tAction.objectStore(tblName);
+                                            for(const delId of value){oStore.delete(delId)}
+                                            tAction.oncomplete = () => {pump()}
+                                        }
+                                    });
+                                }
+                                pump();
+                            }
+                        });
+                    }).
+                    catch(e => {throw e});
+                
+                // optimize?
+                /*
+                if(this.optimize && (newData || this.data == null)){
+                    this.data = null;
+                    let sIndex = null;
+                    if(this.sOrder!=1){sIndex=this.tblName}
+                    this.getAll(sIndex).then(all => {this.data = all}).catch(e => {throw e});
+                }
+                */
 
-            // remove "deleted"
-            if(newData){await this.removeDeleted()}
-            
-            // optimize?
-            if(this.optimize && (newData || this.data == null)){
-                this.data = null;
-                let sIndex = null;
-                if(this.sOrder!=1){sIndex=this.tblName}
-                this.getAll(sIndex).then(all => {this.data = all}).catch(e => {throw e});
-            }
+
+            }); // end of promise
         }
     }
 

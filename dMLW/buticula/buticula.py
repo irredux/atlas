@@ -18,7 +18,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import asyncio
 from binascii import hexlify
 from configparser import ConfigParser
 from datetime import datetime, timedelta, date
@@ -131,6 +130,11 @@ class Buticula(Bottle):
         # write opera sheets
         self.create_opera()
 
+        # write db setups
+        #self.preparedTables = ["lemma", "zettel", "scan", "scan_lnk"]
+        #for tbl in self.preparedTables:
+        #    self.create_db_setup(tbl)
+
         self.Tiro.log("\tButicula started.")
     # ################################################################
     # -I- routes
@@ -177,6 +181,12 @@ class Buticula(Bottle):
     # ################################################################
     # -II- assorted methods
     # ################################################################
+    def create_db_setup(self, table):
+        results = self.db.command(f"SELECT * FROM {table} WHERE u_date > '2020-01-01 01:00:00' ORDER BY u_date ASC");
+        if path.exists(self.p+"/temp") == False: mkdir(self.p+"/temp")
+        with open(self.p + f"/temp/{table}.txt", "w") as i_file:
+            i_file.write(json.dumps(results, default=str))
+
     def create_mlw_file(self, i_data):
         with open(self.p + "/MLW-Software/input.mlw", "wb") as i_file:
             i_file.write(i_data)
@@ -635,16 +645,17 @@ class Buticula(Bottle):
         if res_id == None:
             u_date = request.query.get("u_date", "2020-01-01 01:00:00")
             v_cols.append(u_date);
-            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC LIMIT 50001", v_cols);
-            if(len(results) == 50001):
-                last_date = results[-1]["u_date"]
-                nResults = []
-                for result in results:
-                    if result["u_date"] != last_date:
-                        nResults.append(result)
-                return json.dumps(nResults, default=str)
-            else:
-                return json.dumps(results, default=str)
+            print(f">>> SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC", v_cols)
+            #if u_date == "2020-01-01 01:00:00" and res in self.preparedTables:
+            #    with open(self.p + f"/temp/{res}.txt", "r") as i_file:
+            #        r_txt = i_file.read()
+            #    print("returning file for", res)
+            #    return r_txt
+            #else:
+            #    results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC", v_cols);
+            #    return json.dumps(results, default=str)
+            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC", v_cols);
+            return json.dumps(results, default=str)
         else:
             v_cols.append(res_id);
             results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} id = %s", v_cols);
