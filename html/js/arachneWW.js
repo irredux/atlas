@@ -234,10 +234,19 @@ class ArachneDatabase{
                                         console.log(tblName, "- receiving from server -", count);
                                         const txt = restOfChunk+decoder.decode(value);
                                         const parts = txt.split('}, {"');
+                                        const lastPart = parts[parts.length-1];
+                                        // check if first item is first chunk!
+                                        if(parts[0].startsWith('[{"')){
+                                        } else if (parts[parts.length-1].endsWith("]}")){
+                                        }
                                         // preserve last item, if not last chunk
-                                        if(!(txt.endsWith('"}]') || txt.endsWith('null}]'))){
+                                        if(!(lastPart.endsWith('"}]') || lastPart.endsWith('null}]'))){
                                             restOfChunk = parts.pop();
-                                        } else {restOfChunk = ""}
+                                        } else {
+                                            // last chunk!
+                                            restOfChunk = "";
+                                            parts[parts.length-1] = lastPart.substring(0, lastPart.length-2);
+                                        }
                                         let items = [];
                                         for(const part of parts){
                                             if(part.startsWith("[")){

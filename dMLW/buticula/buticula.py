@@ -131,9 +131,9 @@ class Buticula(Bottle):
         self.create_opera()
 
         # write db setups
-        #self.preparedTables = ["lemma", "zettel", "scan", "scan_lnk"]
-        #for tbl in self.preparedTables:
-        #    self.create_db_setup(tbl)
+        self.presetTbls = ["lemma", "zettel", "scan", "scan_lnk"]
+        for tbl in self.presetTbls:
+            self.create_db_setup(tbl)
 
         self.Tiro.log("\tButicula started.")
     # ################################################################
@@ -645,17 +645,13 @@ class Buticula(Bottle):
         if res_id == None:
             u_date = request.query.get("u_date", "2020-01-01 01:00:00")
             v_cols.append(u_date);
-            print(f">>> SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC", v_cols)
-            #if u_date == "2020-01-01 01:00:00" and res in self.preparedTables:
-            #    with open(self.p + f"/temp/{res}.txt", "r") as i_file:
-            #        r_txt = i_file.read()
-            #    print("returning file for", res)
-            #    return r_txt
-            #else:
-            #    results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC", v_cols);
-            #    return json.dumps(results, default=str)
-            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC", v_cols);
-            return json.dumps(results, default=str)
+            if u_date == "2020-01-01 01:00:00" and res in self.presetTbls:
+                with open(self.p + f"/temp/{res}.txt", "r") as i_file:
+                    r_txt = i_file.read()
+                return r_txt
+            else:
+                results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC", v_cols);
+                return json.dumps(results, default=str)
         else:
             v_cols.append(res_id);
             results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} id = %s", v_cols);
