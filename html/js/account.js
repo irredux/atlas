@@ -67,7 +67,7 @@ class Login extends Oculus{
             <p class="minorTxt" style="float: left;">
                 <a href="mailto:alexander.haeberlin@mlw.badw.de"/>Kontakt</a>
             </p>
-            <p class="minorTxt">Beta 7.2 <i>(1. Juni 2021)</i></p>
+            <p class="minorTxt">Beta 7.3 <i>(7. Juni 2021)</i></p>
         `;
         mainBody.appendChild(footer);
 
