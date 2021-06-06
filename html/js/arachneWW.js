@@ -214,7 +214,6 @@ class ArachneDatabase{
                     headers: {"Authorization": `Bearer ${this.token}`}
                 })
                     .then(response => {
-                        if(!response.ok){throw "ERROR: connection to server lost."}
                         let count = 0;
                         let restOfChunk = "";
                         let decoder = new TextDecoder();
@@ -261,6 +260,7 @@ class ArachneDatabase{
                             }
                         });
                     }).
+                    catch(e => {throw "ERROR! connection to server lost!"}).
                     then(stream => {
                         let count = 0;
                         const reader = stream.getReader();
