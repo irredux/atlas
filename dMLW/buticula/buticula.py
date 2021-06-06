@@ -131,9 +131,9 @@ class Buticula(Bottle):
         self.create_opera()
 
         # write db setups
-        self.presetTbls = ["lemma", "zettel", "scan", "scan_lnk"]
-        for tbl in self.presetTbls:
-            self.create_db_setup(tbl)
+        #self.presetTbls = ["lemma", "zettel", "scan", "scan_lnk"]
+        #for tbl in self.presetTbls:
+        #    self.create_db_setup(tbl)
 
         self.Tiro.log("\tButicula started.")
     # ################################################################

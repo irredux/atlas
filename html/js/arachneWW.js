@@ -476,7 +476,7 @@ onmessage = async (input) => {
             let newDatasets = 0;
             do{
                 newDatasets = await athene.update(true);
-            } while(newDatasets > 0);
+            } while(newDatasets > 9999);
             postMessage({workId: data.workId});
             break;
         case "STRINGTOQUERY":
