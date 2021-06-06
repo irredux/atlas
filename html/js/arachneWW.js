@@ -214,6 +214,7 @@ class ArachneDatabase{
                     headers: {"Authorization": `Bearer ${this.token}`}
                 })
                     .then(response => {
+                        if(!response.ok){throw "ERROR: connection to server lost."}
                         let count = 0;
                         let restOfChunk = "";
                         let decoder = new TextDecoder();
@@ -254,7 +255,7 @@ class ArachneDatabase{
                                         }
                                         if(items.length > 0){controller.enqueue(items)}
                                         pump();
-                                    }).catch(e => {throw "connection lost. "+e});
+                                    });
                                 }
                                 pump();
                             }
