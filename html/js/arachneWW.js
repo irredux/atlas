@@ -234,7 +234,8 @@ class ArachneDatabase{
                                         // check if first item is first chunk!
                                         if(parts[0].startsWith('[{"')){parts[0] = parts[0].substring(3)}
                                         // preserve last item, if not last chunk
-                                        if(!(lastPart.endsWith('"}]') || lastPart.endsWith('null}]'))){
+                                        if(!((lastPart.endsWith('"}]') && !lastPart.endsWith('\\\"}]')) ||
+                                            lastPart.endsWith('null}]'))){
                                             restOfChunk = parts.pop();
                                         } else {
                                             // last chunk!
@@ -288,7 +289,7 @@ class ArachneDatabase{
                                                 pump();
                                             }
                                         }
-                                    });
+                                    }).catch(e => {throw "connection lost. "+e});
                                 }
                                 pump();
                             }
@@ -323,7 +324,7 @@ class ArachneDatabase{
                             }
                         });
                     }).
-                    catch(e => {console.info(">>> ERROR!!!!!!!", e)});
+                    catch(e => {throw e});
                 
                 // optimize?
                 /*
