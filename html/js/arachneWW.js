@@ -241,7 +241,7 @@ class ArachneDatabase{
                                         } else {
                                             // last chunk!
                                             restOfChunk = "";
-                                            parts[parts.length-1] = lastPart.substring(0, lastPart.length-2);
+                                            parts[parts.length-1] = parts[parts.length-1].substring(0, parts[parts.length-1].length-2);
                                         }
                                         let items = [];
                                         for(const part of parts){
