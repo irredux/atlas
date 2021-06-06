@@ -260,7 +260,6 @@ class ArachneDatabase{
                             }
                         });
                     }).
-                    catch(e => {throw "ERROR! connection to server lost!"}).
                     then(stream => {
                         let count = 0;
                         const reader = stream.getReader();
@@ -469,7 +468,11 @@ onmessage = async (input) => {
     switch(data.request){
         case "LOAD":
             athene.load(data.tblName, data.dbName, data.dbVersion, data.optimize, data.sOrder);
-            await athene.update(true);
+            try {
+                await athene.update(true);
+            } catch(e) {
+                throw "ERROR: connection to server lost! "+e;
+            }
             postMessage({workId: data.workId});
             break;
         case "STRINGTOQUERY":
