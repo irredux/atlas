@@ -152,9 +152,7 @@ class ArachneDatabase{
                 }
                 cursorRequest.onerror = (e) => {reject(e)}
             })
-                .catch(e => {throw e});
-        })
-            .catch(e => {throw e});
+        }).catch(e => {throw e});
     }
 
     is(searchValue, index=null, removeArray = true){
@@ -178,9 +176,7 @@ class ArachneDatabase{
                 }
                 cursorRequest.onerror = (e) => {reject(e)}
             })
-                .catch(e => {throw e});
-        })
-            .catch(e => {throw e});
+        }).catch(e => {throw e});
     }
 
     // ***************************************** //
@@ -327,7 +323,7 @@ class ArachneDatabase{
                             }
                         });
                     }).
-                    catch(e => {throw e});
+                    catch(e => {console.info(">>> ERROR!!!!!!!", e)});
                 
                 // optimize?
                 /*
