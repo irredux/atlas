@@ -230,7 +230,7 @@ class ArachneDatabase{
                                         count ++;
                                         console.log(tblName, "- receiving from server -", count);
                                         const txt = restOfChunk+decoder.decode(value);
-                                        const parts = txt.split('}, {"');
+                                        let parts = txt.split('}, {"');
                                         const lastPart = parts[parts.length-1];
                                         // check if first item is first chunk!
                                         if(parts[0].startsWith('[{"')){parts[0] = parts[0].substring(3)}
