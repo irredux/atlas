@@ -287,7 +287,10 @@ class ArachneDatabase{
                                                 oStore.put(item);
                                             }
                                             tAction.oncomplete = () => {
-                                                if(delList.length > 0){controller.enqueue(delList)}
+                                                if(delList.length > 0){
+                                                    newDatasets -= delList.length;
+                                                    controller.enqueue(delList)
+                                                }
                                                 pump();
                                             }
                                         }
@@ -470,7 +473,10 @@ onmessage = async (input) => {
     switch(data.request){
         case "LOAD":
             athene.load(data.tblName, data.dbName, data.dbVersion, data.optimize, data.sOrder);
-            console.log("new datasets: ", await athene.update(true));
+            let newDatasets = 0;
+            do{
+                newDatasets = await athene.update(true);
+            } while(newDatasets > 0);
             postMessage({workId: data.workId});
             break;
         case "STRINGTOQUERY":

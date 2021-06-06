@@ -645,13 +645,15 @@ class Buticula(Bottle):
         if res_id == None:
             u_date = request.query.get("u_date", "2020-01-01 01:00:00")
             v_cols.append(u_date);
-            if u_date == "2020-01-01 01:00:00" and res in self.presetTbls:
-                with open(self.p + f"/temp/{res}.txt", "r") as i_file:
-                    r_txt = i_file.read()
-                return r_txt
-            else:
-                results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC", v_cols);
-                return json.dumps(results, default=str)
+            #if u_date == "2020-01-01 01:00:00" and res in self.presetTbls:
+            #    with open(self.p + f"/temp/{res}.txt", "r") as i_file:
+            #        r_txt = i_file.read()
+            #    return r_txt
+            #else:
+            #    results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC", v_cols);
+            #    return json.dumps(results, default=str)
+            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC LIMIT 10000", v_cols);
+            return json.dumps(results, default=str)
         else:
             v_cols.append(res_id);
             results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} id = %s", v_cols);
