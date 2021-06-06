@@ -208,6 +208,7 @@ class ArachneDatabase{
             const dbVersion = this.dbVersion;
             const tblName = this.tblName;
             this.lastUpdated = Date.now()
+            let newDatasets = 0;
             const url = `/data/${this.tblName}?u_date=${await this.version()}`;
             return new Promise((resolve, reject) => {
                 fetch(url, {
@@ -272,6 +273,7 @@ class ArachneDatabase{
                                             return;
                                         }
                                         count ++;
+                                        newDatasets += value.length;
                                         console.log(tblName, "- saving to DB -", count, value.length);
                                         let request = indexedDB.open(dbName, dbVersion);
                                         request.onerror = e => {throw e}
@@ -304,7 +306,7 @@ class ArachneDatabase{
                                     reader.read().then( ({done, value}) => {
                                         if (done) {
                                             controller.close();
-                                            resolve();
+                                            resolve(newDatasets);
                                             return;
                                         }
                                         count ++;
@@ -468,11 +470,7 @@ onmessage = async (input) => {
     switch(data.request){
         case "LOAD":
             athene.load(data.tblName, data.dbName, data.dbVersion, data.optimize, data.sOrder);
-            try {
-                await athene.update(true);
-            } catch(e) {
-                throw "ERROR: connection to server lost! "+e;
-            }
+            console.log("new datasets: ", await athene.update(true));
             postMessage({workId: data.workId});
             break;
         case "STRINGTOQUERY":
