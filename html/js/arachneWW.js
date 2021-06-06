@@ -236,9 +236,7 @@ class ArachneDatabase{
                                         const parts = txt.split('}, {"');
                                         const lastPart = parts[parts.length-1];
                                         // check if first item is first chunk!
-                                        if(parts[0].startsWith('[{"')){
-                                        } else if (parts[parts.length-1].endsWith("]}")){
-                                        }
+                                        if(parts[0].startsWith('[{"')){parts[0] = parts[0].substring(3)}
                                         // preserve last item, if not last chunk
                                         if(!(lastPart.endsWith('"}]') || lastPart.endsWith('null}]'))){
                                             restOfChunk = parts.pop();
@@ -249,20 +247,10 @@ class ArachneDatabase{
                                         }
                                         let items = [];
                                         for(const part of parts){
-                                            if(part.startsWith("[")){
-                                                //first element of table
-                                                items.push(JSON.parse(part.substring(1)+'}'));
-                                            } else if (part.endsWith("]")){
-                                                // last element of table
-                                                items.push(JSON.parse('{"'+part.substring(0,part.length-1)));
-                                            } else if (part != ""){
-                                                try{
-                                                    items.push(JSON.parse('{"'+part+'}'));
-                                                } catch {
-                                                    console.log(parts);
-                                                    throw part;
-                                                }
-                                            } else {
+                                            if (part === ""){console.log(parts);throw "ERROR: empty part!"}
+                                            try{
+                                                items.push(JSON.parse('{"'+part+'}'));
+                                            } catch {
                                                 console.log(parts);
                                                 throw part;
                                             }
