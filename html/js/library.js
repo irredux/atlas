@@ -16,6 +16,7 @@ class Viewer extends Oculus{
         for(const scanLink of scanLinks){
             scans.push(await arachne.scan.is(scanLink.scan_id));
         }
+        scans.sort((a, b) => b.filename > a.filename);
         scanLinks = [];
 
         let mainBody = document.createDocumentFragment();
@@ -36,8 +37,9 @@ class Viewer extends Oculus{
         let menuTop = document.createElement("DIV");
         menuTop.classList.add("menu_top");
         let editionSpecs = `
-            ${work.opus} <i class="minorTxt">(${edition.editor} ${edition.year} ${edition.volume})</i>
+            ${work.opus} <i class="minorTxt">(${edition.editor} ${edition.year} ${edition.volume!=null?edition.volume:""})</i>
         `;
+        document.title =  `${work.example} - ${edition.editor} ${edition.year}  ${edition.volume!=null?edition.volume:""}`;
 
         let pages = {};
         let cIndex = scans[0].id;

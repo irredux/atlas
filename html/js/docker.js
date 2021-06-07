@@ -1,4 +1,7 @@
-import { Zettel, ZettelAdd, ZettelBatch, ZettelDetail, ZettelExport, ZettelImport } from "/file/js/zettel.js";
+import {
+    Zettel, ZettelAdd, ZettelBatch, ZettelDetail, ZettelExport, ZettelImport,
+    Kasten
+} from "/file/js/zettel.js";
 import { Lemma, LemmaComment, LemmaEdit, LemmaToProject } from "/file/js/lemma.js";
 import { Library, LibraryEdit, LibrarySelector, LibraryUpdate, Opera, OperaExport, OperaUpdate, AuthorEdit, WorkEdit } from "/file/js/opera.js";
 import { Project, ProjectExport, ProjectOverview, ProjectZettelPreview } from "/file/js/project.js";
@@ -17,6 +20,7 @@ export class Docker{
             "zettel_lemma_add": LemmaEdit,
             "zettel_export": ZettelExport,
             "zettel_import": ZettelImport,
+            "kasten": Kasten,
             "lemma": Lemma,
             "lemma_comment": LemmaComment,
             "lemma_edit": LemmaEdit,

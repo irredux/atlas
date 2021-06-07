@@ -1,8 +1,133 @@
 import { Oculus } from "/file/js/oculus.js";
 import { ContextMenu } from "/file/js/contextmenu.js";
 import { html } from "/file/js/elements.js";
-export { Zettel, ZettelAdd, ZettelBatch, ZettelDetail, ZettelExport, ZettelImport };
+export {
+    Zettel, ZettelAdd, ZettelBatch, ZettelDetail, ZettelExport, ZettelImport,
+    Kasten
+};
 
+class Kasten extends Oculus{
+    constructor(res, resId=null, access=[], main=false){
+        super(res, resId, access, main);
+    }
+    async load(){
+        const uItem = [{lemma:"bla 1"}, {lemma_swugg: "bla 2"}];
+        await fetch("/data_batch/lemma", {method: "POST", body: JSON.stringify(uItem),
+        headers: {
+            "Authorization": `Bearer ${arachne.key.token}`,
+            "Content-Type": "application/json"
+        }}).
+            then(re => {console.log(re.status)}).
+            catch(e => {throw e});
+        let mainBody = document.createDocumentFragment();
+        let menuLemma = document.createElement("DIV");
+        menuLemma.style.position = "fixed";
+        menuLemma.style.top = "42px";
+        menuLemma.style.width = "350px";
+        menuLemma.style.bottom = "0";
+        menuLemma.style.left = "0";
+        menuLemma.style.backgroundColor = "var(--mainBG)";
+        menuLemma.style.boxShadow = "0 0 3px black";
+        menuLemma.style.padding = "10px";
+        let iLemma = el.text("");
+        iLemma.oninput = () => {
+            this.selMarker.main.lastRow = null;
+            this.selMarker.main.ids = [];
+            setLemmaResults(iLemma.value);
+        }
+        menuLemma.appendChild(iLemma);
+        let lemmaResults = document.createElement("DIV");
+        lemmaResults.style.padding = "10px";
+        lemmaResults.style.position = "absolute";
+        lemmaResults.style.top = "40px";
+        lemmaResults.style.bottom = "0px";
+        lemmaResults.style.left = "0px";
+        lemmaResults.style.right = "0px";
+        lemmaResults.style.overflow = "scroll";
+        menuLemma.appendChild(lemmaResults);
+        const setLemmaResults = async (query) => {
+            lemmaResults.innerHTML = "";
+            let lemmaLoadLabel = el.loadLabel();
+            lemmaResults.appendChild(lemmaLoadLabel);
+            let lemmata = [];
+            if(query === "*"){
+                lemmata = await arachne.lemma.search(query, ["id", "lemma_display"], "lemma");
+            } else {
+                lemmata = await arachne.lemma.search(`lemma_search:${query.toLowerCase()}.*`, ["id", "lemma_display"], "lemma");
+            }
+            for(const lemma of lemmata){
+                let lemmaBox = document.createElement("DIV");
+                lemmaBox.classList.add("lemmaBox"); lemmaBox.id = lemma.id;
+                lemmaBox.style.padding = "5px";
+                if(query === "*"){
+                    lemmaBox.innerHTML = html(lemma.lemma_display);
+                } else {
+                    lemmaBox.innerHTML = html(lemma.lemma_display.replace(query, `<mark>${query}</mark>`));
+                }
+                lemmaBox.onclick = () => {
+                    loadMainBox();
+                }
+                lemmaResults.appendChild(lemmaBox);
+            }
+            lemmaLoadLabel.remove();
+        }
+        setLemmaResults("*");
+
+        mainBody.appendChild(menuLemma);
+
+        let mainBox = document.createElement("DIV");
+        mainBox.style.position = "absolute";
+        mainBox.style.top = "0px";
+        mainBox.style.left = "350px";
+        mainBox.style.right = "0px";
+        mainBox.style.minHeight = "100px";
+        mainBox.style.padding = "10px";
+        const loadMainBox = async () => {
+            mainBox.innerHTML = "";
+            let mainLoadLabel = el.loadLabel();
+            mainBox.appendChild(mainLoadLabel);
+            for(const id of this.selMarker.main.ids){
+                let lemmaMain = document.createElement("DIV");
+                const cLemma = await arachne.lemma.is(parseInt(id));
+                lemmaMain.style.boxShadow = "0 0 3px black";
+                lemmaMain.style.borderRadius = "7px";
+                lemmaMain.style.padding = "5px";
+                lemmaMain.style.margin = "5px 5px 20px 5px";
+                lemmaMain.style.backgroundColor = "var(--mainBG)";
+                let newHTML = cLemma.lemma_display;
+                if(cLemma.dicts!=null && cLemma.dicts != ""){
+                    newHTML += `<br /><i class="minorTxt">Wörterbücher: ${cLemma.dicts}</i>`;
+                }
+                if(cLemma.comment!=null && cLemma.comment!=""){
+                    newHTML += `<div style="float: right; max-width:300px;">${cLemma.comment}</div>`;
+                }
+                newHTML += "<hr style='clear: both;' />";
+                lemmaMain.innerHTML = html(newHTML);
+                let mainZettelBox = document.createElement("DIV");
+                mainZettelBox.style.display = "flex";
+                mainZettelBox.style.flexDirection = "column";
+                mainZettelBox.style.justifyContent = "center";
+                mainZettelBox.style.alignItems = "center";
+                //mainZettelBox.style.alignContent = "center";
+                const zettels = await arachne.zettel.bound([cLemma.id, 0, 0], [cLemma.id, 99999, 99999], "kasten");
+                for(const zettel of zettels){
+                    mainZettelBox.appendChild(createZettel(zettel));
+                }
+                if(zettels.length === 0){
+                    mainZettelBox.innerHTML = "<span class='minorTxt' style='color:var(--mainColor)'>Keine Zettel für dieses Lemma.</span>";
+                }
+                lemmaMain.appendChild(mainZettelBox);
+                mainBox.appendChild(lemmaMain);
+            }
+            mainLoadLabel.remove();
+        }
+
+        mainBody.appendChild(mainBox);
+        this.ctn.appendChild(mainBody);
+        this.setSelection("main", "div.lemmaBox", true);
+
+    }
+}
 class Zettel extends Oculus{
     constructor(res, resId=null, access=[], main=false){
         super(res, resId, access, main);
@@ -148,47 +273,49 @@ class Zettel extends Oculus{
         mainBody.appendChild(resultBox);
         this.ctn.appendChild(mainBody);
     }
-    contentLoadMore(zettel){
-        let box = document.createElement("DIV");
-        box.classList.add("zettel", "loadMore");
-        box.id = zettel.id;
-        box.display = "flex";
-        box.style.flexShrink = 0;
-        box.style.width = "var(--zettelWidth)";//"500px";
-        if(zettel.img_path!=null){
-            let img = document.createElement("IMG");
-            img.src = zettel.img_path+".jpg";
-            let usage = "in_use";
-            if(zettel.in_use==0){usage="no_use"} // does this do anything?!
-            img.classList.add("zettel_img", usage);
-            box.appendChild(img);
-            let imgMSG = document.createElement("DIV");
-            imgMSG.classList.add("zettel_msg");
-            if(zettel.sibling>0){
-                imgMSG.innerHTML = "<span style='color: var(--contraColor);' title='Geschwisterzettel'>&#x273F;</span>"
-            }
-            if(zettel.date_sort===9 && zettel.date_own === null){
-                imgMSG.innerHTML +="<span style='color: var(--errorStat);' title='Datierung erforderlich'>&#x0021;</span>";
-            }
-            box.appendChild(imgMSG);
-            let zettelMenu = document.createElement("DIV");
-            zettelMenu.classList.add("zettel_menu");
-            zettelMenu.innerHTML = `<span style='float: left;'>${html(zettel.lemma_display)}</span>
-            <span style='float: right;'>${html(zettel.opus)}</span>`;
-            box.appendChild(zettelMenu);
+    contentLoadMore(zettel){return createZettel(zettel)}
 
-        } else {
-            box.style.height = "var(--zettelHeight)";//"500px";
-            box.innerHTML = `<div class='digitalZettel'>
-                <div class='digitalZettelLemma'>${html(zettel.lemma_display)}</div>
-                <div class='digitalZettelDate'>${html(zettel.date_display)}</div>
-                <div class='digitalZettelWork'>${html(zettel.opus)}</div>
-                <div class='digitalZettelText'>${html(zettel.txt)}</div></div>
-            `;
+}
+
+function createZettel(zettel){
+    let box = document.createElement("DIV");
+    box.classList.add("zettel", "loadMore");
+    box.id = zettel.id;
+    box.display = "flex";
+    box.style.flexShrink = 0;
+    box.style.width = "var(--zettelWidth)";//"500px";
+    if(zettel.img_path!=null){
+        let img = document.createElement("IMG");
+        img.src = zettel.img_path+".jpg";
+        let usage = "in_use";
+        if(zettel.in_use==0){usage="no_use"} // does this do anything?!
+        img.classList.add("zettel_img", usage);
+        box.appendChild(img);
+        let imgMSG = document.createElement("DIV");
+        imgMSG.classList.add("zettel_msg");
+        if(zettel.sibling>0){
+            imgMSG.innerHTML = "<span style='color: var(--contraColor);' title='Geschwisterzettel'>&#x273F;</span>"
         }
-        return box;
-    }
+        if(zettel.date_sort===9 && zettel.date_own === null){
+            imgMSG.innerHTML +="<span style='color: var(--errorStat);' title='Datierung erforderlich'>&#x0021;</span>";
+        }
+        box.appendChild(imgMSG);
+        let zettelMenu = document.createElement("DIV");
+        zettelMenu.classList.add("zettel_menu");
+        zettelMenu.innerHTML = `<span style='float: left;'>${html(zettel.lemma_display)}</span>
+        <span style='float: right;'>${html(zettel.opus)}</span>`;
+        box.appendChild(zettelMenu);
 
+    } else {
+        box.style.height = "var(--zettelHeight)";//"500px";
+        box.innerHTML = `<div class='digitalZettel'>
+            <div class='digitalZettelLemma'>${html(zettel.lemma_display)}</div>
+            <div class='digitalZettelDate'>${html(zettel.date_display)}</div>
+            <div class='digitalZettelWork'>${html(zettel.opus)}</div>
+            <div class='digitalZettelText'>${html(zettel.txt)}</div></div>
+        `;
+    }
+    return box;
 }
 
 class ZettelExport extends Oculus{
@@ -269,31 +396,14 @@ class ZettelImport extends Oculus{
             iEditor = el.select(0, userList);
             tblContent.push(["erstellt von:", iEditor]);
         }
-        //let iFiles = document.createElement("INPUT");
-        //iFiles.type = "file"; iFiles.setAttribute("multiple", true);
-        //tblContent.push(["Dateien:", iFiles]);
-        //tblContent.push(["", "<i class='minorTxt'>max. 200 Bilder!</i>"]);
-        tblContent.push(["", "<i class='minorTxt'>Bitte verwenden Sie für den Upload den 'import_zettel'-Ordner</i>"]);
-
-        //let iFolder = document.createElement("INPUT");
-        //iFolder.type="checkbox"; iFolder.id = "from_folder";
-        //let iFolderLabel = document.createElement("LABEL");
-        //iFolderLabel.setAttribute("for", "from_folder");
-        //iFolderLabel.textContent = "Bilder aus 'import_zettel'-Ordner";
-        //let iSpan = document.createElement("SPAN");
-        //iSpan.appendChild(iFolder); iSpan.appendChild(iFolderLabel);
-        //tblContent.push(["", iSpan]);
+        let iFiles = document.createElement("INPUT");
+        iFiles.type = "file"; iFiles.setAttribute("multiple", true);
+        tblContent.push(["Dateien:", iFiles]);
         let iUpload = el.button("hochladen");
         iUpload.onclick = async () => {
-            let data = new FormData();
-            data.append("letter", iLetter.value);
-            data.append("type", iType.value);
-            data.append("user_id_id", iEditor.value);
-            fetch("/file/zettel", {method: "POST", body: data,
-            headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
-                then(re => {el.status("saved", "Import erfolgreich.")}).
-                catch(e => {throw e});
-            /*
+            this.ctn.innerHTML = "";
+            let imgLoadLabel = el.loadLabel("Bilder werden hochgeladen.")
+            this.ctn.appendChild(imgLoadLabel);
             const maxItem= 100;
             let cItemCount = maxItem;
             let cUploadIndex = -1;
@@ -309,17 +419,18 @@ class ZettelImport extends Oculus{
                     uploadGroup[cUploadIndex].append("user_id_id", iEditor.value);
                 }
                 cItemCount ++;
-                uploadGroup[cUploadIndex].append("files"+i, iFiles.files[i]);
+                uploadGroup[cUploadIndex].append("files", iFiles.files[i]);
             }
             for(const uItem of uploadGroup){
                 console.log("Uploading next group...");
-                await fetch("/file/zettel", {method: "POST", body: uItem}).//,
-                //headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
+                await fetch("/file/zettel", {method: "POST", body: uItem,
+                headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
                     then(re => {console.log(re.status)}).
                     catch(e => {throw e});
             }
             console.log("Upload complete!");
-            */
+            alert("Bilder erfolgreich hochgeladen. Bitte laden Sie die Seite neu.");
+            this.close();
         }
         tblContent.push(["", iUpload]);
         mainBody.appendChild(el.table(tblContent));

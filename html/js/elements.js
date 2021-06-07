@@ -9,6 +9,13 @@ class Elements {
     constructor(){
         //this.ctn = ctn;
     }
+    loadLabel(content=null){
+        let div = document.createElement("DIV");
+        div.id = "loadLabel";
+        if(content!=null){div.innerHTML = html(content)}
+        else{div.textContent = "Inhalt wird geladen..."}
+        return div;
+    }
     span(content=null, attr = {}){
         let span = document.createElement("span");
         if(content!=null){span.innerHTML = html(content)}

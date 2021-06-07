@@ -157,6 +157,10 @@ class Buticula(Bottle):
         self.route("/info/<res>", callback=self.info_read, method="GET")
 
         # data
+        self.route("/data_batch/<res>", callback=self.data_batch, method="POST")
+        self.route("/data_batch/<res>", callback=self.data_batch, method="PATCH")
+        self.route("/data_batch/<res>", callback=self.data_batch, method="DELETE")
+
         self.route("/data/user", callback=self.user_create, method="POST")
         self.route("/data/user/<id:int>", callback=self.user_update, method="PATCH")
 
@@ -167,8 +171,8 @@ class Buticula(Bottle):
         self.route("/data/<res>/<res_id:int>", callback=self.data_delete, method="DELETE")
 
         # files
+        self.route("/file/zettel", callback=self.zettel_import, method="POST")
         self.route("/file/<res>/<res_id>", callback=self.file_read)
-        #self.route("/file/zettel", callback=self.zettel_import, method="POST")
 
         # functions
         self.route("/exec/<res>", callback=self.exec_on_server, method="GET");
@@ -396,61 +400,63 @@ class Buticula(Bottle):
                 remove(f"{self.p}/zettel/{zettel['letter']}/{zettel['img_folder']}/{zettel['id']}v.jpg")
 
     def zettel_import(self):
-        user = self.auth();
         # uploading images for zettel-db
+        user = self.auth();
         u_letter = request.forms.letter
         if len(u_letter) == 1 and u_letter.isalpha() and "z_add" in user["access"]:
             u_type = request.forms.type
-            f_lst = []
-            input_path = self.p + "/content/import_zettel/"
-            for lst in listdir(input_path):
-                if lst[-4:] == ".jpg": f_lst.append(lst)
-            f_lst.sort()
-            if len(f_lst) == 0: return HTTPResponse(status=400) # bad request
+            # checking and creating path to new files
+            f_path = self.p + "/zettel/"
+            if path.exists(f_path) == False: mkdir(f_path)
+            f_path += f"{u_letter}/"
+            if path.exists(f_path) == False: mkdir(f_path)
+
+           # set user_id for first editor
+            c_user_id = user['id']
+            if 'admin' in user['access'] and request.forms.user_id_id != '':
+                c_user_id = request.forms.user_id_id
+
+           # loop through file-list
+            recto = True
+            if self.doublesided == True:
+                max_files = 500
             else:
-                # checking and creating path to new files
-                f_path = self.p + "/zettel/"
-                if path.exists(f_path) == False: mkdir(f_path)
-                f_path += f"{u_letter}/"
-                if path.exists(f_path) == False: mkdir(f_path)
-
-               # set user_id for first editor
-                c_user_id = user['id']
-                if 'admin' in user['access'] and request.forms.user_id_id != '':
-                    c_user_id = request.forms.user_id_id
-
-               # loop through file-list
-                recto = True
-                if self.doublesided == True:
-                    max_files = 500
+                max_files = 1000
+            c_path = ""
+            new_id = 0
+            c_loop = 0
+            f_lst = request.files.getall("files")
+            print(len(f_lst))
+            for f in f_lst:
+                c_loop += 1
+                if recto:
+                    # create entry in db
+                    save_dict = {
+                            "user_id": c_user_id,
+                            "letter": u_letter,
+                            "created_by": c_user_id,
+                            "in_use": True
+                            }
+                    if u_type != "0":
+                        save_dict["type"] = u_type
+                    new_id = self.db.save("zettel", save_dict)
+                    self.db.save("zettel", {
+                        "img_folder": f"{(new_id-1)//max_files}",
+                        "img_path": f"/zettel/{u_letter}/{(new_id-1)//max_files}/{new_id}"
+                        },
+                            new_id)
+                    # create subfolder so that no folder has more than 1'000 files
+                    c_path = f_path + f"{(new_id-1)//max_files}/"
+                    if path.exists(c_path) == False: mkdir(c_path)
+                    # save the file
+                    f.save(c_path + f"{new_id}.jpg")
+                    ##rename(input_path + f, c_path + f"{new_id}.jpg")
+                    if self.doublesided: recto = False
                 else:
-                    max_files = 1000
-                c_path = ""
-                new_id = 0
-                c_loop = 0
-                for f in f_lst:
-                    c_loop += 1
-                    if recto:
-                        # create entry in db
-                        save_dict = {"c_date": date.today(), "user_id": c_user_id,
-                                "letter": u_letter, "created_by": c_user_id,
-                                "in_use": True, "created_date": date.today()}
-                        if u_type != "0":
-                            save_dict["type"] = u_type
-                        new_id = self.db.save("zettel", save_dict)
-                        self.db.save("zettel", {"img_folder": f"{(new_id-1)//max_files}"},
-                                new_id)
-                        # create subfolder so that no folder has more than 1'000 files
-                        c_path = f_path + f"{(new_id-1)//max_files}/"
-                        if path.exists(c_path) == False: mkdir(c_path)
-                        # rename and move file
-                        rename(input_path + f, c_path + f"{new_id}.jpg")
-                        if self.doublesided:
-                            recto = False
-                    else:
-                        rename(input_path + f, c_path + f"{new_id}v.jpg")
-                        recto = True
-                return HTTPResponse(status=201) # created
+                    ##rename(input_path + f, c_path + f"{new_id}v.jpg")
+                    f.save(c_path + f"{new_id}v.jpg")
+                    recto = True
+            return HTTPResponse(status=201) # created
         else:
             return HTTPResponse(status=400) # bad request
 
@@ -599,8 +605,8 @@ class Buticula(Bottle):
         else:
             return HTTPResponse(status=403) # forbidden
         if res_id == None:
-            max_date = self.db.command(f"SELECT MAX(u_date) FROM {res}")[0]["MAX(u_date)"];
-            length = self.db.command(f"SELECT COUNT(*) FROM {res}")[0]["COUNT(*)"];
+            max_date = self.db.command(f"SELECT MAX(u_date) FROM {res} WHERE deleted IS NOT NULL")[0]["MAX(u_date)"];
+            length = self.db.command(f"SELECT COUNT(*) FROM {res} WHERE deleted IS NOT NULL")[0]["COUNT(*)"];
             return json.dumps({
                 "max_date": max_date,
                 "length": length
@@ -609,13 +615,31 @@ class Buticula(Bottle):
             u_date = self.db.command(f"SELECT u_date FROM {res} WHERE id = {res_id}");
             return u_date
 
+    def data_batch(self, res):
+        data = request.json
+        if request.method == "POST":
+            for d in data:
+                re = self.data_create(res, d)
+                if(re.status_code != 201):
+                    return HTTPResponse(status=400) # error 
+                    break
+            else:
+                return HTTPResponse(status=201) # created
+        elif request.method == "PATCH":
+            #def data_update(self, res, res_id):
+            pass
+        elif request.method == "DELETE":
+            #def data_delete(self, res, res_id):
+            pass
+        else:
+            return HTTPResponse(status=400) # bad request
 
-    def data_create(self, res):
+    def data_create(self, res, inData=None):
         user = self.auth()
         if res not in self.accessCREATE.keys(): return HTTPResponse(status=404) # not found
         for permission in self.accessCREATE[res]:
             if permission["access"] in user["access"]:
-                inData = request.json
+                if inData == None: inData = request.json
                 if permission.get("restricted", "") == "user_id":
                     inData["user_id"] = user["id"]
                 break

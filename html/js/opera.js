@@ -271,7 +271,7 @@ class LibraryEdit extends Oculus{
                 data.url = iLink.value;
             }
             arachne.edition.save(data).
-                then(() => {el.status("saved"); this.refresh()}).
+                then(() => {el.status("saved"); this.close()}).
                 catch(e => {throw e});
         }
 
@@ -595,7 +595,6 @@ class AuthorEdit extends Oculus{
                     fetch("/exec/opera_update", {headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
                         then(() => {this.close();argos.main.refresh()}).
                         catch(e => {throw e});
-
                 }
             }
             mainBody.appendChild(iSave);
@@ -766,9 +765,18 @@ class WorkEdit extends Oculus{
             }
             let iDelete = el.button("Werk löschen");
             iDelete.style.margin = "10px";
-            iDelete.onclick = () => {
-                if(confirm("Soll das Werk wirklich gelöscht werden? Dieser Schritt kann nicht rückgängig gemacht werden!")){
-                    arachne.work.delete(this.resId);
+            iDelete.onclick = async () => {
+                const cWorks = await arachne.work.is(work.author_id, "author", false);
+                if(cWorks.length > 1){
+                    if(confirm("Soll das Werk wirklich gelöscht werden? Dieser Schritt kann nicht rückgängig gemacht werden!")){
+                        await arachne.work.delete(this.resId);
+                        this.ctn.innerHTML="<div id='loadLabel'>Liste wird vorbereitet...</div>";
+                        fetch("/exec/opera_update", {headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
+                            then(() => {this.close();argos.main.refresh()}).
+                            catch(e => {throw e});
+                    }
+                } else {
+                    alert("Achtung: Dieses Werk kann nicht gelöscht werden, da es das letzte Werk des Autors ist. Entweder löschen Sie den Autor, oder Sie erstellen ein neues Werk für diesen Autor.");
                 }
             }
             mainBody.appendChild(iSave);
