@@ -447,7 +447,7 @@ class ZettelAdd extends Oculus{
         mainBody.appendChild(el.closeButton(this));
         mainBody.appendChild(el.h("Neuen Zettel erstellen",3));
         let iLemma = el.text(""); iLemma.autocomplete = "off";
-        this.bindAutoComplete(iLemma, "lemma", ["id", "lemma_display"]);
+        await this.bindAutoComplete(iLemma, "lemma", ["id", "lemma_display"]);
         let iType = el.select(5, {5: "Ausgeschriebener Zettel", 4: "Literatur"});
         let iDateOwn = el.text("");
         let iDateOwnDisplay = el.text("");
@@ -471,7 +471,7 @@ class ZettelAdd extends Oculus{
         mainBody.appendChild(divLit);
 
         let iWork = el.text(""); iWork.autocomplete = "off";
-        this.bindAutoComplete(iWork, "work", ["id", "example"]);
+        await this.bindAutoComplete(iWork, "work", ["id", "example"]);
         iWork.onchange = (e) => {
             setTimeout(() => {
                 if(iWork.dataset.selected>0){
@@ -580,7 +580,7 @@ class ZettelBatch extends Oculus{
 
         let zbLemma = el.tabContainer("zb_lemma");
         let iLemma = el.text();
-        this.bindAutoComplete(iLemma, "lemma", ["id", "lemma_display"]);
+        await this.bindAutoComplete(iLemma, "lemma", ["id", "lemma_display"]);
         let lemmaSubmit = el.button("übernehmen");
         lemmaSubmit.onclick = async () => {
             if(iLemma.dataset.selected == null){alert("Kein gültiges Lemma ausgewählt!")
@@ -598,7 +598,7 @@ class ZettelBatch extends Oculus{
         tBody.appendChild(zbLemma);
         let zbOpera = el.tabContainer("zb_opera");
         let iWork = el.text();
-        this.bindAutoComplete(iWork, "work", ["id", "example"]);
+        await this.bindAutoComplete(iWork, "work", ["id", "example"]);
         let workSubmit = el.button("übernehmen");
         workSubmit.onclick = async () => {
             if(iWork.dataset.selected == null){alert("Kein gültiges Werk ausgewählt!")
@@ -768,10 +768,10 @@ class ZettelDetail extends Oculus{
             let iType = el.select(zettel.type, zTypes);
             let iLemma = el.text(zettel.lemma);
             iLemma.dataset.selected = zettel.lemma_id;
-            this.bindAutoComplete(iLemma, "lemma", ["id", "lemma_display"]);
+            await this.bindAutoComplete(iLemma, "lemma", ["id", "lemma_display"]);
             let iWork = el.text(zettel.example);
             iWork.dataset.selected = zettel.work_id;
-            this.bindAutoComplete(iWork, "work", ["id", "example"]);
+            await this.bindAutoComplete(iWork, "work", ["id", "example"]);
             let iStelle = el.text(zettel.stellenangabe);
             let iBib = el.text(zettel.stellenangabe_bib);
             let iPageNr = el.text(zettel.page_nr);
@@ -1049,11 +1049,13 @@ class ZettelDetail extends Oculus{
         }
         lTHeader.appendChild(el.tab("digital", "digital"));
         let digital = el.tabContainer("digital");
-        /*
-            <div style='position: absolute; top: 20px; right: 20px; bottom: 20px; left:20px;'>
-                % include('zettel/zettel_card_digital')
-            </div>
-         */
+        const dZettel = {
+            lemma_display: zettel.lemma_display,
+            date_display: zettel.date_display,
+            opus: zettel.opus,
+            txt: zettel.txt
+        }
+        digital.appendChild(createZettel(dZettel));
         lTContent.appendChild(digital);
 
         if(zettel.sibling>0){

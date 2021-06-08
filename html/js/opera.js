@@ -176,7 +176,7 @@ class LibraryEdit extends Oculus{
         }
         let iWork = el.text(work.example);
         iWork.dataset.selected = edition.work_id;
-        this.bindAutoComplete(iWork, "work", ["id", "example"]);
+        await this.bindAutoComplete(iWork, "work", ["id", "example"]);
         let iEditionName = el.area(edition.edition_name);
         let iEditor = el.text(edition.editor);
         let iYear = el.text(edition.year);
