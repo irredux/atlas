@@ -285,7 +285,81 @@ class Statistics extends Oculus{
         });
         lemmaOverview.appendChild(lemmaLetterBox);
 
+        // scans
+        let scanOverview = el.card(); 
+        scanOverview.appendChild(el.h("Digitalisate", 2));
+        scanOverview.appendChild(el.h("Volltext und Scans", 3));
+        const works = await arachne.work.getAll();
+        let wResults = [0, 0];
+        for(const work of works){
+            if(work.in_use == 1){
+                const cEditions = await arachne.edition.is(work.id, "work", false);
+                if(cEditions.length > 0){
+                    wResults[0] ++;
+                } else {
+                    wResults[1] ++;
+                }
+            }
+        }
+        const wLength = 100/(wResults[0]+wResults[1]);
+        let workChartBox = document.createElement("DIV");
+        workChartBox.style.width = "700px";
+        workChartBox.style.margin = "auto";
+        let workChart = document.createElement("CANVAS");
+        workChartBox.appendChild(workChart);
+        scanOverview.appendChild(workChartBox);
+        new Chart(workChart, {
+            type: "pie",
+            data: {
+                labels: [`Werke mit Editionen (${Math.round(wLength*wResults[0])}%)`, `Werke ohne Editionen (${Math.round(wLength*wResults[1])}%)`],
+                datasets: [{
+                    label: '',
+                    data: [wResults[0], wResults[1]],
+                    backgroundColor: ["#537727", "#F9F8ED"],
+                    borderColor: ["#213409", "#F7F4D4"],
+                    borderWidth: 1.5
+                }]
+            },
+            options: {plugins: {legend: {position: "bottom", labels: {font: {size: "15px"}}}}}
+        });
+
+        const scans = await arachne.scan.getAll();
+        let zResults = [0, 0];
+        for(const scan of scans){
+            if(scan.full_text != null && scan.full_text != ""){
+                zResults[0] ++;
+            } else {
+                // no full text
+                zResults[1] ++;
+            }
+        }
+        const sLength = 100/(zResults[0]+zResults[1]);
+        let scanChartBox = document.createElement("DIV");
+        scanChartBox.style.width = "700px";
+        scanChartBox.style.margin = "auto";
+        let scanChart = document.createElement("CANVAS");
+        scanChartBox.appendChild(scanChart);
+        scanOverview.appendChild(scanChartBox);
+        new Chart(scanChart, {
+            type: "pie",
+            data: {
+                labels: [`Scans mit Volltext (${Math.round(sLength*zResults[0])}%)`, `Scans ohne Volltext (${Math.round(sLength*zResults[1])}%)`],
+                datasets: [{
+                    label: '',
+                    data: [zResults[0], zResults[1]],
+                    backgroundColor: ["#537727", "#F9F8ED"],
+                    borderColor: ["#213409", "#F7F4D4"],
+                    borderWidth: 1.5
+                }]
+            },
+            options: {plugins: {legend: {position: "bottom", labels: {font: {size: "15px"}}}}}
+        });
+        zettelOverview.appendChild(zettelChartBox);
+        mainBody.appendChild(scanOverview);
+
         this.ctn.appendChild(mainBody);
+
+
     }
     drawZettelAdd(zettels, zettelAddBox, userId){
         let zettelAdd = document.createElement("CANVAS");

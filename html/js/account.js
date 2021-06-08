@@ -10,8 +10,8 @@ class Login extends Oculus{
         let mainBody = document.createDocumentFragment();
         let header = document.createElement("DIV");
         header.id = "header";
-        header.appendChild(el.h("dMLW", 1));
-        header.appendChild(el.p("Ein digitales Angebot des MLW."));
+        header.appendChild(el.h(captions.title, 1));
+        header.appendChild(el.p(captions.subTitle));
         mainBody.appendChild(header);
 
         let loginDIV = document.createElement("DIV");
@@ -67,7 +67,7 @@ class Login extends Oculus{
             <p class="minorTxt" style="float: left;">
                 <a href="mailto:alexander.haeberlin@mlw.badw.de"/>Kontakt</a>
             </p>
-            <p class="minorTxt">Beta 7.3 <i>(7. Juni 2021)</i></p>
+            <p class="minorTxt">${captions.version}</p>
         `;
         mainBody.appendChild(footer);
 

@@ -13,6 +13,11 @@
         <script src="/file/js/mocha.js"></script>
         <script src="/file/js/chai.js"></script>
         <script type="module">
+            globalThis.captions = {
+                title: "dMLW",
+                subTitle: "Ein digitales Angebot des MLW.",
+                version: "Beta 8 - 8. Juni 2021"
+                }
             import { Argos } from "/file/js/argos.js";
             import { Arachne } from "/file/js/arachne.js";
             import { Elements } from "/file/js/elements.js";

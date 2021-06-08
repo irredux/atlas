@@ -11,14 +11,6 @@ class Kasten extends Oculus{
         super(res, resId, access, main);
     }
     async load(){
-        const uItem = [{lemma:"bla 1"}, {lemma_swugg: "bla 2"}];
-        await fetch("/data_batch/lemma", {method: "POST", body: JSON.stringify(uItem),
-        headers: {
-            "Authorization": `Bearer ${arachne.key.token}`,
-            "Content-Type": "application/json"
-        }}).
-            then(re => {console.log(re.status)}).
-            catch(e => {throw e});
         let mainBody = document.createDocumentFragment();
         let menuLemma = document.createElement("DIV");
         menuLemma.style.position = "fixed";
@@ -679,7 +671,12 @@ class ZettelDetail extends Oculus{
     async load(){
         const user = await argos.user();
         const zettel = await arachne.zettel.is(this.resId);
-        const siblings = await arachne.zettel.is(this.resId, "siblings", false);
+        let siblings = [];
+        if(zettel.sibling == 0){
+            siblings = await arachne.zettel.is(this.resId, "siblings", false);
+        } else if (zettel.sibling > 0){
+            siblings = await arachne.zettel.is(zettel.sibling, "siblings", false);
+        }
         let mainBody = document.createDocumentFragment();
 
         let zTypes = {0: "...", 1: "verzettelt", 2: "Exzerpt", 3: "Index", 4: "Literatur"};
@@ -953,9 +950,17 @@ class ZettelDetail extends Oculus{
                 Datenbank löschen. Wenn der Zettel bereits in ein Projekt
                 importiert wurde, kann es zu Fehler kommen.`));
                 let deleteButton = el.button("löschen");
-                deleteButton.onclick = () => {
+                deleteButton.onclick = async () => {
                     if(confirm("Zettel wirklich löschen? Der Schritt kann nicht rückgängig gemacht werden!")){
-                        arachne.zettel.delete(zettel.id).then(() => {this.close()});
+                        if(siblings.length == 0){
+                            await arachne.zettel.delete(zettel.id);
+                            this.close();
+                        } else if(zettel.sibling != zettel.id){
+                            await arachne.zettel.delete(zettel.id);
+                            this.close();
+                        } else {
+                            alert("Der Zettel kann nicht gelöscht werden, da Geschwisterzettel mit ihm verbunden sind.");
+                        }
                     }
                 }
                 edit.appendChild(deleteButton);
@@ -1061,18 +1066,19 @@ class ZettelDetail extends Oculus{
         if(zettel.sibling>0){
             lTHeader.appendChild(el.tab("Geschwister", "sibling"));
             let siblingTab = el.tabContainer("sibling");
-            /*
-                Es gibt {{len(siblings)}} Geschwister-Zettel:
-                <table>
-                    % for sibling in siblings:
-                        <tr>
-                            <td title='{{sibling["id"]}}'>
-                                <a id="{{sibling["id"]}}" class="siblingLink">{{!sibling["opus"]}}</a>
-                            </td>
-                        </tr>
-                    % end
-                </table>
-             */
+            siblingTab.appendChild(el.p(`Es gibt ${siblings.length} Geschwister-Zettel:`));
+            let sibTbl = [];
+            for(const sib of siblings){
+                let sibLnk = document.createElement("A");
+                sibLnk.title = sib.id; sibLnk.id = sib.id;
+                sibLnk.innerHTML = html(sib.opus);
+                sibLnk.onclick = () => {
+                    this.resId = sib.id;
+                    this.refresh();
+                }
+                sibTbl.push([sibLnk]);
+            }
+            siblingTab.appendChild(el.table(sibTbl));
             lTContent.appendChild(siblingTab);
         }
 

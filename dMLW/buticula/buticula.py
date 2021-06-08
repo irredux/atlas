@@ -626,11 +626,23 @@ class Buticula(Bottle):
             else:
                 return HTTPResponse(status=201) # created
         elif request.method == "PATCH":
-            #def data_update(self, res, res_id):
-            pass
+            for d in data:
+                id = d["id"]
+                del d["id"]
+                re = self.data_update(res, id, d)
+                if(re.status_code != 200):
+                    return HTTPResponse(status=400) # error 
+                    break
+            else:
+                return HTTPResponse(status=200) # ok
         elif request.method == "DELETE":
-            #def data_delete(self, res, res_id):
-            pass
+            for d in data:
+                re = self.data_delete(res, d)
+                if(re.status_code != 200):
+                    return HTTPResponse(status=400) # error 
+                    break
+            else:
+                return HTTPResponse(status=200) # ok
         else:
             return HTTPResponse(status=400) # bad request
 
@@ -683,12 +695,12 @@ class Buticula(Bottle):
             results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} id = %s", v_cols);
             return json.dumps(results, default=str)
 
-    def data_update(self, res, res_id):
+    def data_update(self, res, res_id, inData=None):
         user = self.auth()
         if res not in self.accessUPDATE.keys(): return HTTPResponse(status=404) # not found
         for permission in self.accessUPDATE[res]:
             if permission["access"] in user["access"]:
-                inData = request.json
+                if inData == None: inData = request.json
                 if permission.get("restricted", "") == "user_id":
                     if user["id"] == self.db.search(res, {"id": res_id}, ["user_id"])[0]["user_id"]:
                         break

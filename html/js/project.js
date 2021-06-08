@@ -105,14 +105,25 @@ class ProjectOverview extends Oculus{
             const projects = await arachne.project.is(3, "status", false);
             if(projects.length > 0 && confirm("Papierkorb wirklich leeren? Dieser Schritt kann nicht rückgängig gemacht werden.")){
                 document.body.style.cursor = "wait";
+                let pDelLst = [];
+                let aDelLst = [];
+                let zDelLst = [];
                 for(const project of projects){
                     const articles = await arachne.article.is(project.id, "project", false);
                     for(const article of articles){
                         const zettelLnks = await arachne.zettel_lnk.is(article.id, "article", false);
-                        for(const zettelLnk of zettelLnks){await arachne.zettel_lnk.delete(zettelLnk.id)}
-                        await arachne.article.delete(article.id);
+                        for(const zettelLnk of zettelLnks){
+                            zDelLst.push(zettelLnk.id);
+                            //await arachne.zettel_lnk.delete(zettelLnk.id)
+                        }
+                        aDelLst.push(article.id);
+                        //await arachne.article.delete(article.id);
                     }
-                    await arachne.project.delete(project.id);
+                    pDelLst.push(project.id);
+                    //await arachne.project.delete(project.id);
+                    await arachne.zettel_lnk.delete(zDelLst)
+                    await arachne.article.delete(aDelLst);
+                    await arachne.project.delete(pDelLst);
                 }
                 document.body.style.cursor = "initial";
                 this.refresh();

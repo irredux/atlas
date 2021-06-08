@@ -347,9 +347,19 @@ class ArachneDatabase{
     }
 
     async delete(rowId){
-        const response = await fetch(`/data/${this.tblName}/${rowId}`, {
+        let url = `/data/${this.tblName}/${rowId}`;
+        let data = null;
+        if(Array.isArray(rowId)){
+            url = `/data_batch/${this.tblName}`;
+            data = JSON.stringify(rowId);
+        }
+        const response = await fetch(url, {
             method: "delete",
-            headers: {"Authorization": `Bearer ${this.token}`}
+            headers: {
+                "Authorization": `Bearer ${this.token}`,
+                "Content-Type": "application/json",
+            },
+            body: data
         });
         if(response.status===200){
             await this.update(true);
@@ -361,13 +371,18 @@ class ArachneDatabase{
     async save(newValues){
         // newValues is an object containing col/values as key/value pairs.
         // when no id is given, a new entry will be created.
-        let url = `/data/${this.tblName}`;
         let method = "POST";
-        const rId = newValues.id;
-        if(newValues.id!=null){
-            url += `/${newValues.id}`;
-            method = "PATCH";
-            delete newValues.id;
+        let url = `/data/${this.tblName}`;
+        let rId = 1;
+        if(Array.isArray(newValues)){
+            url = `/batch_data/${this.tblName}`
+        } else {
+            rId = newValues.id;
+            if(newValues.id!=null){
+                url += `/${newValues.id}`;
+                method = "PATCH";
+                delete newValues.id;
+            }
         }
         const response = await fetch(url, {
             method: method,
@@ -378,9 +393,14 @@ class ArachneDatabase{
             body: JSON.stringify(newValues)
         });
         if(response.status===201 && method==="POST"){
-            const newId = parseInt(await response.text());
-            await this.update(true);
-            return await this.is(newId)
+            if(Array.isArray(newValues)){
+                await this.update(true);
+                return await rId;
+            } else {
+                const newId = parseInt(await response.text());
+                await this.update(true);
+                return await this.is(newId)
+            }
         } else if(response.status===200 && method==="PATCH"){
             await this.update(true);
             return rId;
