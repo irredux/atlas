@@ -44,12 +44,13 @@ class Key{
 }
 
 class ArachneWrapper{
-    constructor(tblName, dbName, dbVersion, optimize){
+    constructor(tblName, dbName, dbVersion, optimize, sOrderActive){
         this.worker = new Worker("/file/js/arachneWW.js");
         this.tblName = tblName;
         this.dbName = dbName;
         this.dbVersion = dbVersion;
         this.optimize = optimize;
+        this.sOrderActive = sOrderActive;
         this.workId = 0;
     }
     stringToQuery(string){
@@ -152,6 +153,12 @@ class ArachneWrapper{
                     }*/
                 }
             }
+            if(this.sOrderActive && argos.userDisplay.sOrder === 1){
+                orderIndex = null;
+            } else if (this.sOrderActive && argos.userDisplay.sOrder === 0){
+                orderIndex = this.tblName;
+            }
+                sOrder: argos.userDisplay.sOrder,
             this.worker.postMessage({
                 workId: this.workId,
                 request: "SEARCH",
@@ -319,8 +326,15 @@ class Arachne{
         this.oStoresSchema = await fetch("/config/oStores", {
             headers: {"Authorization": `Bearer ${this.key.token}`}
         })
-            .then((r) => r.json())
-            .catch((e) => {throw e});
+            .then(r => {
+                if(r.status === 401){
+                    // connection failed. remove token.
+                    this.key.removeToken();
+                    this.key.token;
+                }
+                return r.json();
+            })
+            .catch(e => {throw e});
         this.oStores = [];
         for(const oStoreSchema of this.oStoresSchema){
             this.oStores.push(oStoreSchema.name);
@@ -344,11 +358,17 @@ class Arachne{
         });
     }
 
-    async loadDB(loadLabel=null, sync = true){
+    async loadDB(loadLabel=null, sync = true, sOrderLst = []){
         this.optimize = argos.userDisplay.optimize;
         for(const tbl of this.oStores){
             if(loadLabel!=null){loadLabel.textContent = tbl}
-            this[tbl] = new ArachneWrapper(tbl, this.dbName, this.dbVersion, (this.optimize.includes(tbl) ? true : false), this.key.token);
+            this[tbl] = new ArachneWrapper(
+                tbl,
+                this.dbName,
+                this.dbVersion,
+                (this.optimize.includes(tbl) ? true : false),
+                (sOrderLst.includes(tbl) ? true : false)
+            );
             if(sync){await this[tbl].load()}
             else{this[tbl].load()}
         }

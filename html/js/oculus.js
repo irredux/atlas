@@ -119,7 +119,6 @@ class Oculus{
                         cTarget.style.webkitUserSelect = "text";
                         /* *************** */
                         if(dataList!=null){
-                            console.log("set AutoComplete!");
                             me.bindAutoComplete(cTarget, "work", ["id", "example"]);
                         }
                         /* *************** */
@@ -474,17 +473,14 @@ class Oculus{
             and external value (i.e. string displayed in autocomplete menu) as second value
             ["id", "lemma_display"]
          */
-        console.log(dbTable, dbQuery, dbReturnCols);
         let search = await arachne[dbTable].search(dbQuery, dbReturnCols);
         let data = [];
-        console.log(search);
         for(const item of search){
             if(item[dbReturnCols[1]]!=null){
                 data.push([item[dbReturnCols[1]].replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/<[^>]*>/g, ""),
                     item[dbReturnCols[0]]]);
             }
         }
-        console.log(data);
         new AutoComplete(cInput, data);
     }
 }

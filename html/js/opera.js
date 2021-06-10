@@ -4,7 +4,8 @@ import { html } from "/file/js/elements.js";
 export {
     Library, LibraryEdit, LibrarySelector, LibraryUpdate,
     Opera, OperaExport, OperaUpdate,
-    AuthorEdit, WorkEdit
+    AuthorEdit, WorkEdit,
+    FullTextSearch
 };
 
 class Library extends Oculus{
@@ -182,6 +183,10 @@ class LibraryEdit extends Oculus{
         let iYear = el.text(edition.year);
         let iVolume = el.text(edition.volume);
         let iComment = el.area(edition.comment);
+        let editorCityDes = el.span("Editor:");
+        if([2,3].includes(edition.ressource)){
+            editorCityDes.textContent = "Stadt/Drucker:";
+        }
         let resTypes = {
             0: "textkritische Edition",
             1: "textkritische Edition (veraltet)",
@@ -190,6 +195,13 @@ class LibraryEdit extends Oculus{
             4: "Sonstiges"
         };
         let iRessource = el.select(edition.ressource, resTypes);
+        iRessource.onchange = () => {
+            if(iRessource.value === "2" || iRessource.value === "3"){
+                editorCityDes.textContent = "Stadt/Drucker:";
+            } else {
+                editorCityDes.textContent = "Jahr:";
+            }
+        }
         const edTypes = {
             0: "Scan",
             1: "Link"
@@ -211,7 +223,7 @@ class LibraryEdit extends Oculus{
             ["", `<span class="minorTxt">${work.bibliography}</span>`],
             ["", openScans],
             ["Edition:", iEditionName],
-            ["Editor:", iEditor],
+            [editorCityDes, iEditor],
             ["Jahr:", iYear],
             ["Band:", iVolume],
             ["Kommentar:", iComment],
@@ -254,9 +266,9 @@ class LibraryEdit extends Oculus{
                 work_id: iWork.dataset.selected,
                 edition_name: iEditionName.value,
                 editor: iEditor.value,
-                year: iYear.value,
                 volume: iVolume.value,
                 comment: iComment.value,
+                year: iYear.value,
                 ressource: iRessource.value
             };
             if(this.resId > 0){data.id = this.resId}
@@ -900,5 +912,185 @@ class OperaUpdate extends Oculus{
         mainBody.appendChild(updateButton);
         mainBody.appendChild(el.closeButton(this));
         this.ctn.appendChild(mainBody);
+    }
+}
+
+class FullTextSearch extends Oculus{
+    constructor(res, resId=null, access=[], main=false){
+        super(res, resId, access, main);
+    }
+    async load(){
+        if(this.query==null){this.query = "*"}
+        const searchFields = {
+            /*
+            lemma: {name: "Lemma", des: "Durchsucht alle Lemmata nach einer bestimmten Zeichenfolge."},
+            type: {name: "Typ", des: "Sucht nach Zetteltypen (1: verzettelt, 2: Exzerpt, 3: Index, 4: Literatur)"},
+            work: {name: "Werk", des: "Durchsucht die verknüpften Werke."},
+            work_id: {name: "Werk-ID", des: "Durchsucht die verknüpften Werk-IDs."},
+            author: {name: "Autor", des: "Durchsucht die verknüpften Autoren."},
+            author_id: {name: "Autor-ID", des: "Durchsucht die verknüpften Autor-IDs."},
+            id: {name: "ID", des: "Durchsucht die IDs"}
+            */
+        };
+        const displayQuery = this.query;
+        for(const field in searchFields){
+            const reg = new RegExp(searchFields[field].name, "g");
+            this.query = this.query.replace(reg, field);
+        }
+        this.results = [];
+        if(this.query != "*" && this.query != ""){
+            this.results = await arachne.scan.search(`full_text:*${this.query}*`, "*", "scan", 10001);
+        }
+        this.resultLst = [];
+        for(const result of this.results){this.resultLst.push(result.id)};
+        this.ctn.innerHTML = "";
+        let mainBody = document.createDocumentFragment();
+
+        // set search bar
+        let searchBar = document.createElement("DIV");
+        let sbInputBox = document.createElement("DIV");
+        sbInputBox.id = "inputBox";
+        searchBar.id = "searchBar"; searchBar.classList.add("card");
+        let sbInput = document.createElement("INPUT");
+        sbInput.type = "text";
+        (this.query === "*") ? sbInput.value = "" : sbInput.value = displayQuery;
+        sbInput.id = "searchBarQuery";
+        sbInput.spellcheck = "false"; sbInput.autocomplete = "off";
+        sbInput.autocorrect = "off"; sbInput.autocapitalize = "off";
+        sbInput.onkeyup = () => {
+            if(event.keyCode == 13){
+                let query = sbInput.value;
+                (query === "") ? query = "*" : query = query;
+                this.query = query;
+                this.refresh();
+                //this.load(query);
+            }
+        }
+/*
+        this.ctn.querySelector('input#search_field').addEventListener('keyup', function(){
+            if(event.keyCode == 13){
+                argos.mainQuery=document.getElementById("search_field").value;
+            }
+        });
+ */
+        sbInputBox.appendChild(sbInput);
+        searchBar.appendChild(sbInputBox);
+        let sbButton = el.button("suchen");
+        sbButton.style.position = "absolute";
+        sbButton.onclick = () => {
+            let query = sbInput.value;
+            (query === "") ? query = "*" : query = query;
+            this.query = query;
+            this.refresh();
+            //this.load(query);
+        }
+        searchBar.appendChild(sbButton);
+        let helpContent = `
+            <h3>Hilfe zur Suche</h3>
+            <p>Benötigen Sie eine ausführliche Hilfe zur Suche? Dann klicken Sie
+            <a href='https://gitlab.lrz.de/haeberlin/dmlw/-/wikis/00-Start'>hier</a>.</p>
+            <h4>verfügbare Felder</h4>
+            <table class='minorTxt'>
+                <tr><td><b>Feldname</b></td><td><b>Beschreibung</b></td></tr>
+            `;
+        for(const field in searchFields){
+        helpContent += `
+        <tr><td>${searchFields[field].name}</td><td>${searchFields[field].des}</td></tr>
+            `;
+
+        }
+       helpContent += `
+            </table>
+            <i class='minorTxt'>Achtung: Bei den Feldnamen
+            auf Groß- und Kleinschreibung achten!</i>
+            <p class='minorTxt'>Eine Suche nach '<i>Feldname</i>:NULL' zeigt gewöhnlich alle leeren Felder.</p>
+        `;
+        searchBar.appendChild(el.pop("Hilfe", helpContent));
+        mainBody.appendChild(searchBar);
+
+        // result box
+        let resultBox = document.createElement("DIV");
+        if(this.results.length===0){
+            resultBox.classList.add("msgLabel");
+            resultBox.textContent = "Keine Ergebnisse gefunden.";
+        } else {
+            let resultTxt = document.createElement("DIV");
+            resultTxt.classList.add("minorTxt");
+            if(this.results.length === 1){
+                resultTxt.textContent = "1 Resultat.";
+            } else if(this.results.length < 10001){
+                resultTxt.textContent = `${this.results.length} Resultate.`;
+            } else {
+                resultTxt.textContent =  "+10000 Resultate.";
+                this.results.pop();
+            }
+            resultTxt.style.paddingLeft = "20px";
+            resultBox.appendChild(resultTxt);
+            let zettelBox = document.createElement("DIV");
+            zettelBox.classList.add("zettel_box");
+            this.setLoadMore(zettelBox, this.results)
+            resultBox.appendChild(zettelBox);
+
+            this.setSelection("main", "div.zettel", true);
+
+            // contextmenu
+            let cContext = new ContextMenu();
+            cContext.addEntry('div.zettel', 'a', 'Detailansicht', function(){
+                argos.loadEye("zettel_detail", argos.main.selMarker.main.lastRow)});
+            cContext.addEntry('div.zettel', 'hr', '', null);
+            if(this.access.includes("z_edit")||this.access.includes("editor")){
+                cContext.addEntry('div.zettel', 'a', 'Stapelverarbeitung',
+                    function(){argos.loadEye("zettel_batch")});
+            }
+            if(this.access.includes("z_edit")){
+                cContext.addEntry('*', 'a', 'Neuen Zettel erstellen',
+                    function(){argos.loadEye("zettel_add")});
+            }
+            if(this.access.includes("z_add")){
+                cContext.addEntry('*', 'a', 'Zettel importieren', () => {argos.loadEye("zettel_import")});
+            }
+            cContext.addEntry('*', 'a', 'Zettel exportieren', () => {argos.loadEye("zettel_export")});
+            this.setContext = cContext.menu;
+            /*
+            // open zettel detail, if in query
+            this.ctn.querySelector("div.zettel_box").addEventListener("dblclick", function(){
+                argos.loadEye("zettel_detail", this.selMarker.main.lastRow)
+            });
+            if(argos.getQuery("detail") != null){
+                argos.loadEye("zettel_detail", argos.getQuery("detail"))
+            }
+            */
+        }
+        mainBody.appendChild(resultBox);
+        this.ctn.appendChild(mainBody);
+    }
+    async contentLoadMore(scan){
+        let exzerpt = document.createElement("DIV");
+        exzerpt.style.width = "100%";
+        exzerpt.style.margin = "10px";
+        exzerpt.style.padding = "10px";
+        exzerpt.style.boxShadow = "0 0 3px var(--shadowBG)";
+        exzerpt.style.borderRadius = "7px";
+        exzerpt.style.backgroundColor = "var(--mainBG)";
+        const scan_lnk = await arachne.scan_lnk.is(scan.id, "scan");
+        const edition = await arachne.edition.is(scan_lnk.edition_id);
+        const work = await arachne.work.is(edition.work_id);
+        let exzerptContent = `
+            <p style="color: var(--mainColor);">
+            <b>${work.opus}</b> - p. ${scan.filename} <i>(ed. ${edition.editor} ${edition.year})</i>
+            </p>
+        `;
+        let i = scan.full_text.indexOf(this.query);
+        while(i>-1){
+            const lPoint = scan.full_text.lastIndexOf(".", i)+1;
+            const nPoint = scan.full_text.indexOf(".", i)+1;
+            exzerptContent += `<p style="border: 1px solid black; border-radius: 7px;">${scan.full_text.substring(lPoint, nPoint).
+                    replace(/\n/g, "<br />").
+                    replace(this.query, `<mark>${this.query}</mark>`)
+            }</p>`;
+            i = scan.full_text.indexOf(this.query, i+1);
+        }
+        exzerpt.innerHTML = html(exzerptContent);
+        return exzerpt;
     }
 }

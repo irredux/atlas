@@ -3,7 +3,11 @@ import {
     Kasten
 } from "/file/js/zettel.js";
 import { Lemma, LemmaComment, LemmaEdit, LemmaToProject } from "/file/js/lemma.js";
-import { Library, LibraryEdit, LibrarySelector, LibraryUpdate, Opera, OperaExport, OperaUpdate, AuthorEdit, WorkEdit } from "/file/js/opera.js";
+import {
+    Library, LibraryEdit, LibrarySelector, LibraryUpdate,
+    Opera, OperaExport, OperaUpdate, AuthorEdit, WorkEdit,
+    FullTextSearch
+} from "/file/js/opera.js";
 import { Project, ProjectExport, ProjectOverview, ProjectZettelPreview } from "/file/js/project.js";
 import { Account, Help } from "/file/js/settings.js";
 import { Administration, AdministrationDetail, Statistics, Tests } from "/file/js/server.js";
@@ -36,6 +40,7 @@ export class Docker{
             "opera_author_edit": AuthorEdit,
             "opera_update": OperaUpdate,
             "opera_export": OperaExport,
+            "full_text": FullTextSearch,
             "project_overview": ProjectOverview,
             "project": Project,
             "project_export": ProjectExport,

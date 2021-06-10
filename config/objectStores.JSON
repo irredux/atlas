@@ -49,6 +49,7 @@
     }},
     {"name": "scan", "keyPath": "id", "indices": {
         "update": "u_date",
+        "fulltext": "full_text",
         "deleted": "deleted",
         "path": "path"
     }},

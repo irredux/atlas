@@ -449,11 +449,13 @@ class Buticula(Bottle):
                     c_path = f_path + f"{(new_id-1)//max_files}/"
                     if path.exists(c_path) == False: mkdir(c_path)
                     # save the file
+                    print(c_path + f"{new_id}.jpg")
                     f.save(c_path + f"{new_id}.jpg")
                     ##rename(input_path + f, c_path + f"{new_id}.jpg")
                     if self.doublesided: recto = False
                 else:
                     ##rename(input_path + f, c_path + f"{new_id}v.jpg")
+                    print(c_path + f"{new_id}v.jpg")
                     f.save(c_path + f"{new_id}v.jpg")
                     recto = True
             return HTTPResponse(status=201) # created

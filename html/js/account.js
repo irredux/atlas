@@ -49,7 +49,7 @@ class Login extends Oculus{
         deleteDB.textContent = "Lokale Datenbank zurücksetzen";
         deleteDB.onclick = () => {
             return new Promise((resolve, reject) => {
-                let request = indexedDB.deleteDatabase("dmlw");
+                let request = indexedDB.deleteDatabase(arachne.dbName);
                 request.onerror = () => {el.status("error");reject()}
                 request.onsuccess = () => {el.status("updated", "Datenbank gelöscht.");resolve()}
             });

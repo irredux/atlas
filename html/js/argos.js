@@ -70,7 +70,7 @@ export class Argos{
                 location.reload();
             }
             document.body.appendChild(backToLogin);
-            await arachne.loadDB(loadLabelCurrent, true);
+            await arachne.loadDB(loadLabelCurrent, true, ["zettel", "lemma"]);
             fetch("/config/access", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
                 .then(re => {if(re.status === 200){return re.json()}})
                 .then((access) => {
