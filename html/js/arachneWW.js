@@ -375,7 +375,7 @@ class ArachneDatabase{
         let url = `/data/${this.tblName}`;
         let rId = 1;
         if(Array.isArray(newValues)){
-            url = `/batch_data/${this.tblName}`
+            url = `/data_batch/${this.tblName}`
         } else {
             rId = newValues.id;
             if(newValues.id!=null){
@@ -434,12 +434,10 @@ class ArachneDatabase{
                             found = false;
                             if(q.col === "*"){
                                 // any row
-                                let re = null
-                                if(q.regex == true){re = new RegExp(q.value, "g")}
+                                let re = new RegExp(q.value, "i");
                                 for(const key in cursor.value){
-                                    if(q.negative === false && `${cursor.value[key]}`.indexOf(q.value)>-1){found = true}
-                                    else if(q.negative === true && `${cursor.value[key]}`.indexOf(q.value)===-1){found = true}
-                                    else if(q.regex === true && `${cursor.value[key]}`.match(re)){found = true}
+                                    if(q.negative === false && `${cursor.value[key]}`.match(re)){found = true}
+                                    else if(q.negative === true && !`${cursor.value[key]}`.match(re)){found = true}
                                 }
                             } else if (Object.keys(cursor.value).includes(q.col)){
                                 // row given
@@ -459,7 +457,7 @@ class ArachneDatabase{
                                     cursor.value[q.col] < q.value){found = true}
                                 else if(q.regex == true && cursor.value[q.col]!=null){
                                     // regex
-                                    const re = new RegExp(q.value, "g");
+                                    const re = new RegExp(q.value, "gi");
                                     if(cursor.value[q.col].match(re)){found = true}
                                 }
                             }

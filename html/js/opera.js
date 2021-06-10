@@ -2,7 +2,7 @@ import { Oculus } from "/file/js/oculus.js";
 import { ContextMenu } from "/file/js/contextmenu.js";
 import { html } from "/file/js/elements.js";
 export {
-    Library, LibraryEdit, LibrarySelector, LibraryUpdate,
+    Library, LibraryEdit, LibrarySelector, LibraryUpdate, LibraryScanImport,
     Opera, OperaExport, OperaUpdate,
     AuthorEdit, WorkEdit,
     FullTextSearch
@@ -115,7 +115,6 @@ class Library extends Oculus{
                     argos.loadEye("library_edit", this.selMarker.main.lastRow)
                 });
                 cContext.addEntry('tr.edition', 'a', 'Edition erstellen', () => {argos.loadEye("library_edit")});
-                cContext.addEntry('tr.edition', 'hr', '', null);
                 cContext.addEntry('tr.edition', 'a', 'Edition löschen', async () => {
                     if(window.confirm("Soll die Edition wirklich gelöscht werden? Die verknüpften Scans werden nicht gelöscht! Dieser Schritt kann nicht rückgängig gemacht werden!")){
                         const editionId = parseInt(this.selMarker.main.lastRow);
@@ -125,6 +124,8 @@ class Library extends Oculus{
                         this.refresh();
                     }
                 });
+                cContext.addEntry('tr.edition', 'hr', '', null);
+                cContext.addEntry('tr.edition', 'a', 'Scans importieren', () => {argos.loadEye("library_scan_import")});
                 cContext.addEntry('tr.edition', 'hr', '', null);
                 cContext.addEntry('tr.edition', 'a', 'Opera-Listen aktualisieren', () => {argos.loadEye("library_update")});
                 this.setContext = cContext.menu;
@@ -404,6 +405,75 @@ class LibraryUpdate extends Oculus{
                 catch(e => {throw e});
         }
         mainBody.appendChild(updateButton);
+        mainBody.appendChild(el.closeButton(this));
+        this.ctn.appendChild(mainBody);
+    }
+}
+
+class LibraryScanImport extends Oculus{
+    constructor(res, resId=null, access=[], main=false){
+        super(res, resId, access, main);
+    }
+    async load(){
+        this.ctn.style.height = "530px";
+        let mainBody = document.createDocumentFragment();
+        mainBody.appendChild(el.h("Neue Scans importieren", 3));
+        mainBody.appendChild(el.p(`
+            Hier können Sie neue Scans in die Datenbank hinzufügen. Eine Anleitung
+            finden Sie auf {Wikiseite}.
+        `));
+        let pathInput = el.text("");
+        mainBody.appendChild(pathInput);
+        let updateButton = el.button("laden");
+        updateButton.style.margin = "10px 15px";
+        this.fileLst = [];
+        updateButton.onclick = () => {
+            console.log("lets start", pathInput.value);
+            //this.ctn.innerHTML = "<div id='loadLabel'>Bibliothek wird aktualisiert...</div>";
+            fetch("/exec/scan_add/"+encodeURIComponent(pathInput.value), {headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
+                then(re => re.json()).
+                then(files => {
+                    fBox.innerHTML = "";
+                    files.sort();
+                    this.fileLst = [];
+                    for(const file of files){
+                        this.fileLst.push({filename: file.substring(0, file.length-4), path: pathInput.value});
+                        let fCap = document.createElement("DIV");
+                        fCap.style.padding = "5px"; fCap.style.textAlign = "center";
+                        fCap.textContent = file;
+                        fBox.appendChild(fCap);
+                    }
+                    submitNewScans.style.display = "block";
+                    //addWork.style.display = "block";
+                }).catch(e => {throw e});
+        }
+        mainBody.appendChild(updateButton);
+        let fBox = document.createElement("DIV");
+        fBox.style.height = "200px";
+        fBox.style.width = "100%";
+        fBox.style.border = "1px solid var(--mainTxtColor)";
+        fBox.style.borderRadius = "7px";
+        fBox.style.overflow = "scroll";
+        mainBody.appendChild(fBox);
+        /*
+        let addWork = el.text("");
+        addWork.style.margin = "10px 0";
+        addWork.style.display = "none";
+        await this.bindAutoComplete(addWork, "work", ["id", "example"]);
+        mainBody.appendChild(addWork);
+        */
+        let submitNewScans = el.button("importieren");
+        submitNewScans.style.margin = "10px 15px";
+        submitNewScans.style.display = "none";
+        submitNewScans.onclick = () => {
+            arachne.scan.save(this.fileLst).
+                then(re => {
+                    console.log(re);
+                    alert("Neue Scans importiert!");
+                }).
+                catch(e => {throw e});
+        }
+        mainBody.appendChild(submitNewScans);
         mainBody.appendChild(el.closeButton(this));
         this.ctn.appendChild(mainBody);
     }
@@ -1031,12 +1101,15 @@ class FullTextSearch extends Oculus{
             this.setLoadMore(zettelBox, this.results)
             resultBox.appendChild(zettelBox);
 
-            this.setSelection("main", "div.zettel", true);
+            this.setSelection("main", ".exzerptBox", false);
 
             // contextmenu
             let cContext = new ContextMenu();
-            cContext.addEntry('div.zettel', 'a', 'Detailansicht', function(){
-                argos.loadEye("zettel_detail", argos.main.selMarker.main.lastRow)});
+            cContext.addEntry('.exzerptBox', 'a', 'Edition öffnen', () => {
+                const box = document.getElementById(argos.main.selMarker.main.lastRow);
+                window.open(`/site/viewer/${box.dataset.edition_id}?page=${box.dataset.scan_id}`);
+            });
+            /*
             cContext.addEntry('div.zettel', 'hr', '', null);
             if(this.access.includes("z_edit")||this.access.includes("editor")){
                 cContext.addEntry('div.zettel', 'a', 'Stapelverarbeitung',
@@ -1050,47 +1123,47 @@ class FullTextSearch extends Oculus{
                 cContext.addEntry('*', 'a', 'Zettel importieren', () => {argos.loadEye("zettel_import")});
             }
             cContext.addEntry('*', 'a', 'Zettel exportieren', () => {argos.loadEye("zettel_export")});
-            this.setContext = cContext.menu;
-            /*
-            // open zettel detail, if in query
-            this.ctn.querySelector("div.zettel_box").addEventListener("dblclick", function(){
-                argos.loadEye("zettel_detail", this.selMarker.main.lastRow)
-            });
-            if(argos.getQuery("detail") != null){
-                argos.loadEye("zettel_detail", argos.getQuery("detail"))
-            }
             */
+            this.setContext = cContext.menu;
         }
         mainBody.appendChild(resultBox);
         this.ctn.appendChild(mainBody);
     }
     async contentLoadMore(scan){
         let exzerpt = document.createElement("DIV");
-        exzerpt.style.width = "100%";
+        exzerpt.classList.add("exzerptBox");
+        exzerpt.id = "eb_"+scan.id;
+        exzerpt.dataset.scan_id = scan.id;
+        exzerpt.style.width = "700px";
         exzerpt.style.margin = "10px";
         exzerpt.style.padding = "10px";
-        exzerpt.style.boxShadow = "0 0 3px var(--shadowBG)";
+        exzerpt.style.boxShadow = "0 0 1px var(--shadowBG)";
         exzerpt.style.borderRadius = "7px";
         exzerpt.style.backgroundColor = "var(--mainBG)";
         const scan_lnk = await arachne.scan_lnk.is(scan.id, "scan");
         const edition = await arachne.edition.is(scan_lnk.edition_id);
+        exzerpt.dataset.edition_id = edition.id;
         const work = await arachne.work.is(edition.work_id);
-        let exzerptContent = `
+        exzerpt.innerHTML = html(`
             <p style="color: var(--mainColor);">
             <b>${work.opus}</b> - p. ${scan.filename} <i>(ed. ${edition.editor} ${edition.year})</i>
             </p>
-        `;
+        `);
         let i = scan.full_text.indexOf(this.query);
         while(i>-1){
             const lPoint = scan.full_text.lastIndexOf(".", i)+1;
             const nPoint = scan.full_text.indexOf(".", i)+1;
-            exzerptContent += `<p style="border: 1px solid black; border-radius: 7px;">${scan.full_text.substring(lPoint, nPoint).
-                    replace(/\n/g, "<br />").
-                    replace(this.query, `<mark>${this.query}</mark>`)
-            }</p>`;
+            let txtBox = el.p(`
+                ${scan.full_text.substring(lPoint, nPoint)
+                        .replace(/\n/g, "<br />")
+                        .replace(this.query, `<mark>${this.query}</mark>`)}
+                `);
+            txtBox.style.border = "1px solid black";
+            txtBox.style.borderRadius = "7px";
+            txtBox.style.padding = "5px 10px";
+            exzerpt.appendChild(txtBox);
             i = scan.full_text.indexOf(this.query, i+1);
         }
-        exzerpt.innerHTML = html(exzerptContent);
         return exzerpt;
     }
 }

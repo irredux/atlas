@@ -4,7 +4,7 @@ import {
 } from "/file/js/zettel.js";
 import { Lemma, LemmaComment, LemmaEdit, LemmaToProject } from "/file/js/lemma.js";
 import {
-    Library, LibraryEdit, LibrarySelector, LibraryUpdate,
+    Library, LibraryEdit, LibrarySelector, LibraryUpdate, LibraryScanImport,
     Opera, OperaExport, OperaUpdate, AuthorEdit, WorkEdit,
     FullTextSearch
 } from "/file/js/opera.js";
@@ -34,6 +34,7 @@ export class Docker{
             "library_edit": LibraryEdit,
             "library_selector": LibrarySelector,
             "library_update": LibraryUpdate,
+            "library_scan_import": LibraryScanImport,
             "opera_mai": Opera,
             "opera_min": Opera,
             "opera_work_edit": WorkEdit,

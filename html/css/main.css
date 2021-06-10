@@ -867,7 +867,7 @@
         padding: 0 20px;
     }
 
-    #library_update,#opera_update{
+    #library_update,#opera_update, #library_scan_import{
         position: fixed;
         bottom: 20px;
         right: 20px;

@@ -25,7 +25,9 @@ class Viewer extends Oculus{
         imgDisplay.id = "display_img";
         let img = document.createElement("IMG");
         imgDisplay.appendChild(img);
-        fetch(`/file/scan/${scans[0].id}`, {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
+        let loadId = scans[0].id;
+        if(argos.URLSearch.page != null){loadId = argos.URLSearch.page}
+        fetch(`/file/scan/${loadId}`, {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
             .then(re => re.blob())
             .then(newImg => {
                 let nURL = URL.createObjectURL(newImg);

@@ -48,6 +48,9 @@ export class Argos{
     }
 
     async login(){
+        this.URLSearch = this.getSearch();
+        console.log(this.URLSearch);
+
         document.body.textContent = "";
         const lastFullUpdate = localStorage.getItem("lastFullUpdate");
         await arachne.createDB();
@@ -221,19 +224,18 @@ export class Argos{
     /* **************************************** */
     /*        get/set query from uri            */
     /* **************************************** */
-    /*
-    getQuery(sPara) {
-        // function to get url parameter
-        var sPageURL = window.location.search.substring(1);
-        var sURLVariables = sPageURL.split('&');
-        for (var i = 0; i < sURLVariables.length; i++) {
-            var sParameterName = sURLVariables[i].split('=');
-            if (sParameterName[0] == sPara) {
-                return decodeURIComponent(sParameterName[1]);
+    getSearch() {
+        const qString = window.location.search;
+        if(qString != ""){
+            const paras = new URLSearchParams(qString);
+            let re = {};
+            for(const e of paras.entries()){
+                re[e[0]] = e[1];
             }
-        }
+            return re;
+        } else {return {};}
     }
-
+    /*
     setQuery(nPara, nValue) {
         nPara = encodeURIComponent(nPara);
         nValue = encodeURIComponent(nValue);

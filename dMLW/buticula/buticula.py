@@ -31,6 +31,7 @@ from shutil import rmtree, move
 import subprocess
 import sys
 import tempfile
+import urllib.parse
 from uuid import uuid4
 import zipfile
 
@@ -176,6 +177,7 @@ class Buticula(Bottle):
 
         # functions
         self.route("/exec/<res>", callback=self.exec_on_server, method="GET");
+        self.route("/exec/<res>/<res_id>", callback=self.exec_on_server, method="GET");
         self.route("/exec/<res>", callback=self.exec_on_server, method="POST");
 
         # OLD ROUTES!
@@ -209,6 +211,9 @@ class Buticula(Bottle):
         with open(self.p + "/MLW-Software/Ausgabe/Fehlermeldungen_fuer_die_Autoren/input.txt", "r") as err_file:
             o_data["err"] = err_file.read()
         return json.dumps(o_data)
+
+    def get_scan_files(self, path):
+        return json.dumps(listdir(self.p + "/content/scans" + urllib.parse.unquote(path)))
 
     def add_view_path(self, path):
         # used in secondary version
@@ -506,7 +511,7 @@ class Buticula(Bottle):
         else:
             return HTTPResponse(status=404)
 
-    def exec_on_server(self, res):
+    def exec_on_server(self, res, res_id = None):
         user = self.auth()
         if res == "opera_update" and "o_edit" in user["access"]:
             self.create_opera()
@@ -517,6 +522,8 @@ class Buticula(Bottle):
             return HTTPResponse(status=200) # OK
         elif res == "mlw_preview" and "editor" in user["access"]:
             return self.create_mlw_file(request.body.read())
+        elif res == "scan_add" and "e_edit" in user["access"]:
+            return self.get_scan_files(res_id)
         else: return HTTPResponse(status=404) # not found 
 
 
