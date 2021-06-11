@@ -143,8 +143,10 @@ class Library extends Oculus{
         tr.id = values.id; tr.classList.add("loadMore", "edition");
         let tdContents = [(values.url)?"Link":"Scan", values.edition_name, 
             values.editor + " " +values.year, values.comment, values.dir_name];
-        const work = await arachne.work.is(values.id);
-        if(work.id != null){tdContents.push(work.opus)}
+        if(values.work_id != null){
+            const work = await arachne.work.is(values.work_id);
+            tdContents.push(work.opus)
+        }
         else{tdContents.push("")}
         if(values.url!=null && values.url != ""){
             tdContents.push(`<a target='_blank' href='${values.url}'>Link</a>`); 

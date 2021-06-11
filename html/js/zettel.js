@@ -704,13 +704,6 @@ class ZettelDetail extends Oculus{
             if(edition.url==null){url = `/site/viewer/${edition.id}`}
             ed.innerHTML = `<a target="_blank" href="${url}">${edition.editor} ${edition.year}</a>`;
             editionDIV.appendChild(ed);
-            /*
-                    % for edition in editions:
-                        <a id='edition_{{edition["id"]}}'href="{{edition["url"]}}">
-                            {{edition.get("label", "")}}
-                        </a><br />
-                    % end
-             */
         }
         overview.appendChild(el.table([["Lemma:", html(zettel.lemma_display)],
             ["Stelle:", zettel.opus], ["Datum:", html(zettel.date_display)],
@@ -784,14 +777,15 @@ class ZettelDetail extends Oculus{
                 let prevWork = await arachne.work.is(workId);
                 let dateDisplay = prevWork.date_display;
                 if(prevWork.date_type === 9){dateDisplay += " <span style='color: var(--errorStat);'>Eigenes Datum nötig!</span>"}
-                let prevEditions = "";
-                /*
-                    % for edition in editions:
-                        <a id='edition_{{edition["id"]}}'href="{{edition["url"]}}">
-                            {{edition.get("label", "")}}
-                        </a><br />
-                    % end
-                 */
+                let prevEditions = document.createElement("DIV");;
+                const cEditions = await arachne.edition.is(workId, "work", false);
+                for(const cEdition of cEditions){
+                    let ed = el.p("");
+                    let url = cEdition.url;
+                    if(cEdition.url==null){url = `/site/viewer/${cEdition.id}`}
+                    ed.innerHTML = `<a target="_blank" href="${url}">${cEdition.editor} ${cEdition.year}</a>`;
+                    prevEditions.appendChild(ed);
+                }
                 let tbl2 = [["Datum (opera-Liste):", dateDisplay],
                     ["Bsp. Stellenangabe", html(prevWork.citation)], ["Edition:", prevEditions]];
                 /*<td style='width: 175px;'>Datum (<i>opera</i>-Liste):</td>*/

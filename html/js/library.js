@@ -1,6 +1,6 @@
 import { Oculus } from "/file/js/oculus.js";
 import { ContextMenu } from "/file/js/contextmenu.js";
-//import { html } from "/file/js/elements.js";
+import { html } from "/file/js/elements.js";
 export { Viewer };
 
 class Viewer extends Oculus{
@@ -20,21 +20,51 @@ class Viewer extends Oculus{
         scanLinks = [];
 
         let mainBody = document.createDocumentFragment();
+        // scan img
+        let displayBox = document.createElement("DIV");
+        displayBox.id = "display_box";
+        mainBody.appendChild(displayBox);
         let imgDisplay = document.createElement("DIV");
         imgDisplay.classList.add("display_img");
         imgDisplay.id = "display_img";
         let img = document.createElement("IMG");
         imgDisplay.appendChild(img);
-        let loadId = scans[0].id;
-        if(argos.URLSearch.page != null){loadId = argos.URLSearch.page}
-        fetch(`/file/scan/${loadId}`, {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
-            .then(re => re.blob())
-            .then(newImg => {
-                let nURL = URL.createObjectURL(newImg);
-                img.src = nURL;
-            })
-            .catch(e => {throw e});
-        mainBody.appendChild(imgDisplay);
+        displayBox.appendChild(imgDisplay);
+
+        // full text display
+        let ftDisplay = document.createElement("DIV");
+        ftDisplay.classList.add("display_ft");
+        ftDisplay.id = "display_ft";
+        ftDisplay.style.display = "none";
+        this.cTxtSelection = "";
+        ftDisplay.onmouseup = () => {
+            this.cTxtSelection = window.getSelection().toString();
+        }
+        displayBox.appendChild(ftDisplay);
+
+        // full text edit
+        let fullTextEdit = document.createElement("DIV");
+        fullTextEdit.classList.add("fullTextEdit");
+        fullTextEdit.style.display = "none";
+        let textArea = document.createElement("TEXTAREA");
+        textArea.id = "fullTextEditArea";
+        textArea.spellcheck = false;
+        textArea.textContent = "";
+        let okButton = document.createElement("INPUT");
+        okButton.type = "button";
+        okButton.value = "speichern";
+        okButton.onclick = () => {
+            const newText = document.getElementById("fullTextEditArea").value;
+            arachne.scan.save({id: pageSelect.value, full_text: newText}).
+                then(response => {
+                    full_txt[pageSelect.value] = newText;
+                    el.status("saved");
+                }).
+                catch(e => {throw e});
+        }
+        fullTextEdit.appendChild(textArea);
+        fullTextEdit.appendChild(okButton);
+        displayBox.appendChild(fullTextEdit);
 
         let menuTop = document.createElement("DIV");
         menuTop.classList.add("menu_top");
@@ -44,11 +74,14 @@ class Viewer extends Oculus{
         document.title =  `${work.example} - ${edition.editor} ${edition.year}  ${edition.volume!=null?edition.volume:""}`;
 
         let pages = {};
+        let full_txt = {};
         let cIndex = scans[0].id;
+        if(argos.URLSearch.page != null){cIndex = argos.URLSearch.page}
         for(const scan of scans){
             let displayName = scan.filename;
             if(!isNaN(parseInt(scan.filename))){displayName = parseInt(scan.filename)}
             pages[scan.id] = displayName;
+            full_txt[scan.id] = scan.full_text;
         }
         let pageSelect = el.select(cIndex, pages);
         pageSelect.style.width = "200px";
@@ -58,6 +91,25 @@ class Viewer extends Oculus{
                 .then(newImg => {
                     let nURL = URL.createObjectURL(newImg);
                     img.src = nURL;
+                    const ftHeader = `
+                    <div class="minorTxt" style="text-align:center; margin-bottom: 20px;">
+                    <span>${work.opus}<i>(ed. ${edition.editor} ${edition.year})</i></span>
+                    <span style="float: right;">${pageSelect[pageSelect.selectedIndex].text}</span>
+                    </div>
+                        `;
+                    if(full_txt[pageSelect.value]!=null){
+                        ftDisplay.innerHTML = html(ftHeader+full_txt[pageSelect.value]);
+                        textArea.value = full_txt[pageSelect.value];
+                    } else {
+                        ftDisplay.innerHTML = html(ftHeader+"<i>Kein Volltext verfügbar.</i>");
+                        textArea.value = "";
+                    }
+
+                    if(pageSelect.selectedIndex==0){menuLeft.style.display = "none"}
+                    else{menuLeft.style.display = "block"}
+                    if(pageSelect.selectedIndex == (scans.length-1)){menuRight.style.display = "none"}
+                    else{menuRight.style.display = "block"}
+                    /*
                     if(this.editMode === true){
                         document.getElementById("fullTextArea").value = "";
                         for(const scan of scans){
@@ -67,9 +119,20 @@ class Viewer extends Oculus{
                             }
                         }
                     }
+                    */
                 })
                 .catch(e => {throw e});
         }
+        /*
+        let loadId = scans[0].id;
+        fetch(`/file/scan/${loadId}`, {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
+            .then(re => re.blob())
+            .then(newImg => {
+                let nURL = URL.createObjectURL(newImg);
+                img.src = nURL;
+            })
+            .catch(e => {throw e});
+        */
         let scrollBar = document.createElement("INPUT");
         scrollBar.type = "range"; scrollBar.min = "10"; scrollBar.max = "200";
         scrollBar.value = argos.userDisplay.ed_zoom*100;
@@ -96,10 +159,8 @@ class Viewer extends Oculus{
         menuLeft.onclick = (e) => {
             e.preventDefault();
             if(pageSelect.selectedIndex > 0){
-                if(pageSelect.selectedIndex==1){menuLeft.style.display = "none"}
                 pageSelect.selectedIndex = pageSelect.selectedIndex - 1;
                 pageSelect.onchange();
-                menuRight.style.display = "block";
             }
         }
         let menuRight = document.createElement("DIV");
@@ -107,14 +168,17 @@ class Viewer extends Oculus{
         menuRight.onclick = (e) => {
             e.preventDefault();
             if(pageSelect.selectedIndex < (scans.length-1)){
-                if(pageSelect.selectedIndex == (scans.length-2)){menuRight.style.display = "none"}
                 pageSelect.selectedIndex = pageSelect.selectedIndex + 1;
                 pageSelect.onchange();
-                menuLeft.style.display = "block";
             }
         }
         mainBody.appendChild(menuLeft);
         mainBody.appendChild(menuRight);
+
+        // set first page
+        pageSelect.onchange();
+
+
         document.body.onkeydown = (e) => {
             if (e.which == 37 && menuLeft.style.display != "none") {menuLeft.click()}
             else if (e.which == 39 && menuRight.style.display != "none") {menuRight.click()}
@@ -123,42 +187,46 @@ class Viewer extends Oculus{
         this.ctn.appendChild(mainBody);
         this.setZoom();
         // contextmenu
-        if(this.access.includes("l_edit")){
-            let cContext = new ContextMenu();
+        let cContext = new ContextMenu();
+        cContext.addEntry('*', 'span', 'Anzeige als ...', null);
+        cContext.addEntry('*', 'a', '... Scans', () => {
+            imgDisplay.style.display = "block";
+            ftDisplay.style.display = "none";
+        });
+        cContext.addEntry('*', 'a', '... Volltext', () => {
+            imgDisplay.style.display = "none";
+            ftDisplay.style.display = "block";
+            fullTextEdit.style.display = "none";
+        });
+        cContext.addEntry('*', 'a', '... Scans&Volltext', () => {
+            imgDisplay.style.display = "block";
+            ftDisplay.style.display = "block";
+            fullTextEdit.style.display = "none";
+        });
 
+
+        cContext.addEntry('.display_ft', 'hr', '', null);
+        cContext.addEntry('.display_ft', 'a', 'neuer Zettel aus Auswahl', () => {
+            if(this.cTxtSelection!= ""){
+                argos.loadEye("zettel_add");
+                //this.cTxtSelection = window.getSelection().toString();
+            } else {
+                alert("Bitte wählen Sie zuerst die Textstelle aus!");
+            }
+        });
+
+        if(this.access.includes("l_edit")){
+            cContext.addEntry('*', 'hr', '', null);
             cContext.addEntry('*', 'a', 'Edition bearbeiten', () => {
                 argos.loadEye("library_edit", this.resId);
             });
             cContext.addEntry('*', 'a', 'Volltext bearbeiten', () => {
-                this.editMode = true;
-                imgDisplay.style.width="50%";
-                let fullText = document.createElement("DIV");
-                fullText.classList.add("fullText");
-                let textArea = document.createElement("TEXTAREA");
-                textArea.id = "fullTextArea";
-                textArea.spellcheck = false;
-                textArea.textContent = "";
-                for(const scan of scans){
-                    if(pageSelect.value == scan.id){
-                        textArea.value = scan.full_text;
-                        break;
-                    }
-                }
-                fullText.appendChild(textArea);
-                let okButton = document.createElement("INPUT");
-                okButton.type = "button";
-                okButton.value = "speichern";
-                okButton.onclick = () => {
-                    const newText = document.getElementById("fullTextArea").value;
-                    arachne.scan.save({id: pageSelect.value, full_text: newText}).
-                        then(response => {el.status("saved")}).
-                        catch(e => {throw e});
-                }
-                fullText.appendChild(okButton);
-                this.ctn.appendChild(fullText);
+                imgDisplay.style.display = "block";
+                ftDisplay.style.display = "none";
+                fullTextEdit.style.display = "block";
             });
-            this.setContext = cContext.menu;
         }
+        this.setContext = cContext.menu;
     }
     setZoom(){
         let img = document.querySelector("img");
