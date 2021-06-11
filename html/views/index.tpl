@@ -19,7 +19,7 @@
             globalThis.captions = {
                 title: "dMLW",
                 subTitle: "Ein digitales Angebot des MLW.",
-                version: "Beta 8.1 - 10. Juni 2021"
+                version: "Beta 8.3 - 11. Juni 2021"
                 }
             globalThis.el = new Elements();
             globalThis.arachne = new Arachne("dmlw");
