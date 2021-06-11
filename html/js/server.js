@@ -2,7 +2,7 @@ import { Oculus } from "/file/js/oculus.js";
 import { ContextMenu } from "/file/js/contextmenu.js";
 import "/file/js/chart.js";
 
-export { Administration, AdministrationDetail, Statistics, Tests };
+export { Administration, AdministrationDetail, LocalDatabase, Statistics, Tests };
 
 class Administration extends Oculus{
     constructor(res, resId=null, access=[], main=false){
@@ -125,6 +125,34 @@ class AdministrationDetail extends Oculus{
     }
 }
 
+class LocalDatabase extends Oculus{
+    constructor(res, resId=null, access=[], main=false){
+        super(res, resId, access, main);
+    }
+    async load(){
+        let mainBody = document.createDocumentFragment();
+        let cardDB = el.card();
+        cardDB.style.margin = "20px 10%";
+        cardDB.appendChild(el.h("Lokale Datenbank", 3));
+        cardDB.appendChild(el.p("Hier finden Sie die lokal gespeicherten Tabellen. Optimierte Tabellen werden im Arbeitsspeicher behalten und sind schneller verfügbar. Es kann aber sein, dass der Computer oder Browser dadurch verlangsamt wird."));
+        let tblContent = [["<b>Tabellen-Name</b>", "<b>aktuell</b>", "<b>komplett</b>"]];
+        for(const tbl of arachne.oStores){
+            const cVersion = await arachne[tbl].version();
+            const cAll = await arachne[tbl].getAll();
+            const serverInfo = await fetch("/info/"+tbl, {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
+                .then(re => re.json());
+            let maxDate = "<span style='color: red'>NEIN</span>";
+            let length = "<span style='color: red'>NEIN</span>";
+            if(cVersion==serverInfo.max_date){maxDate = "<span style='color:green'>Ja</span>"}
+            if(cAll.length==serverInfo.length){length = "<span style='color:green'>Ja</span>"}
+            tblContent.push([tbl, maxDate, length]);
+        }
+        cardDB.appendChild(el.table(tblContent));
+        mainBody.appendChild(cardDB);
+
+        this.ctn.appendChild(mainBody);
+    }
+}
 class Statistics extends Oculus{
     constructor(res, resId=null, access=[], main=false){
         super(res, resId, access, main);

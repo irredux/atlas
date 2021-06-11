@@ -10,7 +10,7 @@ import {
 } from "/file/js/opera.js";
 import { Project, ProjectExport, ProjectOverview, ProjectZettelPreview } from "/file/js/project.js";
 import { Account, Help } from "/file/js/settings.js";
-import { Administration, AdministrationDetail, Statistics, Tests } from "/file/js/server.js";
+import { Administration, AdministrationDetail, LocalDatabase, Statistics, Tests } from "/file/js/server.js";
 import { Login, AccountCreate, Logout } from "/file/js/account.js";
 import { Viewer } from "/file/js/library.js";
 
@@ -54,6 +54,7 @@ export class Docker{
             "user_access": Administration,
             "user_access_detail": AdministrationDetail,
             "server_stats": Statistics,
+            "local_database": LocalDatabase,
             "tests": Tests,
             "viewer": Viewer
         }

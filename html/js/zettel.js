@@ -654,11 +654,14 @@ class ZettelBatch extends Oculus{
                     else {
                         document.body.style.cursor = "wait";
                         const defaultArticle = await arachne.article.is([parseInt(iProject.value), 0, 0], "article");
+                        let zLst = [];
                         for(const id of argos.main.selMarker.main.ids){
-                            await arachne.zettel_lnk.save({
+                            zLst.push({
                                 zettel_id: id,
-                                article_id: defaultArticle.id});
+                                article_id: defaultArticle.id
+                            });
                         }
+                        await arachne.zettel_lnk.save(zLst);
                         el.status("saved");
                         document.body.style.cursor = "initial";
                     }

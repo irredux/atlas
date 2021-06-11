@@ -236,6 +236,15 @@ BEFORE UPDATE ON work
 FOR EACH ROW
     BEGIN
         SET new.u_date = SYSDATE(6);
+        SET new.ac_vsc = (
+            SELECT 
+                CONCAT(
+                UPPER(IF(new.author_display IS NULL OR new.author_display = '', author.abbr, new.author_display)),
+                IF(work.abbr IS NULL OR work.abbr = "", "", work.abbr)
+                )
+            FROM author WHERE author.id = new.author_id
+        );
+        /*SET new.ac_web = ();*/
         SET new.example = (
             SELECT CONCAT(
                 IF(new.in_use=1, '', '['),

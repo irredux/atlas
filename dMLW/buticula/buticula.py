@@ -150,9 +150,9 @@ class Buticula(Bottle):
         self.route("/config/<res>", callback=self.config_read, method="GET")
 
         # session
-        self.route("/session", callback=self.session_create, method="POST");
-        self.route("/session", callback=self.session_read, method="GET");
-        self.route("/session", callback=self.session_delete, method="DELETE");
+        self.route("/session", callback=self.session_create, method="POST")
+        self.route("/session", callback=self.session_read, method="GET")
+        self.route("/session", callback=self.session_delete, method="DELETE")
 
         # info 
         self.route("/info/<res>", callback=self.info_read, method="GET")
@@ -176,9 +176,9 @@ class Buticula(Bottle):
         self.route("/file/<res>/<res_id>", callback=self.file_read)
 
         # functions
-        self.route("/exec/<res>", callback=self.exec_on_server, method="GET");
-        self.route("/exec/<res>/<res_id>", callback=self.exec_on_server, method="GET");
-        self.route("/exec/<res>", callback=self.exec_on_server, method="POST");
+        self.route("/exec/<res>", callback=self.exec_on_server, method="GET")
+        self.route("/exec/<res>/<res_id>", callback=self.exec_on_server, method="GET")
+        self.route("/exec/<res>", callback=self.exec_on_server, method="POST")
 
         # OLD ROUTES!
         self.route("/export_project/<mlw_file>", callback=self.f_mlw)
@@ -188,7 +188,7 @@ class Buticula(Bottle):
     # -II- assorted methods
     # ################################################################
     def create_db_setup(self, table):
-        results = self.db.command(f"SELECT * FROM {table} WHERE u_date > '2020-01-01 01:00:00' ORDER BY u_date ASC");
+        results = self.db.command(f"SELECT * FROM {table} WHERE u_date > '2020-01-01 01:00:00' ORDER BY u_date ASC")
         if path.exists(self.p+"/temp") == False: mkdir(self.p+"/temp")
         with open(self.p + f"/temp/{table}.txt", "w") as i_file:
             i_file.write(json.dumps(results, default=str))
@@ -200,7 +200,7 @@ class Buticula(Bottle):
         #print("SERVER STATUS:", server_status)
         #subprocess.run(f"python3 {self.p}/MLW-Software/MLWServer.py --port 9997 --startserver&", shell=True)
         if path.exists(self.p + "/MLW-Software/Ausgabe"):
-            rmtree(self.p + "/MLW-Software/Ausgabe");
+            rmtree(self.p + "/MLW-Software/Ausgabe")
         subprocess.run(
                 f"python3 {self.p}/MLW-Software/MLWServer.py --port 9997 {self.p}/MLW-Software/input.mlw",
                 shell=True)
@@ -406,7 +406,7 @@ class Buticula(Bottle):
 
     def zettel_import(self):
         # uploading images for zettel-db
-        user = self.auth();
+        user = self.auth()
         u_letter = request.forms.letter
         if len(u_letter) == 1 and u_letter.isalpha() and "z_add" in user["access"]:
             u_type = request.forms.type
@@ -535,7 +535,7 @@ class Buticula(Bottle):
                 "last_name": user["last_name"],
                 "email": user["email"]
                 }
-        return json.dumps(r_user);
+        return json.dumps(r_user)
 
     def session_create(self):
         email = request.json.get("user", "")
@@ -577,9 +577,9 @@ class Buticula(Bottle):
                     nItems = []
                     for subMenu in menu["items"]:
                         if subMenu.get("access", "*") == "*" or subMenu.get("access") in user["access"]:
-                            nItems.append(subMenu);
+                            nItems.append(subMenu)
                     if len(nItems) != 0: user_menu.append([key, nItems])
-            return json.dumps(user_menu);
+            return json.dumps(user_menu)
         elif res == "server_stats":
             server_stats = {
                     "author": [
@@ -604,25 +604,31 @@ class Buticula(Bottle):
 
     def info_read(self, res, res_id=None):
         user = self.auth()
-
         if res not in self.accessREAD.keys(): return HTTPResponse(status=404) # not found
+        user_id = ""
+        v_vals = []
         for permission in self.accessREAD[res]:
             if permission["access"] in user["access"]:
                 if permission.get("restricted", "") == "user_id":
-                    pass
+                    if res != "user": user_id = f" user_id = %s AND"
+                    else: user_id = f" id = %s AND"
+                    v_vals.append(user["id"]);
                 break
         else:
             return HTTPResponse(status=403) # forbidden
         if res_id == None:
-            max_date = self.db.command(f"SELECT MAX(u_date) FROM {res} WHERE deleted IS NOT NULL")[0]["MAX(u_date)"];
-            length = self.db.command(f"SELECT COUNT(*) FROM {res} WHERE deleted IS NOT NULL")[0]["COUNT(*)"];
-            return json.dumps({
-                "max_date": max_date,
-                "length": length
-                }, default=str)
+            max_date = self.db.command(f"SELECT MAX(u_date) as r FROM {res} WHERE{user_id} deleted IS NULL", v_vals)[0]["r"]
+            length = self.db.command(f"SELECT COUNT(id) as r FROM {res} WHERE{user_id} deleted IS NULL", v_vals)[0]["r"]
+            return json.dumps({"max_date": max_date, "length": length}, default=str)
         else:
-            u_date = self.db.command(f"SELECT u_date FROM {res} WHERE id = {res_id}");
-            return u_date
+            pass
+            #v_cols.append(res_id)
+            #results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} id = %s", v_cols)
+            #return json.dumps(results, default=str)
+
+
+
+
 
     def data_batch(self, res):
         data = request.json
@@ -674,9 +680,9 @@ class Buticula(Bottle):
         user = self.auth()
 
         if res not in self.accessREAD.keys(): return HTTPResponse(status=404) # not found
-        r_cols = "";
-        v_cols = [];
-        user_id = "";
+        r_cols = ""
+        v_cols = []
+        user_id = ""
         for permission in self.accessREAD[res]:
             if permission["access"] in user["access"]:
                 if permission.get("restricted", "") == "user_id":
@@ -689,19 +695,12 @@ class Buticula(Bottle):
             return HTTPResponse(status=403) # forbidden
         if res_id == None:
             u_date = request.query.get("u_date", "2020-01-01 01:00:00")
-            v_cols.append(u_date);
-            #if u_date == "2020-01-01 01:00:00" and res in self.presetTbls:
-            #    with open(self.p + f"/temp/{res}.txt", "r") as i_file:
-            #        r_txt = i_file.read()
-            #    return r_txt
-            #else:
-            #    results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC", v_cols);
-            #    return json.dumps(results, default=str)
-            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC LIMIT 10000", v_cols);
+            v_cols.append(u_date)
+            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC LIMIT 10000", v_cols)
             return json.dumps(results, default=str)
         else:
-            v_cols.append(res_id);
-            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} id = %s", v_cols);
+            v_cols.append(res_id)
+            results = self.db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} id = %s", v_cols)
             return json.dumps(results, default=str)
 
     def data_update(self, res, res_id, inData=None):

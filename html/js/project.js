@@ -907,6 +907,16 @@ class ProjectZettelPreview extends Oculus{
             `);
             mainBody.appendChild(this.createBox("opera", "Opera-Eintrag", pmOpera));
 
+            if(zettel.d_e){
+                let pmDLnk = document.createElement("DIV");
+                let pmDLnkBox = this.createBox("dlnk", "Direktlink", pmDLnk)
+                pmDLnk.parentNode.classList.add("noShow");
+                pmDLnkBox.onclick = () => {
+                    window.open(`/site/viewer/${zettel.d_e}?scan=${zettel.d_s}`);
+                }
+                mainBody.appendChild(pmDLnkBox);
+            }
+
             const editions = await arachne.edition.is(work.id, "work", false);
             if(editions.length > 0){
                 let pmEdition = document.createElement("DIV");
@@ -949,7 +959,7 @@ class ProjectZettelPreview extends Oculus{
         pmButton.textContent = button; pmButton.classList.add("projectMenuButton");
         pmButton.onclick = () => {
             let currentActive = null;
-            this.ctn.querySelectorAll("div.projectMenuContent").forEach((f) => {
+            this.ctn.querySelectorAll("div.projectMenuContent:not(.noShow)").forEach((f) => {
                 if(f.style.display != "block" && f.parentNode.id == event.target.parentNode.id){
                     f.style.display = "block";
                     argos.main.zettelPreviewId = event.target.parentNode.id;

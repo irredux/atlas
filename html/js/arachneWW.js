@@ -223,26 +223,20 @@ class ArachneDatabase{
                             start(controller){
                                 let pump = () => {
                                     reader.read().then( ({done, value}) => {
-                                        if (done) {
-                                            controller.close();
-                                            return;
-                                        }
                                         count ++;
-                                        console.log(tblName, "- receiving from server -", count);
                                         const txt = restOfChunk+decoder.decode(value);
                                         let parts = txt.split('}, {"');
                                         const lastPart = parts[parts.length-1];
+
                                         // check if first item is first chunk!
                                         if(parts[0].startsWith('[{"')){parts[0] = parts[0].substring(3)}
-                                        // preserve last item, if not last chunk
-                                        if(!((lastPart.endsWith('"}]') && !lastPart.endsWith('\\\"}]')) ||
-                                            lastPart.endsWith('null}]'))){
-                                            restOfChunk = parts.pop();
-                                        } else {
-                                            // last chunk!
-                                            restOfChunk = "";
-                                            parts[parts.length-1] = parts[parts.length-1].substring(0, parts[parts.length-1].length-2);
-                                        }
+                                        // preserve last item
+                                        if(done && parts.length === 1 && parts[0].endsWith("}]")){
+                                            parts[0] = parts[0].substring(0, parts[0].length-2);
+                                            restOfChunk = "[]";
+                                        } else {restOfChunk = parts.pop()}
+
+                                        //console.log("parts (after cut):", parts);
                                         let items = [];
                                         for(const part of parts){
                                             if (part === ""){console.log(parts);throw "ERROR: empty part!"}
@@ -254,6 +248,12 @@ class ArachneDatabase{
                                             }
                                         }
                                         if(items.length > 0){controller.enqueue(items)}
+                                        if (done && restOfChunk === "[]") {
+                                            controller.close();
+                                            return;
+                                        } else if(done && restOfChunk != "[]"){
+                                           throw "ERROR: Buffer not empty!";
+                                        }
                                         pump();
                                     });
                                 }

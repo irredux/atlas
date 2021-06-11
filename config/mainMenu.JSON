@@ -27,6 +27,7 @@
         "items":[
             {"caption": "Kontenverwaltung", "onClick": "user_access", "access": "admin"},
             {"caption": "Statistiken", "onClick": "server_stats"},
+            {"caption": "Lokale Datenbank", "onClick": "local_database"},
             {"caption": "Tests", "onClick": "tests", "access": "admin", "access": "admin"}
         ]
     },
