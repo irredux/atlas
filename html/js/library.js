@@ -76,7 +76,7 @@ class Viewer extends Oculus{
         let pages = {};
         let full_txt = {};
         let cIndex = scans[0].id;
-        if(argos.URLSearch.page != null){cIndex = argos.URLSearch.page}
+        if(argos.URLSearch.scan != null){cIndex = argos.URLSearch.scan}
         for(const scan of scans){
             let displayName = scan.filename;
             if(!isNaN(parseInt(scan.filename))){displayName = parseInt(scan.filename)}
@@ -180,8 +180,10 @@ class Viewer extends Oculus{
 
 
         document.body.onkeydown = (e) => {
-            if (e.which == 37 && menuLeft.style.display != "none") {menuLeft.click()}
-            else if (e.which == 39 && menuRight.style.display != "none") {menuRight.click()}
+            if(!["TEXTAREA", "INPUT"].includes(event.target.tagName)){
+                if (e.which == 37 && menuLeft.style.display != "none") {menuLeft.click()}
+                else if (e.which == 39 && menuRight.style.display != "none") {menuRight.click()}
+            }
         }
         //document.body.textContent = "";
         this.ctn.appendChild(mainBody);
@@ -206,8 +208,12 @@ class Viewer extends Oculus{
 
 
         cContext.addEntry('.display_ft', 'hr', '', null);
-        cContext.addEntry('.display_ft', 'a', 'neuer Zettel aus Auswahl', () => {
+        cContext.addEntry('.display_ft', 'a', 'neuen Zettel aus Auswahl erstellen', () => {
             if(this.cTxtSelection!= ""){
+                this.cEditionId = this.resId;
+                this.workId = work.id;
+                this.workOpus = work.example;
+                this.cScanId = pageSelect.value;
                 argos.loadEye("zettel_add");
                 //this.cTxtSelection = window.getSelection().toString();
             } else {

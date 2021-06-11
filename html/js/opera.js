@@ -1100,6 +1100,11 @@ class FullTextSearch extends Oculus{
             resultBox.appendChild(resultTxt);
             let zettelBox = document.createElement("DIV");
             zettelBox.classList.add("zettel_box");
+
+            this.cTxtSelection = "";
+            zettelBox.onmouseup = () => {
+                this.cTxtSelection = window.getSelection().toString();
+            }
             this.setLoadMore(zettelBox, this.results)
             resultBox.appendChild(zettelBox);
 
@@ -1109,7 +1114,19 @@ class FullTextSearch extends Oculus{
             let cContext = new ContextMenu();
             cContext.addEntry('.exzerptBox', 'a', 'Edition öffnen', () => {
                 const box = document.getElementById(argos.main.selMarker.main.lastRow);
-                window.open(`/site/viewer/${box.dataset.edition_id}?page=${box.dataset.scan_id}`);
+                window.open(`/site/viewer/${box.dataset.edition_id}?scan=${box.dataset.scan_id}`);
+            });
+            cContext.addEntry('.exzerptBox', 'a', 'neuen Zettel aus Auswahl erstellen', () => {
+                const box = document.getElementById(argos.main.selMarker.main.lastRow);
+                if(this.cTxtSelection!= ""){
+                    this.cEditionId = parseInt(box.dataset.edition_id);
+                    this.workId = parseInt(box.dataset.work_id);
+                    this.workOpus = box.dataset.work_example;
+                    this.cScanId = parseInt(box.dataset.scan_id);
+                    argos.loadEye("zettel_add");
+                } else {
+                    alert("Bitte wählen Sie zuerst eine Textstelle aus!");
+                }
             });
             /*
             cContext.addEntry('div.zettel', 'hr', '', null);
@@ -1146,8 +1163,10 @@ class FullTextSearch extends Oculus{
         const edition = await arachne.edition.is(scan_lnk.edition_id);
         exzerpt.dataset.edition_id = edition.id;
         const work = await arachne.work.is(edition.work_id);
+        exzerpt.dataset.work_id = work.id;
+        exzerpt.dataset.work_example = work.example;
         exzerpt.innerHTML = html(`
-            <p style="color: var(--mainColor);">
+            <p style="color: var(--mainColor);" class="exzerptBox">
             <b>${work.opus}</b> - p. ${scan.filename} <i>(ed. ${edition.editor} ${edition.year})</i>
             </p>
         `);

@@ -198,13 +198,13 @@ class Buticula(Bottle):
             i_file.write(i_data)
         #server_status = subprocess.run(f"python {self.p}/MLW-Software/MLWServer.py --status", shell=True)
         #print("SERVER STATUS:", server_status)
-        subprocess.run(f"python {self.p}/MLW-Software/MLWServer.py --startserver&", shell=True)
+        #subprocess.run(f"python {self.p}/MLW-Software/MLWServer.py --port 9997 --startserver&", shell=True)
         if path.exists(self.p + "/MLW-Software/Ausgabe"):
             rmtree(self.p + "/MLW-Software/Ausgabe");
         subprocess.run(
-                f"python {self.p}/MLW-Software/MLWServer.py {self.p}/MLW-Software/input.mlw",
+                f"python {self.p}/MLW-Software/MLWServer.py --port 9997 {self.p}/MLW-Software/input.mlw",
                 shell=True)
-        subprocess.run(f"python {self.p}/MLW-Software/MLWServer.py --stopserver", shell=True)
+        subprocess.run(f"python {self.p}/MLW-Software/MLWServer.py --port 9997 --stopserver", shell=True)
         o_data = {}
         with open(self.p + "/MLW-Software/Ausgabe/HTML-Vorschau/input.html", "r") as html_file:
             o_data["html"] = html_file.read()

@@ -464,6 +464,10 @@ class ZettelAdd extends Oculus{
 
         let iWork = el.text(""); iWork.autocomplete = "off";
         await this.bindAutoComplete(iWork, "work", ["id", "example"]);
+        if(argos.main.cTxtSelection != null){
+            iWork.value = argos.main.workOpus;
+            iWork.dataset.selected = argos.main.workId;
+        }
         iWork.onchange = (e) => {
             setTimeout(() => {
                 if(iWork.dataset.selected>0){
@@ -497,6 +501,7 @@ class ZettelAdd extends Oculus{
         mainBody.appendChild(divNoLit);
 
         let iTxt = el.area(""); iTxt.autocomplete = "off";
+        if(argos.main.cTxtSelection != null){iTxt.value = argos.main.cTxtSelection}
         let tbl2 = el.table([["Text:", iTxt]]);
         mainBody.appendChild(tbl2);
 
@@ -509,6 +514,10 @@ class ZettelAdd extends Oculus{
                     type: iType.value,
                     in_use: 1
                 };
+                if(["viewer", "full_text"].includes(argos.main.res)){
+                    data.d_e = argos.main.cEditionId;
+                    data.d_s = argos.main.cScanId;
+                }
                 if(iDateOwn.value != "" && !isNaN(parseInt(iDateOwn.value))){
                     data.date_own = iDateOwn.value;
                     data.date_own_display = iDateOwnDisplay.value;
@@ -542,10 +551,16 @@ class ZettelAdd extends Oculus{
                                 argos.main.currentArticle.dispatchEvent(setZettel);
                             });
                     }
-                    this.refresh();
+                    if(["viewer", "full_text"].includes(argos.main.res)){this.close()}
+                    else {this.refresh()}
                 })
                 .catch((e) => {throw e});
             } else {alert("Kein gültiges Lemma eingetragen!")}
+        }
+        if(["viewer", "full_text"].includes(argos.main.res)){
+            mainBody.appendChild(el.p(`
+            Dieser Zettel wird einen Direktlink auf die Seite der Edition haben.
+                `));
         }
         mainBody.appendChild(iSubmit);
 
@@ -705,11 +720,21 @@ class ZettelDetail extends Oculus{
             ed.innerHTML = `<a target="_blank" href="${url}">${edition.editor} ${edition.year}</a>`;
             editionDIV.appendChild(ed);
         }
+        let dLnkDes = "";
+        let dLnk = "";
+        if(zettel.d_e!=null){
+            dLnkDes = "Direktlink zur Edition:";
+            dLnk = document.createElement("A");
+            dLnk.href = `/site/viewer/${zettel.d_e}?scan=${zettel.d_s}`;
+            dLnk.setAttribute("target", "_blank");
+            dLnk.textContent = "Edition öffnen"
+        }
         overview.appendChild(el.table([["Lemma:", html(zettel.lemma_display)],
             ["Stelle:", zettel.opus], ["Datum:", html(zettel.date_display)],
             ["Zetteltyp:", zTypes[zettel.type]], ["MLW relevant:", ""],
             ["Text:", zettel.txt], ["Edition:", editionDIV],
-            ["Seitenzahl der Edition:", `${zettel.page_nr}`]
+            //["Seitenzahl der Edition:", `${zettel.page_nr}`],
+            [dLnkDes, dLnk]
         ]));
         rTContent.appendChild(overview);
         if(this.access.includes("comment")){
@@ -804,7 +829,7 @@ class ZettelDetail extends Oculus{
 
             let iDateOwn = el.text(zettel.date_own);
             let iDateOwnDisplay = el.text(zettel.date_own_display);
-            let iTxt = el.area(zettel.txt); iTxt.autocomplete = "off";
+            let iTxt = el.area(zettel.txt);iTxt.autocomplete = "off";
             let iSaveNext = el.button("speichern und weiter");
             iSaveNext.onclick = () => {
                 if(iLemma.value != "" && iLemma.dataset.selected == null){
