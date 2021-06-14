@@ -261,7 +261,6 @@ class Project extends Oculus{
                         }
                     // recalculate targetZettelBox 
                     let nArtId = parseInt(dBoxZettel.dataset.article_id);
-                    console.log("dBoxID", nArtId);
                     const nZettels = await arachne.zettel_lnk.bound([nArtId, "", 0, 0, 0], [(nArtId+1), "?", 9999, 9999, 9999], "zettel", false);
                     const setZettel = new CustomEvent("setZettel", {detail: nZettels});
                     dBoxZettel.dispatchEvent(setZettel);
@@ -536,7 +535,6 @@ class Project extends Oculus{
                 }}).
                 catch(e => {alert("Ein Fehler ist aufgetreten! "+e);argos.loadMain("project_overview");});
         });
-        console.log(document.querySelectorAll(".dBox").length === 0);
         if(document.querySelectorAll(".dBox").length===0){
             let cWarning = document.createElement("DIV");
             cWarning.classList.add("msgLabel");
@@ -997,7 +995,10 @@ class ProjectExport extends Oculus{
     async load(){
         let mainBody = document.createDocumentFragment();
         let eTxt = "";
-        const getContent = (box, depth) => {
+        let eLst = [];
+        let eLstSrvr = [];
+        let lemmaLst = [];
+        const getContent = async (box, depth) => {
             if(box.children.length > 0){
                 if(box.classList.contains("dBox")){
                     depth ++;
@@ -1006,7 +1007,7 @@ class ProjectExport extends Oculus{
                     eTxt += box.children[0].children[1].textContent.trim();
                     if(box.dataset.type === "0"){eTxt += ":"}
                     eTxt += "<br />";
-                } else if (box.classList.contains("detail_zettel", "zettelExport")){
+                } else if (box.classList.contains("detail_zettel") && box.classList.contains("zettelExported")){
                     eTxt += "&nbsp;&nbsp;&nbsp;&nbsp;".repeat(depth+1)+"* ";
                     eTxt += box.children[0].textContent.trim().toUpperCase();
                     if(box.children.length>1){
@@ -1016,71 +1017,101 @@ class ProjectExport extends Oculus{
                         // Literaturzettel
                         eTxt += "<br />"
                     }
+                    const comments = await arachne.comment.is(parseInt(box.id), "zettel", false);
+                    const indent = "&nbsp;&nbsp;&nbsp;&nbsp;".repeat(depth+1);
+                    for(const comment of comments){
+                        eTxt += `${indent}/*<br />
+                            ${indent}${comment.user} - ${comment.u_date.substring(0, 10)}:<br />
+                            ${indent}${comment.comment}<br />
+                        ${indent}*/<br />`;
+                    }
                 }
-                for(const child of box.children){getContent(child, depth)}
+                for(const child of box.children){await getContent(child, depth)}
             }
         }
         let mainBox = document.querySelector(".project_detail");
+        let k = 0;
+        const user = await argos.user();
         for(const child of mainBox.children){
-            getContent(child, -1);
+            k++;
+            await getContent(child, -1);
+            if(child.dataset.type === "1"){
+                lemmaLst.push(child.children[0].children[1].textContent);
+            } else {
+                lemmaLst.push("Lemma "+k);
+            }
+            eTxt += `AUTORIN ${user.last_name}`;
+            eLst.push(eTxt);
+            eLstSrvr.push(eTxt.replace(/\<br \/\>/g, "\n").replace(/\&nbsp\;/g, " "));
+            eTxt = "";
         }
-        let user = await argos.user();
-        eTxt += `AUTORIN ${user.last_name}`;
         // preview window will be attach to body after upper part
         let prevBox = document.createElement("DIV");
-        prevBox.innerHTML = html(eTxt);
-        
+        prevBox.innerHTML = html(eLst.join("<br />"));
         
         // info in upper part of window
         mainBody.appendChild(el.h("Lemmastrecke exportieren", 3));
-        let info = el.p("Klicken Sie auf den Link, um die .mlw-Dateien herunter zu laden: ")
-        eTxt = eTxt.replace(/<br \/>/g, "\n").replace(/&nbsp;/g, " ");
-        let eFile = new Blob([eTxt], {type: "text/plain"});
-        let eLink = document.createElement("A");
-        let eURL = URL.createObjectURL(eFile);
-        eLink.href = eURL;
-        eLink.innerHTML = "&rarr; Als Datei herunterladen.";
-        eLink.download = "test.mlw";
-        info.appendChild(eLink);
-        mainBody.appendChild(info);
-        let HTMLPreviewData = await fetch("/exec/mlw_preview", {
+        mainBody.appendChild(el.p("Klicken Sie auf den Link, um die .mlw-Dateien herunter zu laden: "));
+        let j = 0;
+        let info = el.p("")
+        for(const eTxt of eLstSrvr){
+            j ++;
+            let eFile = new Blob([eTxt], {type: "text/plain"});
+            let eLink = document.createElement("A");
+            let eURL = URL.createObjectURL(eFile);
+            eLink.href = eURL;
+            eLink.innerHTML = "&rarr; " + lemmaLst[j-1] + " ";
+            eLink.download = `${lemmaLst[j-1]}.mlw`;
+            info.appendChild(eLink);
+            mainBody.appendChild(info);
+        }
+        let HTMLPreviewDatas = await fetch("/exec/mlw_preview", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${arachne.key.token}`},
-            body: eTxt
+                "Authorization": `Bearer ${arachne.key.token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(eLstSrvr)
         }).then(re => re.json());
-        let HTMLPreview = document.createElement("IFRAME");
-        HTMLPreviewData.html = HTMLPreviewData.html.
-            replace(/MLW_kompakt\.css/g, "/file/css/MLW_kompakt.css").
-            replace(/MLW\.css/g, "/file/css/MLW.css").
-            replace(/MLW_disposition\.css/g, "/file/css/MLW_disposition.css").
-            replace(/MLW\.js/g, "/file/js/MLW.js");
-        HTMLPreview.srcdoc = HTMLPreviewData.html;
-        HTMLPreview.style.border = "none";
-        HTMLPreview.style.position = "absolute";
-        HTMLPreview.style.width = "100%";
-        HTMLPreview.style.height = "100%";
-        
+
         let tHeader = document.createElement("DIV");
         tHeader.classList.add("tab_header");
         tHeader.setAttribute("name", "exportViews");
         tHeader.style.padding = "0px 20px";
-        tHeader.appendChild(el.tab("Vorschau", "preview"));
-        tHeader.appendChild(el.tab("MLW-Notation", "notation"));
-        mainBody.appendChild(tHeader);
 
         let tBody = document.createElement("DIV");
         tBody.classList.add("tab_content");
         tBody.setAttribute("name","exportViews");
         //tBody.style.backgroundColor = "var(--mainBG)";
-        let pPreview = el.tabContainer("preview");
+        
+        let i = 0;
+        for(const HTMLPreviewData of HTMLPreviewDatas){
+            i ++;
+            tHeader.appendChild(el.tab(lemmaLst[i-1], "preview_"+i));
+            let pPreview = el.tabContainer("preview_"+i);
+            let HTMLPreview = document.createElement("IFRAME");
+            const HTMLContent = HTMLPreviewData.html.
+                replace(/MLW_kompakt\.css/g, "/file/css/MLW_kompakt.css").
+                replace(/MLW\.css/g, "/file/css/MLW.css").
+                replace(/MLW_disposition\.css/g, "/file/css/MLW_disposition.css").
+                replace(/MLW\.js/g, "/file/js/MLW.js");
+            HTMLPreview.srcdoc = HTMLContent;
+            HTMLPreview.style.border = "none";
+            HTMLPreview.style.position = "absolute";
+            HTMLPreview.style.width = "100%";
+            HTMLPreview.style.height = "100%";
+            pPreview.appendChild(HTMLPreview);
+            tBody.appendChild(pPreview);
+        }
+
+        tHeader.appendChild(el.tab("MLW-Notation", "notation"));
+
         let pNotation = el.tabContainer("notation");
         pNotation.appendChild(prevBox);
-        pPreview.appendChild(HTMLPreview);
-        tBody.appendChild(pPreview);
+        mainBody.appendChild(tHeader);
         tBody.appendChild(pNotation);
         tBody.style.position = "absolute";
-        tBody.style.top = "152px";
+        tBody.style.top = "192px";
         tBody.style.right = "20px";
         tBody.style.bottom = "20px";
         tBody.style.left = "20px";

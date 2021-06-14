@@ -193,24 +193,26 @@ class Buticula(Bottle):
         with open(self.p + f"/temp/{table}.txt", "w") as i_file:
             i_file.write(json.dumps(results, default=str))
 
-    def create_mlw_file(self, i_data):
-        with open(self.p + "/MLW-Software/input.mlw", "wb") as i_file:
-            i_file.write(i_data)
-        #server_status = subprocess.run(f"python3 {self.p}/MLW-Software/MLWServer.py --status", shell=True)
-        #print("SERVER STATUS:", server_status)
-        #subprocess.run(f"python3 {self.p}/MLW-Software/MLWServer.py --port 9997 --startserver&", shell=True)
-        if path.exists(self.p + "/MLW-Software/Ausgabe"):
-            rmtree(self.p + "/MLW-Software/Ausgabe")
-        subprocess.run(
-                f"python3 {self.p}/MLW-Software/MLWServer.py --port 9997 {self.p}/MLW-Software/input.mlw",
-                shell=True)
+    def create_mlw_file(self, i_datas):
+        o_datas = []
+        for i_data in i_datas:
+            with open(self.p + "/MLW-Software/input.mlw", "w") as i_file:
+                i_file.write(i_data)
+            #server_status = subprocess.run(f"python3 {self.p}/MLW-Software/MLWServer.py --status", shell=True)
+            #print("SERVER STATUS:", server_status)
+            #subprocess.run(f"python3 {self.p}/MLW-Software/MLWServer.py --port 9997 --startserver&", shell=True)
+            if path.exists(self.p + "/MLW-Software/Ausgabe"): rmtree(self.p + "/MLW-Software/Ausgabe")
+            subprocess.run(
+                    f"python3 {self.p}/MLW-Software/MLWServer.py --port 9997 {self.p}/MLW-Software/input.mlw",
+                    shell=True)
+            o_data = {}
+            with open(self.p + "/MLW-Software/Ausgabe/HTML-Vorschau/input.html", "r") as html_file:
+                o_data["html"] = html_file.read()
+            #with open(self.p + "/MLW-Software/Ausgabe/Fehlermeldungen_fuer_die_Autoren/input.txt", "r") as err_file:
+            #    o_data["err"] = err_file.read()
+            o_datas.append(o_data)
         subprocess.run(f"python3 {self.p}/MLW-Software/MLWServer.py --port 9997 --stopserver", shell=True)
-        o_data = {}
-        with open(self.p + "/MLW-Software/Ausgabe/HTML-Vorschau/input.html", "r") as html_file:
-            o_data["html"] = html_file.read()
-        with open(self.p + "/MLW-Software/Ausgabe/Fehlermeldungen_fuer_die_Autoren/input.txt", "r") as err_file:
-            o_data["err"] = err_file.read()
-        return json.dumps(o_data)
+        return json.dumps(o_datas)
 
     def get_scan_files(self, path):
         return json.dumps(listdir(self.p + "/content/scans" + urllib.parse.unquote(path)))
@@ -521,7 +523,8 @@ class Buticula(Bottle):
             self.create_opera()
             return HTTPResponse(status=200) # OK
         elif res == "mlw_preview" and "editor" in user["access"]:
-            return self.create_mlw_file(request.body.read())
+            print(request.json)
+            return self.create_mlw_file(request.json)
         elif res == "scan_add" and "e_edit" in user["access"]:
             return self.get_scan_files(res_id)
         else: return HTTPResponse(status=404) # not found 

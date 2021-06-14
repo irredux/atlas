@@ -729,6 +729,20 @@ class WorkEdit extends Oculus{
         if(this.resId>0){
             work = await arachne.work.is(this.resId);
             mainBody.appendChild(el.h(`${work.full} <i class='minorTxt'>(ID: ${work.id})</i>`, 3))
+            let tblNames = el.table([
+                [
+                `<span class="minorTxt"><b>Vorschlagsliste VSC</b></span>`,
+                `<span class="minorTxt"><b>Vorschlagsliste Webseite</b></span>`,
+                `<span class="minorTxt"><b>'opus'-Darstellung</b></span>`
+                ],
+                [
+                `<span class="minorTxt">${work.ac_vsc}</span>`,
+                `<span class="minorTxt">${work.ac_web}</span>`,
+                `<span class="minorTxt">${work.opus}</span>`
+            ]]);
+            tblNames.style.boxShadow = "0 0 3px var(--shadowBG)";
+            tblNames.style.marginBottom = "15px";
+            mainBody.appendChild(tblNames);
         }
         else{mainBody.appendChild(el.h("Neues Werk erstellen", 3))}
         const authorsRaw = await arachne.author.getAll();

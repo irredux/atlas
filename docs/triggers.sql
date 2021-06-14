@@ -108,6 +108,9 @@ FOR EACH ROW
         SET new.zettel_count = 0;
         SET new.comments_count = 0;
         SET new.lemma_search = LOWER(new.lemma);
+        IF new.lemma_nr IS NULL THEN
+            SET new.lemma_nr = 0;
+        END IF;
     END; //
 DELIMITER ;
 
@@ -297,6 +300,11 @@ FOR EACH ROW
             SET new.lemma_nr = (SELECT lemma_nr FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_search = (SELECT lemma_search FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_display = (SELECT lemma_display FROM lemma WHERE new.lemma_id = lemma.id);
+        ELSE
+            SET new.lemma = "";
+            SET new.lemma_nr = 0;
+            SET new.lemma_search = "";
+            SET new.lemma_display = "";
         END IF;
         IF new.work_id IS NOT NULL THEN
             SET new.ac_web = (SELECT work.ac_web FROM work WHERE new.work_id = work.id);

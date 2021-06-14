@@ -437,8 +437,10 @@ class ZettelAdd extends Oculus{
     async load(){
         let mainBody = document.createDocumentFragment();
         mainBody.appendChild(el.closeButton(this));
-        mainBody.appendChild(el.h("Neuen Zettel erstellen",3));
-        let iLemma = el.text(""); iLemma.autocomplete = "off";
+        let title = el.h("Neuen Zettel erstellen",3);
+        title.style.margin = "0px";
+        mainBody.appendChild(title);
+        let iLemma = el.text(""); iLemma.autocomplete = "off"; iLemma.style.width = "350px";
         await this.bindAutoComplete(iLemma, "lemma", ["id", "lemma_display"]);
         let iType = el.select(5, {5: "Ausgeschriebener Zettel", 4: "Literatur"});
         let iDateOwn = el.text("");
@@ -452,7 +454,9 @@ class ZettelAdd extends Oculus{
                 divNoLit.style.display = "block";
             }
         }
-        let tbl1 = el.table([["Lemma:", iLemma],["Zetteltyp:", iType]]);
+        iType.style.width = "350px";
+        let tbl1 = el.table([["<div style='width:154px;'>Lemma:</div>", iLemma ,
+            "<div style='width:124px'>Zetteltyp:</div>", iType]]);
         mainBody.appendChild(tbl1);
 
         let iLiteratur = el.text(""); iLiteratur.autocomplete = "off";
@@ -484,11 +488,13 @@ class ZettelAdd extends Oculus{
             }, 500);
         }
         let iStelle = el.text(""); iStelle.autocomplete = "off";
+        iStelle.style.width = "350px";
+        iDateOwnDisplay.style.width = "350px";
         let tblNoLit = el.table([
-            ["Zitiertitel:", iWork], ["Stellenangabe:", iStelle],
-            ["Eigene Datierung <i class='minorTxt'>(Sotierung)</i>:", iDateOwn],
-            ["Eigene Datierung <i class='minorTxt'>(Darstellung)</i>:", iDateOwnDisplay]
-        ]);
+            ["Zitiertitel:", iWork, "Stellenangabe:", iStelle],
+            ["Eigene Datierung <i class='minorTxt'>(Sotierung)</i>:", iDateOwn,
+            "Eigene Datierung <i class='minorTxt'>(Darstellung)</i>:", iDateOwnDisplay]
+        ], ["15%", "35%", "15%", "35%"]);
         let divNoLit = document.createElement("DIV");
         divNoLit.appendChild(tblNoLit);
 
@@ -501,12 +507,16 @@ class ZettelAdd extends Oculus{
         mainBody.appendChild(divNoLit);
 
         let iTxt = el.area(""); iTxt.autocomplete = "off";
+        iTxt.classList.add("minorTxt"); iTxt.style.height = "150px";
         if(argos.main.cTxtSelection != null){iTxt.value = argos.main.cTxtSelection}
         let tbl2 = el.table([["Text:", iTxt]]);
         mainBody.appendChild(tbl2);
 
         let iSubmit = el.button("erstellen");
-        iSubmit.onclick = () => {
+        iSubmit.style.position = "absolute";
+        iSubmit.style.bottom = "28px";
+        iSubmit.style.left = "45px";
+        iSubmit.onclick = async () => {
             if(iLemma.dataset.selected != undefined){
                 let data = {
                     lemma_id: iLemma.dataset.selected,
@@ -533,34 +543,50 @@ class ZettelAdd extends Oculus{
                         data.stellenangabe_bib = iStelleBib.value;
                     }
                 }
-                arachne.zettel.save(data)
-                .then((z) => {
-                    if(argos.main.res === "project"){
-                        const articleId = parseInt(argos.main.currentArticle.dataset.article_id);
-                        arachne.zettel_lnk.save({
+                const z = await arachne.zettel.save(data)
+                const cSelProject = document.getElementById("selProject");
+                if(cSelProject != null){
+                    const defaultArticle = await arachne.article.is([parseInt(cSelProject.value), 0, 0], "article");
+                    const articleId = defaultArticle.id;
+                    if(articleId > 0){
+                        await arachne.zettel_lnk.save({
                             zettel_id: z.id,
-                            article_id: articleId
-                        }).
-                            then(() => arachne.zettel_lnk.bound(
-                                    [articleId, "", 0, 0, 0],
-                                    [(articleId+1), "?", 9999, 9999, 9999],
-                                    "zettel", false
-                                )).
-                            then(nZettels => {
-                                const setZettel = new CustomEvent("setZettel", {detail: nZettels});
-                                argos.main.currentArticle.dispatchEvent(setZettel);
-                            });
+                            article_id: articleId,
+                            display_text: iTxt.value
+                        });
+                        if(argos.main.res === "project"){
+                            const nZettels = await arachne.zettel_lnk.bound(
+                                [articleId, "", 0, 0, 0],
+                                [(articleId+1), "?", 9999, 9999, 9999],
+                                "zettel", false
+                            );
+                            const setZettel = new CustomEvent("setZettel", {detail: nZettels});
+                            argos.main.currentArticle.dispatchEvent(setZettel);
+                        }
+                    } else {
+                        alert("Ein Fehler ist aufgetreten mit dem ausgewählten Projekt!");
                     }
-                    if(["viewer", "full_text"].includes(argos.main.res)){this.close()}
-                    else {this.refresh()}
-                })
-                .catch((e) => {throw e});
+                }
+                if(["viewer", "full_text"].includes(argos.main.res)){this.close()}
+                else {this.refresh()}
             } else {alert("Kein gültiges Lemma eingetragen!")}
         }
         if(["viewer", "full_text"].includes(argos.main.res)){
             mainBody.appendChild(el.p(`
             Dieser Zettel wird einen Direktlink auf die Seite der Edition haben.
                 `));
+        }
+        const projects = await arachne.project.is(1, "status", false);
+        if(projects.length>0){
+            let selData = {};
+            for(const project of projects){
+                selData[project.id] = project.name;
+            }
+            let cProject = projects[0].id;
+            if(argos.main.res === "project"){cProject = parseInt(argos.main.resId)}
+            let iProject = el.select(cProject, selData);
+            iProject.id = "selProject";
+            mainBody.appendChild(el.table([["zu Projekt hinzufügen:", iProject]]));
         }
         mainBody.appendChild(iSubmit);
 
