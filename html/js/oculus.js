@@ -118,9 +118,11 @@ class Oculus{
                         cTarget.style.userSelect = "text";
                         cTarget.style.webkitUserSelect = "text";
                         /* *************** */
+                        /*
                         if(dataList!=null){
-                            me.bindAutoComplete(cTarget, "work", ["id", "example"]);
+                            me.bindAutoComplete(cTarget, "work", ["id", "ac_web"]);
                         }
+                        */
                         /* *************** */
                         cTarget.addEventListener("blur", function(){
                             cTarget.setAttribute("contenteditable", false);

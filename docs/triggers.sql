@@ -5,6 +5,9 @@ FOR EACH ROW
     BEGIN
         SET new.c_date = SYSDATE(6);
         SET new.u_date = SYSDATE(6);
+        UPDATE project
+        SET project.deleted = project.deleted
+        WHERE project.id = new.project_id;
     END; //
 DELIMITER ;
 
@@ -14,6 +17,9 @@ BEFORE UPDATE ON article
 FOR EACH ROW
     BEGIN
         SET new.u_date = SYSDATE(6);
+        UPDATE project
+        SET project.deleted = project.deleted
+        WHERE project.id = new.project_id;
     END; //
 DELIMITER ;
 
@@ -215,18 +221,6 @@ FOR EACH ROW
     BEGIN
         SET new.c_date = SYSDATE(6);
         SET new.u_date = SYSDATE(6);
-        SET new.example = (
-            SELECT CONCAT(
-                IF(new.in_use=1, '', '['),
-                IF(author.in_use=1, '', '['),
-                UPPER(IF(new.author_display IS NULL OR new.author_display = '', author.abbr, new.author_display)),
-                IF(author.in_use=1, '', ']'),
-                IF(new.abbr IS NULL,'',CONCAT(' ', new.abbr)),
-                IF(new.citation IS NULL, '', CONCAT(' ', new.citation)),
-                IF(new.is_maior=1, '', CONCAT(' (', IF(new.bibliography IS NULL, '', new.bibliography), ' ', IF(new.bibliography_cit IS NULL, '', new.bibliography_cit),')')),
-                IF(new.in_use=1, '', ']')
-            ) FROM author WHERE new.author_id = author.id
-        );
     END; //
 DELIMITER ;
 
@@ -239,23 +233,27 @@ FOR EACH ROW
         SET new.ac_vsc = (
             SELECT 
                 CONCAT(
-                UPPER(IF(new.author_display IS NULL OR new.author_display = '', author.abbr, new.author_display)),
-                IF(work.abbr IS NULL OR work.abbr = "", "", work.abbr)
+                    IF(new.in_use = 0 OR author.in_use = 0, "[", ""),
+                    UPPER(IF(new.author_display IS NULL OR new.author_display = '', author.abbr, new.author_display)),
+                    IF(new.abbr IS NULL OR new.abbr = "", "", CONCAT(" ", new.abbr)),
+                    IF(new.in_use = 0 OR author.in_use = 0, "]", "")
                 )
             FROM author WHERE author.id = new.author_id
         );
-        /*SET new.ac_web = ();*/
-        SET new.example = (
-            SELECT CONCAT(
-                IF(new.in_use=1, '', '['),
-                IF(author.in_use=1, '', '['),
-                UPPER(IF(new.author_display IS NULL OR new.author_display = '', author.abbr, new.author_display)),
-                IF(author.in_use=1, '', ']'),
-                IF(new.abbr IS NULL,'',CONCAT(' ', new.abbr)),
-                IF(new.citation IS NULL, '', CONCAT(' ', new.citation)),
-                IF(new.is_maior=1, '', CONCAT(' (', IF(new.bibliography IS NULL, '', new.bibliography), ' ', IF(new.bibliography_cit IS NULL, '', new.bibliography_cit),')')),
-                IF(new.in_use=1, '', ']')
-            ) FROM author WHERE new.author_id = author.id
+        SET new.ac_web = CONCAT(
+            new.ac_vsc,
+            IF(new.is_maior = 1,
+                "",
+                CONCAT(
+                    "; ",
+                    IF(new.citation = "" OR new.citation IS NULL, "", CONCAT(new.citation, " ")),
+                    " (",
+                    IF(new.bibliography IS NULL, "", new.bibliography),
+                    " ",
+                    IF(new.bibliography_cit IS NULL, "", new.bibliography_cit),
+                    ")"
+                )
+            )
         );
         SET new.opus = (
             SELECT CONCAT(
@@ -301,7 +299,7 @@ FOR EACH ROW
             SET new.lemma_display = (SELECT lemma_display FROM lemma WHERE new.lemma_id = lemma.id);
         END IF;
         IF new.work_id IS NOT NULL THEN
-            SET new.example = (SELECT work.example FROM work WHERE new.work_id = work.id);
+            SET new.ac_web = (SELECT work.ac_web FROM work WHERE new.work_id = work.id);
             SET new.opus = (
                 SELECT
                 IF(new.stellenangabe IS NULL OR new.stellenangabe = "", IF(new.stellenangabe_bib IS NULL OR new.stellenangabe_bib = "", 
@@ -353,7 +351,7 @@ FOR EACH ROW
             SET new.lemma_display = (SELECT lemma_display FROM lemma WHERE new.lemma_id = lemma.id);
         END IF;
         IF new.work_id != old.work_id OR (old.work_id IS NULL AND new.work_id IS NOT NULL) THEN
-            SET new.example = (SELECT work.example FROM work WHERE new.work_id = work.id);
+            SET new.ac_web = (SELECT work.ac_web FROM work WHERE new.work_id = work.id);
             SET new.opus = (
                 SELECT
                 IF(new.stellenangabe IS NULL OR new.stellenangabe = "", IF(new.stellenangabe_bib IS NULL OR new.stellenangabe_bib = "", 
@@ -395,7 +393,7 @@ FOR EACH ROW
             zettel_lnk.date_type = new.date_type,
             zettel_lnk.lemma_search = new.lemma_search,
             zettel_lnk.lemma_nr = new.lemma_nr,
-            zettel_lnk.opus = new.opus,
+            zettel_lnk.ac_web = zettel_lnk.ac_web,
             zettel_lnk.stellenangabe = new.stellenangabe,
             zettel_lnk.type = new.type
         WHERE zettel_lnk.zettel_id = new.id;
@@ -415,7 +413,7 @@ FOR EACH ROW
         SET new.date_type = (SELECT zettel.date_type FROM zettel WHERE new.zettel_id = zettel.id);
         SET new.lemma_search = (SELECT zettel.lemma_search FROM zettel WHERE new.zettel_id = zettel.id);
         SET new.lemma_nr = (SELECT zettel.lemma_nr FROM zettel WHERE new.zettel_id = zettel.id);
-        SET new.opus = (SELECT zettel.opus FROM zettel WHERE new.zettel_id = zettel.id);
+        SET new.ac_web = (SELECT zettel.ac_web FROM zettel WHERE new.zettel_id = zettel.id);
         SET new.stellenangabe = (SELECT zettel.stellenangabe FROM zettel WHERE new.zettel_id = zettel.id);
         SET new.type = (SELECT zettel.type FROM zettel WHERE new.zettel_id = zettel.id);
         SET new.display_text = (SELECT zettel.txt FROM zettel WHERE new.zettel_id = zettel.id);

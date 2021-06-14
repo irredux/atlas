@@ -31,8 +31,16 @@ class ProjectOverview extends Oculus{
         let pActive = el.tabContainer("p_active");
         let pArchive = el.tabContainer("p_archive");
         let pTrash = el.tabContainer("p_trash");
+        let actTblContent = [["<b></b>", "<b class='minorTxt'>Änderungsdatum</b>", "<b class='minorTxt'>Erstelldatum</b>"]];
+        let arcTblContent = [["<b></b>", "<b class='minorTxt'>Änderungsdatum</b>", "<b class='minorTxt'>Erstelldatum</b>"]];
+        let traTblContent = [["<b></b>", "<b class='minorTxt'>Änderungsdatum</b>", "<b class='minorTxt'>Erstelldatum</b>"]];
         for(const project of projects){
+            //let projectBox = document.createElement("DIV");
             let nProject = document.createElement("DIV");
+            let nCDate = el.span(project.c_date.substring(0, 10));
+            nCDate.classList.add("minorTxt");
+            let nUDate = el.span(project.u_date.substring(0, 16));
+            nUDate.classList.add("minorTxt");
             nProject.textContent = project.name;
             nProject.id = project.id;
             nProject.classList.add("projectItems");
@@ -42,18 +50,21 @@ class ProjectOverview extends Oculus{
                     nProject.ondblclick = () => {
                         argos.loadMain("project", project.id);
                     }
-                    pActive.appendChild(nProject);
+                    actTblContent.push([nProject, nUDate, nCDate]);
                     break;
                 case 2:
                     nProject.classList.add("projectArchive");
-                    pArchive.appendChild(nProject);
+                    arcTblContent.push([nProject, nUDate, nCDate]);
                     break;
                 case 3:
                     nProject.classList.add("projectTrash");
-                    pTrash.appendChild(nProject);
+                    traTblContent.push([nProject, nUDate, nCDate]);
                     break;
             }
         }
+        pActive.appendChild(el.table(actTblContent, ["60%", "20%", "20%"]));
+        pArchive.appendChild(el.table(arcTblContent, ["60%", "20%", "20%"]));
+        pTrash.appendChild(el.table(traTblContent, ["60%", "20%", "20%"]));
         tBody.appendChild(pActive);
         tBody.appendChild(pArchive);
         tBody.appendChild(pTrash);
@@ -415,7 +426,7 @@ class Project extends Oculus{
                         zBox.innerHTML = "* <i>Literaturzettel</i>";
                     } else {
                         zBox.innerHTML = html(`
-                    ∗ <span class="opus">${zettel.opus?zettel.opus:"<i>Werk</i>"}</span>;
+                    ∗ <span class="opus">${zettel.ac_web?zettel.ac_web:"<i>Werk</i>"}</span>;
                     <span class="stelle">${zettel.stellenangabe?zettel.stellenangabe:"<i>Stelle</i>"}</span>
                     &ldquo;<span class="exportText">${zettel.display_text?zettel.display_text:"..."}</span>&rdquo;`);
                         if(zettel.include_export == 1){zBox.classList.add("zettelExported")}
@@ -945,7 +956,7 @@ class ProjectZettelPreview extends Oculus{
             pmZettel.innerHTML = `<div class='digitalZettel'>
                 <div class='digitalZettelLemma'>${html(zettel.lemma_display)}</div>
                 <div class='digitalZettelDate'>${html(zettel.date_display)}</div>
-                <div class='digitalZettelWork'>${html(zettel.opus)}</div>
+                <div class='digitalZettelWork'>${html(zettel.ac_web)}</div>
                 <div class='digitalZettelText'>${html(zettel.txt)}</div></div>
             `;
         }
@@ -1131,7 +1142,7 @@ class ProjectExport extends Oculus{
                             article_txt += " " + article["name"] + "\n"
 
                         zettels = self.db.search("zettel_lnk_view",
-                                {"article_id": article["id"]}, ["example_plain",
+                                {"article_id": article["id"]}, ["ac_web_plain",
                                     "display_text", "include_export", "comments",
                                     "stellenangabe"],
                                 ["date_sort"])

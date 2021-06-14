@@ -71,7 +71,7 @@ class Viewer extends Oculus{
         let editionSpecs = `
             ${work.opus} <i class="minorTxt">(${edition.editor} ${edition.year} ${edition.volume!=null?edition.volume:""})</i>
         `;
-        document.title =  `${work.example} - ${edition.editor} ${edition.year}  ${edition.volume!=null?edition.volume:""}`;
+        document.title =  `${work.ac_web} - ${edition.editor} ${edition.year}  ${edition.volume!=null?edition.volume:""}`;
 
         let pages = {};
         let full_txt = {};
@@ -212,7 +212,7 @@ class Viewer extends Oculus{
             if(this.cTxtSelection!= ""){
                 this.cEditionId = this.resId;
                 this.workId = work.id;
-                this.workOpus = work.example;
+                this.workOpus = work.ac_web;
                 this.cScanId = pageSelect.value;
                 argos.loadEye("zettel_add");
                 //this.cTxtSelection = window.getSelection().toString();

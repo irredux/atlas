@@ -463,7 +463,7 @@ class ZettelAdd extends Oculus{
         mainBody.appendChild(divLit);
 
         let iWork = el.text(""); iWork.autocomplete = "off";
-        await this.bindAutoComplete(iWork, "work", ["id", "example"]);
+        await this.bindAutoComplete(iWork, "work", ["id", "ac_web"]);
         if(argos.main.cTxtSelection != null){
             iWork.value = argos.main.workOpus;
             iWork.dataset.selected = argos.main.workId;
@@ -605,7 +605,7 @@ class ZettelBatch extends Oculus{
         tBody.appendChild(zbLemma);
         let zbOpera = el.tabContainer("zb_opera");
         let iWork = el.text();
-        await this.bindAutoComplete(iWork, "work", ["id", "example"]);
+        await this.bindAutoComplete(iWork, "work", ["id", "ac_web"]);
         let workSubmit = el.button("übernehmen");
         workSubmit.onclick = async () => {
             if(iWork.dataset.selected == null){alert("Kein gültiges Werk ausgewählt!")
@@ -787,9 +787,9 @@ class ZettelDetail extends Oculus{
             let iLemma = el.text(zettel.lemma);
             iLemma.dataset.selected = zettel.lemma_id;
             await this.bindAutoComplete(iLemma, "lemma", ["id", "lemma_display"]);
-            let iWork = el.text(zettel.example);
+            let iWork = el.text(zettel.ac_web);
             iWork.dataset.selected = zettel.work_id;
-            await this.bindAutoComplete(iWork, "work", ["id", "example"]);
+            await this.bindAutoComplete(iWork, "work", ["id", "ac_web"]);
             let iStelle = el.text(zettel.stellenangabe);
             let iBib = el.text(zettel.stellenangabe_bib);
             let iPageNr = el.text(zettel.page_nr);

@@ -178,9 +178,9 @@ class LibraryEdit extends Oculus{
         } else {
             mainBody.appendChild(el.h("Neue Edition erstellen", 3));
         }
-        let iWork = el.text(work.example);
+        let iWork = el.text(work.ac_web);
         iWork.dataset.selected = edition.work_id;
-        await this.bindAutoComplete(iWork, "work", ["id", "example"]);
+        await this.bindAutoComplete(iWork, "work", ["id", "ac_web"]);
         let iEditionName = el.area(edition.edition_name);
         let iEditor = el.text(edition.editor);
         let iYear = el.text(edition.year);
@@ -461,7 +461,7 @@ class LibraryScanImport extends Oculus{
         let addWork = el.text("");
         addWork.style.margin = "10px 0";
         addWork.style.display = "none";
-        await this.bindAutoComplete(addWork, "work", ["id", "example"]);
+        await this.bindAutoComplete(addWork, "work", ["id", "ac_web"]);
         mainBody.appendChild(addWork);
         */
         let submitNewScans = el.button("importieren");
@@ -1121,7 +1121,7 @@ class FullTextSearch extends Oculus{
                 if(this.cTxtSelection!= ""){
                     this.cEditionId = parseInt(box.dataset.edition_id);
                     this.workId = parseInt(box.dataset.work_id);
-                    this.workOpus = box.dataset.work_example;
+                    this.workOpus = box.dataset.work_ac_web;
                     this.cScanId = parseInt(box.dataset.scan_id);
                     argos.loadEye("zettel_add");
                 } else {
@@ -1164,7 +1164,7 @@ class FullTextSearch extends Oculus{
         exzerpt.dataset.edition_id = edition.id;
         const work = await arachne.work.is(edition.work_id);
         exzerpt.dataset.work_id = work.id;
-        exzerpt.dataset.work_example = work.example;
+        exzerpt.dataset.work_ac_web = work.ac_web;
         exzerpt.innerHTML = html(`
             <p style="color: var(--mainColor);" class="exzerptBox">
             <b>${work.opus}</b> - p. ${scan.filename} <i>(ed. ${edition.editor} ${edition.year})</i>
