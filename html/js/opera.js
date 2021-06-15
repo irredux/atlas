@@ -2,7 +2,7 @@ import { Oculus } from "/file/js/oculus.js";
 import { ContextMenu } from "/file/js/contextmenu.js";
 import { html } from "/file/js/elements.js";
 export {
-    Library, LibraryEdit, LibrarySelector, LibraryUpdate, LibraryScanImport,
+    Library, LibraryEdit, LibrarySelector, LibraryScanImport,
     Opera, OperaExport, OperaUpdate,
     AuthorEdit, WorkEdit,
     FullTextSearch
@@ -127,7 +127,7 @@ class Library extends Oculus{
                 cContext.addEntry('tr.edition', 'hr', '', null);
                 cContext.addEntry('tr.edition', 'a', 'Scans importieren', () => {argos.loadEye("library_scan_import")});
                 cContext.addEntry('tr.edition', 'hr', '', null);
-                cContext.addEntry('tr.edition', 'a', 'Opera-Listen aktualisieren', () => {argos.loadEye("library_update")});
+                cContext.addEntry('tr.edition', 'a', 'Opera-Listen aktualisieren', () => {argos.loadEye("opera_update")});
                 this.setContext = cContext.menu;
             }
         }
@@ -381,32 +381,6 @@ class LibrarySelector extends Oculus{
                 textElement.textContent = "Keine Scans verfügbar in diesem Verzeichnis.";
                 me.ctn.appendChild(textElement);
          */
-        mainBody.appendChild(el.closeButton(this));
-        this.ctn.appendChild(mainBody);
-    }
-}
-class LibraryUpdate extends Oculus{
-    constructor(res, resId=null, access=[], main=false){
-        super(res, resId, access, main);
-    }
-    async load(){
-        let mainBody = document.createDocumentFragment();
-        mainBody.appendChild(el.h("Bibliothek aktualisieren", 3));
-        mainBody.appendChild(el.p(`
-            Sollen die Bibliothek aktualisiert werden, damit die Veränderungen
-            in den Editionen übernommen werden? Dieser Vorgang kann einige
-            Momente dauern.`));
-        let updateButton = el.button("aktualisieren");
-        updateButton.onclick = () => {
-            this.ctn.innerHTML = "<div id='loadLabel'>Bibliothek wird aktualisiert...</div>";
-            fetch("/exec/library_update", {headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
-                then(re => {this.refresh();
-                    if(re.status == 200){alert("Die Listen wurden auf dem Server aktualisiert.")}
-                    else {alert("Ein Fehler is aufgetreten. Bitte versuchen Sie es erneut.")}
-                }).
-                catch(e => {throw e});
-        }
-        mainBody.appendChild(updateButton);
         mainBody.appendChild(el.closeButton(this));
         this.ctn.appendChild(mainBody);
     }
@@ -991,8 +965,10 @@ class OperaUpdate extends Oculus{
         einige Momente dauern.`));
         let updateButton = el.button("aktualisieren");
         updateButton.onclick = () => {
+            this.ctn.innerHTML = "";
+            this.ctn.appendChild(el.loadLabel("Listen werden auf dem Server aktualisiert..."));
             fetch("/exec/opera_update", {headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
-                then(() => {alert("Die Listen wurden auf dem Server aktualisiert.")}).
+                then(() => {alert("Aktualisierung erfolgreich."); this.close();}).
                 catch(e => {throw e});
         }
         mainBody.appendChild(updateButton);

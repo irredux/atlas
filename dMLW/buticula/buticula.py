@@ -271,9 +271,12 @@ class Buticula(Bottle):
             sheet_file.write('</th><th>Abkürzung</th><th>Bezeichung</th><th>')
             sheet_file.write('Editionen</th><th>Kommentar</th></tr>')
             nr = -1
-            for opus in opera:
+            for raw_opus in opera:
+                opus = {}
+                for key, item in raw_opus.items():
+                    if item != None: opus[key] = item
                 nr+=1
-                if current_author != opus['author_id']:
+                if current_author != opus.get('author_id', None):
                     row_count += 1
                     current_author = opus['author_id']
                     work_class = " work" if opus.get('work_abbr', '') == '' else ""
@@ -351,7 +354,10 @@ class Buticula(Bottle):
             sheet_file.write('<div id="opera_1"><table><tr><th>Datum</th>')
             sheet_file.write('<th>Zitierweise</th><th>Kommentar</th></tr>')
             nr = -1
-            for opus in opera:
+            for raw_opus in opera:
+                opus = {}
+                for key, item in raw_opus.items():
+                    if item != None: opus[key] = item
                 nr += 1
                 row_count += 1
                 sheet_file.write(f'<tr class="work author opera" id="o{nr}" data-author_id="{opus.get("author_id", 0)}" data-work_id="{opus.get("id", 0)}">')
