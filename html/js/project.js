@@ -550,6 +550,7 @@ class Project extends Oculus{
         // context menu
         let cContext = new ContextMenu();
         cContext.addEntry('div.detail_zettel', 'a', 'Detailansicht', () => {
+            argos.main.currentArticle = document.querySelector(".detail_zettel[id='"+this.selMarker.main.lastRow+"']").parentNode;
             argos.main.resultLst = [];
             for(const id of this.selMarker.main.ids){
                 argos.main.resultLst.push(parseInt(id));

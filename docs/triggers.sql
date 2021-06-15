@@ -401,7 +401,7 @@ FOR EACH ROW
             zettel_lnk.date_type = new.date_type,
             zettel_lnk.lemma_search = new.lemma_search,
             zettel_lnk.lemma_nr = new.lemma_nr,
-            zettel_lnk.ac_web = zettel_lnk.ac_web,
+            zettel_lnk.ac_web = new.ac_web,
             zettel_lnk.stellenangabe = new.stellenangabe,
             zettel_lnk.type = new.type
         WHERE zettel_lnk.zettel_id = new.id;

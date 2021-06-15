@@ -554,15 +554,7 @@ class ZettelAdd extends Oculus{
                             article_id: articleId,
                             display_text: iTxt.value
                         });
-                        if(argos.main.res === "project"){
-                            const nZettels = await arachne.zettel_lnk.bound(
-                                [articleId, "", 0, 0, 0],
-                                [(articleId+1), "?", 9999, 9999, 9999],
-                                "zettel", false
-                            );
-                            const setZettel = new CustomEvent("setZettel", {detail: nZettels});
-                            argos.main.currentArticle.dispatchEvent(setZettel);
-                        }
+                        if(argos.main.res === "project"){await refreshProject(articleId)}
                     } else {
                         alert("Ein Fehler ist aufgetreten mit dem ausgewählten Projekt!");
                     }
@@ -860,7 +852,7 @@ class ZettelDetail extends Oculus{
             let iDateOwnDisplay = el.text(zettel.date_own_display);
             let iTxt = el.area(zettel.txt);iTxt.autocomplete = "off";
             let iSaveNext = el.button("speichern und weiter");
-            iSaveNext.onclick = () => {
+            iSaveNext.onclick = async () => {
                 if(iLemma.value != "" && iLemma.dataset.selected == null){
                     this.newLemma = iLemma.value;
                     this.iLemmaInput = iLemma;
@@ -882,14 +874,15 @@ class ZettelDetail extends Oculus{
                         data.date_own = iDateOwn.value;
                         data.date_own_display = iDateOwnDisplay.value;
                     }
-                    arachne.zettel.save(data).
-                        then(() => {el.status("saved");rB5.click();}).
-                        catch(e => {throw e});
+                    await arachne.zettel.save(data);
+                    el.status("saved");
+                    if(argos.main.res === "project"){await refreshProject()}
+                    if(rB5.style.visibility != "hidden"){rB5.click()}
                 }
             }
 
             let iSave = el.button("speichern");
-            iSave.onclick = () => {
+            iSave.onclick = async () => {
                 console.log(iLemma.value, iLemma.dataset.selected);
                 if(iLemma.value != "" && iLemma.dataset.selected == null){
                     this.newLemma = iLemma.value;
@@ -912,25 +905,10 @@ class ZettelDetail extends Oculus{
                         data.date_own = iDateOwn.value;
                         data.date_own_display = iDateOwnDisplay.value;
                     }
-                    arachne.zettel.save(data).
-                        then(() => {
-                            el.status("saved");
-                            this.refresh();
-                            /*
-                            if(argos.main.res === "project"){
-                                let zBox = document.querySelector(`.detail_zettel[id="${this.resId}"]`).parentNode;
-                                console.log(zBox);
-                                arachne.zettel_lnk.bound([parseInt(zBox.dataset.article_id), "", 0, 0, 0], [(parseInt(zBox.dataset.article_id)+1), "?", 9999, 9999, 9999], "zettel", false).
-                                    then(nZettels => {
-                                        console.log(nZettels);
-                                        const setZettel = new CustomEvent("setZettel", {detail: nZettels});
-                                        console.log(zBox);
-                                        zBox.dispatchEvent(setZettel);
-                                    });
-                            }
-                            */
-                        }).
-                        catch(e => {throw e});
+                    await arachne.zettel.save(data);
+                    if(argos.main.res === "project"){await refreshProject()}
+                    el.status("saved");
+                    this.refresh();
                 }
             }
             let dateOwnDes = el.span("Eigenes Sortier-datum: ");
@@ -1144,4 +1122,16 @@ class ZettelDetail extends Oculus{
         this.ctn.appendChild(mainBody);
         this.setTabs = true;
     }
+}
+
+async function refreshProject(articleId = parseInt(argos.main.currentArticle.dataset.article_id)){
+    await arachne.zettel_lnk.update();
+    const nZettels = await arachne.zettel_lnk.bound(
+        [articleId, "", 0, 0, 0],
+        [(articleId+1), "?", 9999, 9999, 9999],
+        "zettel", false
+    );
+    console.log(nZettels);
+    const setZettel = new CustomEvent("setZettel", {detail: nZettels});
+    argos.main.currentArticle.dispatchEvent(setZettel);
 }

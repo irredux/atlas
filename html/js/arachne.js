@@ -98,11 +98,6 @@ class ArachneWrapper{
             this.worker.postMessage({
                 workId: this.workId,
                 request: "UPDATE",
-                tblName: this.tblName,
-                dbName: this.dbName,
-                dbVersion: this.dbVersion,
-                optimize: this.optimize, 
-                sOrder: argos.userDisplay.sOrder,
                 token: arachne.key.token
             });
         });
