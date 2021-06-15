@@ -150,6 +150,7 @@ class Project extends Oculus{
         this.editMode = false;
     }
     async load(){
+        this.rules = new Rules(this.ctn);
         this.currentDrag = null;
         let mainBody = document.createDocumentFragment();
         let detailBox = document.createElement("DIV");
@@ -223,16 +224,12 @@ class Project extends Oculus{
             }
             mBoxText.ondragenter = (e) => {return false;}
             mBoxText.ondragover = (e) => {
-                event.target.style.textShadow = "0 0 3px var(--mainColor)";
-                //event.target.style.color = "red";
+                mBoxText.style.textShadow = "0 0 3px var(--mainColor)";
                 return false;
             }
             mBoxText.ondragleave = (e) => {
                 e.stopPropagation();
-                try{
-                event.target.style.textShadow = "none";
-                }
-                catch{}
+                mBoxText.style.textShadow = "none";
             }
             mBoxText.ondrop = async (e) => {
                 e.stopPropagation();
@@ -264,6 +261,7 @@ class Project extends Oculus{
                     const nZettels = await arachne.zettel_lnk.bound([nArtId, "", 0, 0, 0], [(nArtId+1), "?", 9999, 9999, 9999], "zettel", false);
                     const setZettel = new CustomEvent("setZettel", {detail: nZettels});
                     dBoxZettel.dispatchEvent(setZettel);
+                    this.rules.check();
                     if(nZettels.length > 0){mBoxText.children[2].textContent = nZettels.length}
                     else {mBoxText.children[2].textContent = ""}
                     this.selMarker.main.ids = [];
@@ -342,8 +340,9 @@ class Project extends Oculus{
                         sort_nr: 1,
                         parent_id: mBox.id.substring(2)
                     });
+                    this.resetSortNr();
+                    this.rules.check();
                 }
-                this.resetSortNr();
             }
             mBox.appendChild(mBoxInsert);
             let mBoxChildren = document.createElement("DIV");
@@ -390,8 +389,9 @@ class Project extends Oculus{
                         sort_nr:  (parseInt(mBox.dataset.sort_nr)+1),
                         parent_id: mBox.dataset.parent_id
                     });
+                    this.resetSortNr();
+                    this.rules.check();
                 }
-                this.resetSortNr();
             }
 
             mArt.appendChild(mBox);
@@ -413,6 +413,7 @@ class Project extends Oculus{
             dBox.appendChild(dBoxText);
             let dBoxZettel = document.createElement("DIV");
             dBoxZettel.dataset.article_id = article.id;
+            dBoxZettel.classList.add("dBoxZettel");
             dBoxZettel.addEventListener("setZettel", (e) => {
                 dBoxZettel.innerHTML = "";
                 for(const zettel of e.detail){
@@ -465,6 +466,7 @@ class Project extends Oculus{
             dBoxZettel.dispatchEvent(setZettel);
             dBox.appendChild(dBoxZettel);
             let dBoxChildren = document.createElement("DIV");
+            dBoxChildren.classList.add("dBoxChildren");
             dBox.appendChild(dBoxChildren);
 
             dArt.appendChild(dBox);
@@ -525,6 +527,9 @@ class Project extends Oculus{
                     saveValues.name = saveValues.name.substring(`${kW[0]} `.length);
                     obj.textContent = saveValues.name;
                     saveValues.type = kW[1];
+                    obj.closest(".dBox").dataset.type = kW[1];
+                    this.resetSortNr();
+                    this.rules.check();
                     break;
                 }
             }
@@ -544,9 +549,7 @@ class Project extends Oculus{
             this.ctn.style.backgroundColor = "var(--mainBG)";
             this.ctn.appendChild(cWarning);
         }
-        /* const rule = new Rules();
-        rule.check(this.ctn);
-        */
+
         // context menu
         let cContext = new ContextMenu();
         cContext.addEntry('div.detail_zettel', 'a', 'Detailansicht', () => {
@@ -588,6 +591,8 @@ class Project extends Oculus{
         cContext.addEntry('*', 'a', 'Projekt exportieren', () => {argos.loadEye("project_export", this.resId)});
         this.setContext = cContext.menu;
         this.resetSortNr();
+
+        this.rules.check();
     }
 
     editArticleStructure(){
@@ -701,18 +706,20 @@ class Project extends Oculus{
 
 class Rules{
     // defines the way articles and zettel can be grouped
-    constructor(){
+    constructor(ctn){
+        this.ctn = ctn;
         this.book = [
             {
                 subject: ".detail_zettel",
-                object: "[data-arttype=\"1\"]",
-                domain: "parent",
+                object: ".dBox",
+                attr: "[data-type=\"1\"]",
+                domain: "closest",
                 minCount: 0, maxCount: 0,
                 errorMsg: "Zettel dürfen nicht abhängig sein von Lemmata!"
             },
             {
-                subject: ".detail_zettel",
-                object: "[data-arttype=\"0\"]",
+                subject: ".dBoxZettel",
+                object: ".dBoxChildren > *",
                 domain: "sibling",
                 minCount: 0, maxCount: 0,
                 errorMsg: "Zettel dürfen nicht neben Bedeutungsgruppen stehen."
@@ -725,39 +732,45 @@ class Rules{
                 errorMsg: "Eine Bedeutungsgruppe soll nicht mehr als drei aktive Stellen haben."
             },
             {
-                subject: "[data-arttype=\"1\"]",
-                object: ".artBox",
+                subject: ".dBox[data-type=\"1\"]",
+                object: ".project_detail",
                 domain: "parent",
-                minCount: 0, maxCount: 0,
+                minCount: 1, maxCount: 1,
                 errorMsg: "Ein Lemma muss sich immer auf der Grundebene befinden."
             },
             {
-                subject: "[data-arttype=\"0\"]",
-                object: ".article_container",
+                subject: "[data-type=\"0\"]",
+                object: ".project_detail",
                 domain: "parent",
                 minCount: 0, maxCount: 0,
                 errorMsg: "Eine Bedeutungsgruppe darf sich nicht auf der Grundebene befinden."
             },
             {
-                subject: "[data-arttype=\"2\"]",
-                object: ":not([data-arttype=\"0\"])",
-                domain: "parent",
-                minCount: 0, maxCount: 0,
+                subject: ".dBox[data-type=\"2\"]",
+                object: ".dBox:not([data-type=\"2\"])",
+                attr: "[data-type=\"0\"]",
+                domain: "closest",
+                minCount: 1, maxCount: 1,
                 errorMsg: "Ein Anhänger muss von einer Bedeutungsgruppe abhängen."
             },
             {
-                subject: "[data-arttype=\"2\"]",
-                object: "[data-arttype=\"0\"]",
+                subject: "[data-type=\"2\"]",
+                object: "[data-type=\"0\"]",
                 domain: "sibling",
                 minCount: 0, maxCount: 0,
                 errorMsg: "Ein Anhänger darf nicht neben Bedeutungsgruppen stehen."
             }
         ];
     }
-    check(ctn){
+    async check(){
         // checks the rules given; marks object with error class
+        console.log("start checking...");
+        this.ctn.querySelectorAll(".errMarked").forEach(e => {
+            e.classList.remove("errMarked");
+            e.removeAttribute("title");
+        });
         for(let page of this.book){
-            let subjects = ctn.querySelectorAll(page.subject);
+            let subjects = this.ctn.querySelectorAll(page.subject);
             for(let subject of subjects){
                 if(subject!=null){
                     let object=null;
@@ -772,6 +785,11 @@ class Rules{
                             if(object.matches(page.object)){length=1}
                             else{object=null}
                             break;
+                        case "closest":
+                            object = subject.closest(page.object);
+                            if(object.matches(page.attr)){length=1}
+                            else{object=null}
+                            break;
                         case "children":
                             object = subject.querySelectorAll(page.object);
                             if(object!=null){length=object.length}
@@ -779,8 +797,13 @@ class Rules{
                     }
                     if(length<page.minCount || length > page.maxCount){
                         subject.classList.add("errMarked");
-                        if(`${subject.title}` == ""){subject.title = `* ${page.errorMsg}`}
-                        else{subject.title += `\n* ${page.errorMsg}`}
+                        if(`${subject.title}` == ""){
+                            subject.title = `* ${page.errorMsg}`;
+                        } else {
+                            if(`${subject.title}`.indexOf(`* ${page.errorMsg}`) == -1){
+                                subject.title += `\n* ${page.errorMsg}`;
+                            }
+                        }
                     }
                 }
             }
