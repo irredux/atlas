@@ -37,10 +37,10 @@ Löscht den Datensatz mit der angegebenen ID. Wenn das Löschen erfolgreich war,
 ### Arachne.<Tabellenname>.describe()
 Gibt das Schema der aktuellen Tabelle aus der **lokalen Datenbank** als Liste wieder.
 
-### Arachne.<Tabellenname>.save('neue Werte')
+### Arachne.<Tabellenname>.save({'neue Werte'})
 Speichert die neuen Werte, welche in Form eines dictionary angegeben werden müssen. Wenn ein Schlüssel "id" enthalten ist, wird der Datensatz mit der entsprechenden ID aktualisiert, wenn der Schlüssel fehlt, wird ein neuer Datensatz erstellt. Es wird der Status Code der Serveranfrage zurückgegeben (200 = Datensatz aktualisiert; 201 = neuer Datensatz erstellt).
 
-### Arachne.<Tabellenname>.search()
+### Arachne.<Tabellenname>.search({'Suchanfrage'} = "*", {'Rückgabespalten'} = "*")
 Sucht in der lokalen Datenbank nach dem in de Suchanfrage gegebenen Werten. Eine Liste mit dictionaries wird zurückgegeben. Wenn eine Suchanfrage ausgelassen wird, werden alle Datensätze zurückgegeben.
 - 'Suchanfrage': Wenn angegeben, muss es ein dictionary sein, mit den Schlüsseln entsprechende der Tabellen-Spalten. Die Werte können mit den Vorzeichen "<", ">" und "-" gesteuert werden. Ein Stern "*" kann als Platzhalter für keines oder mehrere Zeichen verwendet werden.
 - 'Rückgabespalten': Wenn nicht angegben, werden alle verfügbaren Spalten zurückgegeben. Sonst muss es eine Liste von Strings sein.
