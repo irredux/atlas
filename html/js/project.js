@@ -189,31 +189,35 @@ class Project extends Oculus{
             let mBox = document.createElement("DIV");
             mBox.id = "m_"+article.id;
             mBox.classList.add("mBox");
-            mBox.setAttribute("draggable", this.editMode);
-            if(this.editMode){mBox.classList.add("editModeArticle")}
             mBox.dataset.sort_nr = article.sort_nr;
             mBox.dataset.parent_id = article.parent_id;
             mBox.dataset.type = article.type;
             mBox.style.padding = "0 0 5px 10px";
-            mBox.ondragstart = (e) => {
-                e.stopPropagation();
-                mBox.querySelectorAll(".artInsert").forEach((e) => {
-                    e.style.visibility = "hidden";
-                });
-                this.currentDragMBox = mBox;
-                this.currentDragMBoxAfter = mBoxAfter;
-                this.currentDragDBox = dBox;
-                this.currentDragZettel = null;
-            }
-            mBox.ondragend = (e) => {
-                e.stopPropagation();
-                mBox.querySelectorAll(".artInsert").forEach((e) => {
-                    e.style.visibility = "visible";
-                });
-                this.currentDragMBox = null;
-                this.currentDragMBoxAfter = null;
-                this.currentDragDBox = null;
-                this.currentDragZettel = null;
+            if(article.parent_id === 0 && article.sort_nr === 0){
+                mBox.dataset.defaultArticle = "1"
+            } else {
+                mBox.setAttribute("draggable", this.editMode);
+                if(this.editMode){mBox.classList.add("editModeArticle")}
+                mBox.ondragstart = (e) => {
+                    e.stopPropagation();
+                    mBox.querySelectorAll(".artInsert").forEach((e) => {
+                        e.style.visibility = "hidden";
+                    });
+                    this.currentDragMBox = mBox;
+                    this.currentDragMBoxAfter = mBoxAfter;
+                    this.currentDragDBox = dBox;
+                    this.currentDragZettel = null;
+                }
+                mBox.ondragend = (e) => {
+                    e.stopPropagation();
+                    mBox.querySelectorAll(".artInsert").forEach((e) => {
+                        e.style.visibility = "visible";
+                    });
+                    this.currentDragMBox = null;
+                    this.currentDragMBoxAfter = null;
+                    this.currentDragDBox = null;
+                    this.currentDragZettel = null;
+                }
             }
             let mBoxText = document.createElement("DIV");
             mBoxText.onclick = (e) => {
@@ -273,78 +277,87 @@ class Project extends Oculus{
                     <span>${article.name.substring(0, 20)}${article.name.length>20?"...":""}</span>
                     <span class="artBoxZettelCount">${zettels.length>0?zettels.length:""}</i>
                 `);
-            let mBoxDelete = document.createElement("SPAN");
-            mBoxDelete.classList.add("artBoxDelete", "editMode");
-            if(!this.editMode){mBoxDelete.classList.add("editModeOff")}
-            mBoxDelete.style.marginRight = "20px";
-            mBoxDelete.innerHTML = "&#x2715;";
-            mBoxDelete.onclick= async () => {
-                if(confirm("Soll die Gruppe wirklich gelöscht werden? Alle Untergruppen und die darin befindlichen Zettel werden ebenfalls aus dem Projekt entfernt.")){
-                    document.body.style.cursor = "wait";
-                    let aLst = [article.id];
-                    let zLst = [];
-                    mBox.querySelectorAll(".mBox").forEach((e) => {
-                        aLst.push(parseInt(e.id.substring(2)));
-                    });
-                    dBox.querySelectorAll(".detail_zettel").forEach((e) => {
-                        zLst.push(parseInt(e.dataset.lnk_id));
-                    });
-                    for(const a of aLst){await arachne.article.delete(a)}
-                    for(const z of zLst){await arachne.zettel_lnk.delete(z)}
-                    mBox.remove();
-                    mBoxAfter.remove();
-                    dBox.remove();
-                    document.body.style.cursor = "initial";
-                }
-            } 
-            mBoxText.appendChild(mBoxDelete);
+            if(mBox.dataset.defaultArticle != "1"){
+                let mBoxDelete = document.createElement("SPAN");
+                mBoxDelete.classList.add("artBoxDelete", "editMode");
+                if(!this.editMode){mBoxDelete.classList.add("editModeOff")}
+                mBoxDelete.style.marginRight = "20px";
+                mBoxDelete.innerHTML = "&#x2715;";
+                mBoxDelete.onclick= async () => {
+                    if(confirm("Soll die Gruppe wirklich gelöscht werden? Alle Untergruppen und die darin befindlichen Zettel werden ebenfalls aus dem Projekt entfernt.")){
+                        document.body.style.cursor = "wait";
+                        let aLst = [article.id];
+                        let zLst = [];
+                        mBox.querySelectorAll(".mBox").forEach((e) => {
+                            aLst.push(parseInt(e.id.substring(2)));
+                        });
+                        dBox.querySelectorAll(".detail_zettel").forEach((e) => {
+                            zLst.push(parseInt(e.dataset.lnk_id));
+                        });
+                        for(const a of aLst){await arachne.article.delete(a)}
+                        for(const z of zLst){await arachne.zettel_lnk.delete(z)}
+                        mBox.remove();
+                        mBoxAfter.remove();
+                        dBox.remove();
+                        document.body.style.cursor = "initial";
+                    }
+                } 
+                mBoxText.appendChild(mBoxDelete);
+            }
             mBox.appendChild(mBoxText);
-            let mBoxInsert = document.createElement("DIV");
-            mBoxInsert.classList.add("artInsert", "editMode");
-            if(!this.editMode){mBoxInsert.classList.add("editModeOff")}
-            mBoxInsert.textContent = "hinzufügen";
-            mBoxInsert.onclick = async () => {
-                let nArticle = await arachne.article.save({
-                    project_id: article.project_id,
-                    name: "Neue Gruppe",
-                    type: 0,
-                    sort_nr: 1,
-                    parent_id: article.id
-                });
-                const [mArt, dArt] = await designArticle(nArticle);
-                mBoxChildren.prepend(mArt);
-                dBoxChildren.prepend(dArt);
-                this.resetSortNr();
-            }
-            mBoxInsert.ondragenter = (e) => {return false;}
-            mBoxInsert.ondragover = (e) => {
-                event.target.classList.add("dragOverArticle");
-                event.target.textContent = "verschieben";
-                return false;
-            }
-            mBoxInsert.ondragleave = (e) => {
-                try{
-                    event.target.classList.remove("dragOverArticle");
-                    event.target.textContent = "hinzufügen";
-                }
-                catch{}
-            }
-            mBoxInsert.ondrop = async (e) => {
-                if(this.currentDragMBox != null){
-                    this.currentDragMBox.dataset.sort_nr = 1;
-                    mBoxChildren.prepend(this.currentDragMBoxAfter);
-                    mBoxChildren.prepend(this.currentDragMBox);
-                    dBoxChildren.prepend(this.currentDragDBox);
-                    await arachne.article.save({
-                        id: this.currentDragMBox.id.substring(2),
+            if(mBox.dataset.defaultArticle != "1"){
+                let mBoxInsert = document.createElement("DIV");
+                mBoxInsert.classList.add("artInsert", "editMode");
+                if(!this.editMode){mBoxInsert.classList.add("editModeOff")}
+                mBoxInsert.textContent = "hinzufügen";
+                mBoxInsert.onclick = async () => {
+                    let nArticle = await arachne.article.save({
+                        project_id: article.project_id,
+                        name: "Neue Gruppe",
+                        type: 0,
                         sort_nr: 1,
-                        parent_id: mBox.id.substring(2)
+                        parent_id: article.id
                     });
+                    const [mArt, dArt] = await designArticle(nArticle);
+                    mBoxChildren.prepend(mArt);
+                    dBoxChildren.prepend(dArt);
                     this.resetSortNr();
-                    this.rules.check();
                 }
+                mBoxInsert.ondragenter = (e) => {return false;}
+                mBoxInsert.ondragover = (e) => {
+                    event.target.classList.add("dragOverArticle");
+                    event.target.textContent = "verschieben";
+                    return false;
+                }
+                mBoxInsert.ondragleave = (e) => {
+                    try{
+                        event.target.classList.remove("dragOverArticle");
+                        event.target.textContent = "hinzufügen";
+                    }
+                    catch{}
+                }
+                mBoxInsert.ondrop = async (e) => {
+                    if(this.currentDragMBox != null){
+                        this.currentDragMBox.dataset.sort_nr = 1;
+                        mBoxChildren.prepend(this.currentDragMBoxAfter);
+                        mBoxChildren.prepend(this.currentDragMBox);
+                        dBoxChildren.prepend(this.currentDragDBox);
+                        await arachne.article.save({
+                            id: this.currentDragMBox.id.substring(2),
+                            sort_nr: 1,
+                            parent_id: mBox.id.substring(2)
+                        });
+                        this.resetSortNr();
+                        this.rules.check();
+                    }
+                }
+                mBox.appendChild(mBoxInsert);
+            } else {
+                // default article
+                let placeHolderBox = document.createElement("DIV");
+                placeHolderBox.display = "none";
+                mBox.appendChild(placeHolderBox);
             }
-            mBox.appendChild(mBoxInsert);
             let mBoxChildren = document.createElement("DIV");
             mBox.appendChild(mBoxChildren);
 
@@ -353,10 +366,16 @@ class Project extends Oculus{
             if(!this.editMode){mBoxAfter.classList.add("editModeOff")}
             mBoxAfter.textContent = "hinzufügen";
             mBoxAfter.onclick = async () => {
+                let cType = 0;
+                let cName = "Neue Gruppe";
+                if(mBox.parentNode.classList.contains("project_menu_container")){
+                    cType = 1;
+                    cName = "Neues Lemma";
+                }
                 let nArticle = await arachne.article.save({
                     project_id: article.project_id,
-                    name: "Neue Gruppe",
-                    type: 0,
+                    name: cName,
+                    type: cType,
                     sort_nr: (parseInt(mBox.dataset.sort_nr)+1),
                     parent_id: mBox.dataset.parent_id
                 });
@@ -399,6 +418,7 @@ class Project extends Oculus{
 
             let dArt = document.createDocumentFragment();
             let dBox = document.createElement("DIV");
+            if(article.parent_id === 0 && article.sort_nr === 0){dBox.dataset.defaultArticle = "1"}
             dBox.mBox = mBox;
             dBox.id = "d_"+article.id;
             dBox.classList.add("dBox");
@@ -530,8 +550,7 @@ class Project extends Oculus{
                     obj.textContent = saveValues.name;
                     saveValues.type = kW[1];
                     obj.closest(".dBox").dataset.type = kW[1];
-                    this.resetSortNr();
-                    this.rules.check();
+                    document.getElementById(`m_${obj.id}`).dataset.type = kW[1];
                     break;
                 }
             }
@@ -540,6 +559,10 @@ class Project extends Oculus{
                     el.status("saved");
                     obj.parentNode.parentNode.mBox.children[0].children[1].innerHTML = `${obj.textContent.substring(0, 20)}${obj.textContent.length>20?"...":""}`;
                 }}).
+                then(() => {
+                    this.resetSortNr();
+                    this.rules.check();
+                }).
                 catch(e => {alert("Ein Fehler ist aufgetreten! "+e);argos.loadMain("project_overview");});
         });
         if(document.querySelectorAll(".dBox").length===0){
@@ -669,7 +692,9 @@ class Project extends Oculus{
                 box.style.color = "gray";
                 box.style.filter = "grayscale(100%)";
             }
-            box.children[0].children[0].textContent = word;
+            if(box.dataset.defaultArticle != "1"){
+                box.children[0].children[0].textContent = word;
+            }
             if(box.children.length > 2 && box.children[2].children.length > 0){
                 depth ++;
                 const children = box.children[2].children;
