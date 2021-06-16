@@ -31,16 +31,16 @@ Beendet die aktuelle Session und löscht das Token auf dem Server.
 Gibt eine Liste mit den aktuell auf dem Server verfügbaren Tabellen zurück. Das Arachne-Objekt hat eventuell nicht auf alle Zugriff, je nachdem wie es initialisiert wurde.
 
 
-### Arachne.<Tabellenname>.delete('ID')
+### Arachne.*Tabellenname*.delete('ID')
 Löscht den Datensatz mit der angegebenen ID. Wenn das Löschen erfolgreich war, wird 200 zurückgegeben.
 
-### Arachne.<Tabellenname>.describe()
+### Arachne.*Tabellenname*.describe()
 Gibt das Schema der aktuellen Tabelle aus der **lokalen Datenbank** als Liste wieder.
 
-### Arachne.<Tabellenname>.save({'neue Werte'})
+### Arachne.*Tabellenname*.save({'neue Werte'})
 Speichert die neuen Werte, welche in Form eines dictionary angegeben werden müssen. Wenn ein Schlüssel "id" enthalten ist, wird der Datensatz mit der entsprechenden ID aktualisiert, wenn der Schlüssel fehlt, wird ein neuer Datensatz erstellt. Es wird der Status Code der Serveranfrage zurückgegeben (200 = Datensatz aktualisiert; 201 = neuer Datensatz erstellt).
 
-### Arachne.<Tabellenname>.search({'Suchanfrage'} = "*", {'Rückgabespalten'} = "*")
+### Arachne.*Tabellenname*.search({'Suchanfrage'} = "*", {'Rückgabespalten'} = "*")
 Sucht in der lokalen Datenbank nach dem in de Suchanfrage gegebenen Werten. Eine Liste mit dictionaries wird zurückgegeben. Wenn eine Suchanfrage ausgelassen wird, werden alle Datensätze zurückgegeben.
 - 'Suchanfrage': Wenn angegeben, muss es ein dictionary sein, mit den Schlüsseln entsprechende der Tabellen-Spalten. Die Werte können mit den Vorzeichen "<", ">" und "-" gesteuert werden. Ein Stern "*" kann als Platzhalter für keines oder mehrere Zeichen verwendet werden.
 - 'Rückgabespalten': Wenn nicht angegben, werden alle verfügbaren Spalten zurückgegeben. Sonst muss es eine Liste von Strings sein.
@@ -53,7 +53,7 @@ arachne.lemma.search({"lemma": "kab*"}) // alle Datensätze, die in der Spalte "
 
 ```
 
-### Arachne.<Tabellenname>.version()
+### Arachne.*Tabellenname*.version()
 Gibt Informationen über die aktuelle Tabelle aus der **Datenbank auf dem Server** als dictionary mit folgenden Schlüsseln zurück:
 - 'max_date': das Aktualisierungsdatum des zuletzt aktualisierten Datensatzes.
 - 'length': Anzahl aller Datensätze
