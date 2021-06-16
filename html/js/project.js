@@ -414,7 +414,7 @@ class Project extends Oculus{
             let dBoxZettel = document.createElement("DIV");
             dBoxZettel.dataset.article_id = article.id;
             dBoxZettel.classList.add("dBoxZettel");
-            dBoxZettel.addEventListener("setZettel", (e) => {
+            dBoxZettel.addEventListener("setZettel", async (e) => {
                 dBoxZettel.innerHTML = "";
                 for(const zettel of e.detail){
                     let zBox = document.createElement("DIV");
@@ -430,6 +430,8 @@ class Project extends Oculus{
                     <span class="stelle">${zettel.stellenangabe?zettel.stellenangabe:"<i>Stelle</i>"}</span>
                     &ldquo;<span class="exportText">${zettel.display_text?zettel.display_text:"..."}</span>&rdquo;`);
                         if(zettel.include_export == 1){zBox.classList.add("zettelExported")}
+
+                        await this.bindAutoComplete(zBox.querySelector(".opus"), "work", ["id", "ac_web"]);
                     }
                     dBoxZettel.appendChild(zBox);
                     zBox.onclick = () => {
@@ -1147,91 +1149,3 @@ class ProjectExport extends Oculus{
         this.setTabs = true;
     }
 }
-/*
-    def project_export(self, dock):
-        user = self.auth()
-        id=dock["res_id"]
-        if "editor" in user["access"]:
-            c_project = self.db.search("project", {"id": id}, ["user_id", "name"])[0]
-            if c_project["user_id"] == user["id"]:
-                articles = self.db.search("article", {"project_id": id},
-                        ["position", "name", "id", "type"], ["position"])
-                article_txt = ""
-                article_lst = []
-                c_article = ""
-                c_lvl = 0
-                for article in articles:
-                    if article["position"] != "000":
-                        # new article
-                        if article["position"].find(".") == -1 and article_txt != "":
-                            article_txt += f'AUTOR {user["last_name"]}'
-                            article_lst.append(article_txt)
-                            article_txt = ""
-
-                        # new group inside of an article
-                        if article["position"] != c_article:
-                            c_article = article["position"]
-                            c_lvl = c_article.count(".")
-                            if article_txt != "":
-                                if article['type'] == 0:
-                                    if c_lvl == 1:
-                                        article_txt += "BEDEUTUNG"
-                                    elif c_lvl == 2:
-                                        article_txt += "\tUNTER_BEDEUTUNG"
-                                    elif c_lvl == 3:
-                                        article_txt += "\t\tUNTER_UNTER_BEDEUTUNG"
-                                    elif c_lvl >= 4:
-                                        article_txt += ("\t"*c_lvl) + ("U"*c_lvl) + "_BEDEUTUNG"
-                                elif article["type"] == 1:
-                                        article_txt += ("\t"*(c_lvl-1)) + "LEMMA"
-                                elif article["type"] == 2:
-                                        article_txt += ("\t"*(c_lvl-1)) + "ANHÄNGER"
-                                elif article["type"] == 3:
-                                        article_txt += ("\t"*(c_lvl-1)) + "???"
-                                elif article["type"] == 4:
-                                        article_txt += ("\t"*(c_lvl-1)) + "???"
-                                elif article["type"] == 5:
-                                        article_txt += ("\t"*(c_lvl-1)) + "//"
-                            else:
-                                article_txt = "LEMMA"
-                            article_txt += " " + article["name"] + "\n"
-
-                        zettels = self.db.search("zettel_lnk_view",
-                                {"article_id": article["id"]}, ["ac_web_plain",
-                                    "display_text", "include_export", "comments",
-                                    "stellenangabe"],
-                                ["date_sort"])
-                        # collect zettels
-                        for zettel in zettels:
-                            if zettel.get("include_export", 0) == 1:
-                                article_txt += ("\t"*(c_lvl+1)) + "* "
-                                article_txt += f"{zettel.get('example_plain', '')}; {zettel.get('stellenangabe', '')} "
-                                article_txt += f"\"{zettel.get('display_text', '')}\"\n"
-                                if zettel.get("comments", None):
-                                    cmnts = json.loads(zettel["comments"])
-                                    for cmnt in cmnts:
-                                        article_txt += ("\t"*(c_lvl+1)) + f"/* {cmnt.get('user', '')}, am {cmnt.get('date', '')[:10]}: {cmnt.get('comment', '')} * /\n"
-                article_txt += f'AUTOR {user["last_name"]}'
-                article_lst.append(article_txt)
-
-                c_path = self.p + "/export_project/"
-                if path.exists(c_path) == False: mkdir(c_path)
-                export_path = c_path+c_project["name"].replace(" ", "_")+".zip"
-                export_url = "/export_project/"+c_project["name"].replace(" ", "_")+".zip"
-                if path.exists(export_path): remove(export_path)
-                ex_zip = zipfile.ZipFile(export_path, "w")
-                export_txt = ''
-                for article in article_lst:
-                    c_name = article.split("\n")[0][6:]
-                    c_file = open(c_path+c_name+".mlw", "w")
-                    c_file.write(article)
-                    export_txt += '<p>' + article.replace('\n', '<br />').replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;') + '</p>'
-                    c_file.close()
-                    ex_zip.write(c_path+c_name+".mlw", c_project["name"]+"/"+c_name+".mlw")
-                    #kompiliere_mlw(c_path+c_name+".mlw")
-                    remove(c_path+c_name+".mlw")
-                ex_zip.close()
-
-                return template("project/project_export", article_lst=article_lst,
-                        export_url=export_url, preview=export_txt)
- */

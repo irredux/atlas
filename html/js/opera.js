@@ -202,7 +202,7 @@ class LibraryEdit extends Oculus{
             if(iRessource.value === "2" || iRessource.value === "3"){
                 editorCityDes.textContent = "Stadt/Drucker:";
             } else {
-                editorCityDes.textContent = "Jahr:";
+                editorCityDes.textContent = "Editor:";
             }
         }
         const edTypes = {
@@ -253,8 +253,8 @@ class LibraryEdit extends Oculus{
         let scanTbl = [
             ["Dateipfad auf Server:", iPath],
             ["Ursprünglicher Dateiname:", edition.dir_name],
-            ["Scan-Seiten bearbeiten:", iSelector],
-            ["Letzte Seite:", iDefaultPage]
+            ["Scan-Seiten bearbeiten:", iSelector]/*,
+            ["Letzte Seite:", iDefaultPage]*/
         ];
         scanDIV.appendChild(el.table(scanTbl));
 
@@ -280,7 +280,7 @@ class LibraryEdit extends Oculus{
                 // scan
                 data.url = "";
                 data.path = iPath.value;
-                data.default_page = iDefaultPage.value;
+                //data.default_page = iDefaultPage.value;
             } else {
                 // link
                 data.url = iLink.value;
@@ -705,9 +705,9 @@ class WorkEdit extends Oculus{
             mainBody.appendChild(el.h(`${work.full} <i class='minorTxt'>(ID: ${work.id})</i>`, 3))
             let tblNames = el.table([
                 [
-                `<span class="minorTxt"><b>Vorschlagsliste VSC</b></span>`,
-                `<span class="minorTxt"><b>Vorschlagsliste Webseite</b></span>`,
-                `<span class="minorTxt"><b>'opus'-Darstellung</b></span>`
+                `<span class="minorTxt"><b>Vorschlagsliste VSC <i>(ac_vsc)</i></b></span>`,
+                `<span class="minorTxt"><b>Vorschlagsliste Webseite <i>(ac_web)</i></b></span>`,
+                `<span class="minorTxt"><b>'opus'-Darstellung <i>(opus)</i></b></span>`
                 ],
                 [
                 `<span class="minorTxt">${work.ac_vsc}</span>`,

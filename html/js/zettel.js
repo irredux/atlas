@@ -507,15 +507,17 @@ class ZettelAdd extends Oculus{
         mainBody.appendChild(divNoLit);
 
         let iTxt = el.area(""); iTxt.autocomplete = "off";
-        iTxt.classList.add("minorTxt"); iTxt.style.height = "150px";
+        iTxt.classList.add("minorTxt"); iTxt.style.height = "100px";
+        iTxt.style.width = "930px";
         if(argos.main.cTxtSelection != null){iTxt.value = argos.main.cTxtSelection}
-        let tbl2 = el.table([["Text:", iTxt]]);
+        let tbl2 = el.table([["Text:", iTxt]], ["15%", "85%"]);
         mainBody.appendChild(tbl2);
 
         let iSubmit = el.button("erstellen");
-        iSubmit.style.position = "absolute";
-        iSubmit.style.bottom = "28px";
-        iSubmit.style.left = "45px";
+        iSubmit.style.padding = "4px 20px";
+        //iSubmit.style.position = "absolute";
+        //iSubmit.style.bottom = "28px";
+        //iSubmit.style.left = "45px";
         iSubmit.onclick = async () => {
             if(iLemma.dataset.selected != undefined){
                 let data = {
@@ -563,11 +565,13 @@ class ZettelAdd extends Oculus{
                 else {this.refresh()}
             } else {alert("Kein gültiges Lemma eingetragen!")}
         }
+        /*
         if(["viewer", "full_text"].includes(argos.main.res)){
             mainBody.appendChild(el.p(`
             Dieser Zettel wird einen Direktlink auf die Seite der Edition haben.
                 `));
         }
+        */
         const projects = await arachne.project.is(1, "status", false);
         if(projects.length>0){
             let selData = {};
@@ -578,10 +582,12 @@ class ZettelAdd extends Oculus{
             if(argos.main.res === "project"){cProject = parseInt(argos.main.resId)}
             let iProject = el.select(cProject, selData);
             iProject.id = "selProject";
-            mainBody.appendChild(el.table([["zu Projekt hinzufügen:", iProject]]));
+            mainBody.appendChild(el.table([["zu Projekt hinzufügen:", iProject, iSubmit]]));
         }
-        mainBody.appendChild(iSubmit);
-
+        //mainBody.appendChild(iSubmit);
+        
+        this.ctn.style.padding = "10px 20px";
+        this.ctn.style.fontSize = "90%";
         this.ctn.appendChild(mainBody);
     }
 }
