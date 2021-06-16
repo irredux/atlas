@@ -5,10 +5,10 @@ Mit dem Modul wird der Zugriff auf den dMLW-Server vereinfacht. Die Daten werden
 
 ## Erste Schritte
 ```
-import Arachne
+from arachne import Arachne
 
 arachne = Arachne("email", "passwort", "host", ["work"])
-print(arachne.describe())
+print(arachne.version())
 print(arachne.search("work", {id: 1}))
 arachne.close()
 ```
