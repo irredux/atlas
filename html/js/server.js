@@ -219,6 +219,7 @@ class Statistics extends Oculus{
             options: {plugins: {legend: {position: "bottom", labels: {font: {size: "15px"}}}}}
         });
         zettelOverview.appendChild(zettelChartBox);
+        zettelOverview.appendChild(el.h("Zettel nach Zetteltyp", 3));
 
         // zettel type
         let zettelTypeBox = document.createElement("DIV");
@@ -316,7 +317,7 @@ class Statistics extends Oculus{
         // scans
         let scanOverview = el.card(); 
         scanOverview.appendChild(el.h("Digitalisate", 2));
-        scanOverview.appendChild(el.h("Volltext und Scans", 3));
+        scanOverview.appendChild(el.h("Digitalisate und Werke", 3));
         const works = await arachne.work.getAll();
         let wResults = [0, 0];
         for(const work of works){
@@ -336,6 +337,7 @@ class Statistics extends Oculus{
         let workChart = document.createElement("CANVAS");
         workChartBox.appendChild(workChart);
         scanOverview.appendChild(workChartBox);
+        scanOverview.appendChild(el.h("Volltexte und Scans", 3));
         new Chart(workChart, {
             type: "pie",
             data: {
@@ -382,7 +384,7 @@ class Statistics extends Oculus{
             },
             options: {plugins: {legend: {position: "bottom", labels: {font: {size: "15px"}}}}}
         });
-        zettelOverview.appendChild(zettelChartBox);
+//        zettelOverview.appendChild(zettelChartBox);
         mainBody.appendChild(scanOverview);
 
         this.ctn.appendChild(mainBody);

@@ -14,3 +14,7 @@ arachne.close()
 ```
 
 ## Funktionen
+### delete()
+### save()
+### search()
+### version()
