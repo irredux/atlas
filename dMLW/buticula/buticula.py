@@ -628,7 +628,8 @@ class Buticula(Bottle):
         if res_id == None:
             max_date = self.db.command(f"SELECT MAX(u_date) as r FROM {res} WHERE{user_id} deleted IS NULL", v_vals)[0]["r"]
             length = self.db.command(f"SELECT COUNT(id) as r FROM {res} WHERE{user_id} deleted IS NULL", v_vals)[0]["r"]
-            return json.dumps({"max_date": max_date, "length": length}, default=str)
+            describe = self.db.command(f"DESCRIBE {res}")
+            return json.dumps({"max_date": max_date, "length": length, "describe": describe}, default=str)
         else:
             pass
             #v_cols.append(res_id)
