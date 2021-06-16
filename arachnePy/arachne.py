@@ -1,6 +1,5 @@
 #!/user/bin/env python3
-#from csv import DictWriter
-#import json
+import json
 from os import path, remove
 import requests
 import sqlite3
@@ -132,7 +131,7 @@ class ArachneTable(object):
         re = self.__call("/info/"+self.tblName)
         return re.json()
 
-    def search(self, query = "*", rCols = "*"):
+    def search(self, query = "*", rCols = "*", oCols = None):
         '''
             query should be a list of dict and defines WHERE-clause:
                 {"foo": "bar"}  =>  foo = "bar"
@@ -145,6 +144,9 @@ class ArachneTable(object):
 
             rCols: can be "*" to fetch every column, or list with columns
         '''
+        orderBy = ""
+        if oCols:
+            orderBy = " ORDER BY "+", ".join(oCols)
         select = "*"
         if rCols != "*": select = ", ".join(rCols)
 
@@ -156,15 +158,16 @@ class ArachneTable(object):
                 # set operator
                 nV = v
                 op = "="
-                if v[0] in [">", "<"]:
-                    op = v[0]
-                    nV = v[1:]
-                elif v[0] == "-":
-                    op = "!="
-                    nV = v[1:]
-                elif type(nV) == str and nV.find("*")>-1:
-                    op = "LIKE"
-                    nV = nV.replace("*", "%")
+                if type(v) == str:
+                    if v[0] in [">", "<"]:
+                        op = v[0]
+                        nV = v[1:]
+                    elif v[0] == "-":
+                        op = "!="
+                        nV = v[1:]
+                    elif type(nV) == str and nV.find("*")>-1:
+                        op = "LIKE"
+                        nV = nV.replace("*", "%")
 
                 #set quotes
                 q = "'"
@@ -173,7 +176,7 @@ class ArachneTable(object):
                 where_lst.append(f"{k} {op} {q}{nV}{q}")
             where += " AND ".join(where_lst)
 
-        re = self.__command(f"SELECT {select} FROM {self.tblName}{where}")
+        re = self.__command(f"SELECT {select} FROM {self.tblName}{where}{orderBy}")
         return re
 
     def save(self, values):
@@ -238,16 +241,16 @@ class Arachne(object):
             raise "connection failed."
 
 
-#if __name__ == '__main__':
-#    user = input(' User: ')
-#    pw = input(' Passwort: ')
-#    table = 'opera_view'
-#    print(f' |{user}|{pw}')
-#    reader = dMLW(user, pw)
-#    print(f'\t\'{table}\' last updated:', reader.version(table))
-#    if input('download data? (y/n) ').lower() in ['yes', 'y']:
-#        j_str, j_dump = reader.load(table, {'in_use': 1}, ['id', 'example', 'example_plain'],
-#                ['author_abbr', 'work_abbr_sort'])
-#        with open('opera.json', 'w', encoding='utf-8') as f:
-#            f.write(j_str)
-#        print(j_str)
+if __name__ == "__main__":
+    user = input(" User: ")
+    pw = input(" Passwort: ")
+    table = "work"
+    print(f" |{user}|{pw}")
+    reader = Arachne(user, pw, tbls=[table], resetDB = True)
+    print(f"\t\"{table}\" last updated:", getattr(reader, table).version()["max_date"])
+    if input("download data? (y/n) ").lower() in ["yes", "y"]:
+        re = getattr(reader, table).search({"in_use": 1}, ["id", "ac_vsc"], ["ac_vsc"])
+        with open("opera.json", "w", encoding="utf-8") as f:
+            f.write(json.dumps(re))
+        print(re)
+    reader.close()
