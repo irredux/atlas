@@ -493,6 +493,8 @@ class Opera extends Oculus{
             cContext.addEntry('tr.opera', 'a', 'Neuer Autor erstellen', function(){argos.loadEye("opera_author_edit")});
             cContext.addEntry('tr.opera', 'a', 'Neues Werk erstellen', function(){argos.loadEye("opera_work_edit")});
             cContext.addEntry('tr.opera', 'hr', '', null);
+        }
+        if(argos.access.includes("e_edit")){
             cContext.addEntry('*', 'a', 'Opera-Listen aktualisieren', function(){argos.loadEye("opera_update")});
         }
         cContext.addEntry('*', 'hr', '', null);

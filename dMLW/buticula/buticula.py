@@ -521,13 +521,13 @@ class Buticula(Bottle):
 
     def exec_on_server(self, res, res_id = None):
         user = self.auth()
-        if res == "opera_update" and "o_edit" in user["access"]:
+        if res == "opera_update" and "e_edit" in user["access"]:
             self.create_opera()
             return HTTPResponse(status=200) # OK
-        elif res == "library_update" and "l_edit" in user["access"]:
-            self.db.command("CALL update_library")
-            self.create_opera()
-            return HTTPResponse(status=200) # OK
+        #elif res == "library_update" and "e_edit" in user["access"]:
+            #self.db.command("CALL update_library")
+            #self.create_opera()
+            #return HTTPResponse(status=200) # OK
         elif res == "mlw_preview" and "editor" in user["access"]:
             print(request.json)
             return self.create_mlw_file(request.json)
