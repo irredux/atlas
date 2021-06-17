@@ -273,7 +273,7 @@ class LibraryEdit extends Oculus{
                 edition_name: iEditionName.value,
                 editor: iEditor.value,
                 volume: iVolume.value,
-                vol_cont: iVolumeContennt.value,
+                vol_cont: iVolumeContent.value,
                 comment: iComment.value,
                 year: iYear.value,
                 ressource: iRessource.value
