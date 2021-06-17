@@ -70,7 +70,7 @@ class Viewer extends Oculus{
         menuTop.classList.add("menu_top");
         let editionSpecs = `
             ${work.opus} <i class="minorTxt">(${edition.ressource==1?"[":""}${edition.editor} ${edition.year} ${edition.volume!=null?edition.volume:""}${edition.ressource==1?"]":""}
-        ${(edition.vol_cont != null || edition.vol_cont != "")?` (${edition.vol_cont})`:""}
+        ${(edition.vol_cont > "")?` (${edition.vol_cont})`:""}
             )</i>
         `;
         document.title =  `${work.ac_web} - ${edition.editor} ${edition.year}  ${edition.volume!=null?edition.volume:""}`;
