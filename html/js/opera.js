@@ -1391,7 +1391,7 @@ class SekLitEdit extends Oculus{
         let mainBody = document.createDocumentFragment();
         mainBody.appendChild(el.closeButton(this));
         let mainHeader = document.createElement("H3");
-        if(lemma.lemma == ""){mainHeader.textContent = "Neue Sekundärliteratur erstellen"}
+        if(this.resId == null){mainHeader.textContent = "Neue Sekundärliteratur erstellen"}
         else {mainHeader.innerHTML = html(`${seklit.name} ${seklit.jahr} <i class='minorTxt'>(ID: ${seklit.id})</i>`)}
         mainBody.appendChild(mainHeader);
         
