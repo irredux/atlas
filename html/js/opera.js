@@ -1405,7 +1405,7 @@ class SekLitEdit extends Oculus{
         let iVorname = el.text(seklit.vorname);
         let iTitel = el.text(seklit.titel);
         let iReihe = el.text(seklit.reihe);
-        let iWeitereangaben = el.text(seklit.weitere_angaben);
+        let iWeitereAngaben = el.text(seklit.weitere_angaben);
         let iOrt = el.text(seklit.ort);
         let iJahr = el.text(seklit.jahr);
         let iZusatz = el.text(seklit.zusatz);
