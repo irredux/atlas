@@ -1293,7 +1293,7 @@ class SekLit extends Oculus{
                     argos.loadEye("sek_lit_edit")
                 });
                 cContext.addEntry('tr.loadMore', 'a', 'Eintrag löschen', async () => {
-                    if(window.confirm("Soll die Edition wirklich gelöscht werden? Die verknüpften Scans werden nicht gelöscht! Dieser Schritt kann nicht rückgängig gemacht werden!")){
+                    if(window.confirm("Soll der Eintrag wirklich gelöscht werden? Dieser Schritt kann nicht rückgängig gemacht werden!")){
                         await arachne.seklit.delete(parseInt(this.selMarker.main.lastRow));
                         this.refresh();
                     }
@@ -1382,94 +1382,65 @@ class SekLitEdit extends Oculus{
         super(res, resId, access, main);
     }
     async load(){
-        let lemma = {id: null, lemma: "", lemma_display: "", dicts: "", lemma_nr: 0, comment: ""}
+        let seklit = {id: null, kennziffer: null, signatur: null, alte_signatur: null,
+        name: null, vorname: null, titel: null, reihe: null, weitere_angaben: null,
+        ort: null, jahr: null, zusatz: null};
         if(!isNaN(this.resId)){
-            lemma = await arachne.lemma.is(this.resId);
-            const zettels = await arachne.zettel.is(this.resId, "lemma", false);
-            lemma.zettelCount = zettels.length;
+            seklit = await arachne.seklit.is(this.resId);
         }
         let mainBody = document.createDocumentFragment();
         mainBody.appendChild(el.closeButton(this));
         let mainHeader = document.createElement("H3");
-        if(lemma.lemma == ""){mainHeader.textContent = "Neues Lemma erstellen"}
-        else {mainHeader.innerHTML = `${html(lemma.lemma_display)} <i class='minorTxt'>(ID: ${lemma.id})</i>`}
+        if(lemma.lemma == ""){mainHeader.textContent = "Neue Sekundärliteratur erstellen"}
+        else {mainHeader.innerHTML = html(`${seklit.name} ${seklit.jahr} <i class='minorTxt'>(ID: ${seklit.id})</i>`)}
         mainBody.appendChild(mainHeader);
-        if(lemma.lemma!=""){
-            let zCount = document.createElement("P");
-            zCount.textContent = `Anzahl verknüpfter Zettel: ${lemma.zettelCount}.`;
-            mainBody.appendChild(zCount);
-        }
         
         let sbHelp = el.popHTMLHelp();
         sbHelp.style.top = "10px"; sbHelp.style.right = "40px"; sbHelp.style.textAlign = "right";
         mainBody.appendChild(sbHelp);
-        let iLemma = el.text(lemma.lemma);
-        let iLemmaDicts = el.text(lemma.dicts);
-        let iLemmaDisplay = el.text(html(lemma.lemma_display));
-        if(argos.main.o.zettel_detail != null){
-            iLemma.value = argos.main.o.zettel_detail.newLemma;
-            iLemmaDisplay.value = argos.main.o.zettel_detail.newLemma;
-        }
-        let iLemmaNr = el.text(lemma.lemma_nr);
-        let iMLW = el.select(lemma.MLW);
-        let iFragezeichen = el.select(lemma.Fragezeichen);
-        let iStern = el.select(lemma.Stern);
-        let iKlammerverweis = el.select(lemma.Klammerverweis);
-        let iAusschluss = el.select(lemma.Ausschluss);
-        let iKommentar = el.area(lemma.comment);
+        let iKennziffer = el.text(seklit.kennziffer);
+        let iSignatur = el.text(seklit.signatur);
+        let iAlteSignatur = el.text(seklit.alte_signatur);
+        let iName = el.text(seklit.name);
+        let iVorname = el.text(seklit.vorname);
+        let iTitel = el.text(seklit.titel);
+        let iReihe = el.text(seklit.reihe);
+        let iWeitereangaben = el.text(seklit.weitere_angaben);
+        let iOrt = el.text(seklit.ort);
+        let iJahr = el.text(seklit.jahr);
+        let iZusatz = el.text(seklit.zusatz);
+
         let iSave = el.button("speichern");
         iSave.onclick = () => {
-            if(iLemma.value!="" && iLemma.value.indexOf(" ")===-1){
-                const nValues = {
-                    id: lemma.id,
-                    lemma: iLemma.value,
-                    lemma_display: iLemmaDisplay.value,
-                    dicts: iLemmaDicts.value,
-                    lemma_nr: iLemmaNr.value,
-                    MLW: iMLW.value,
-                    Fragezeichen: iFragezeichen.value,
-                    Stern: iStern.value,
-                    Klammerverweis: iKlammerverweis.value,
-                    Ausschluss: iAusschluss.value,
-                    comment: iKommentar.value
-                };
-                arachne.lemma.save(nValues).then(rTxt => {
-                    el.status("saved");
-                    if(argos.main.o.zettel_detail != null){
-                        this.close();
-                        argos.main.o.zettel_detail.iLemmaInput.dataset.selected = rTxt.id;
-                        argos.main.o.zettel_detail.saveButton.click();
-                    }
-                });
-            } else {el.status("error", "Bitte ein gültiges Lemma eintragen!")}
-        }
-        let iDelete = el.button("löschen");
-        iDelete.onclick = () => {
-                    if(window.confirm("Soll das Lemma wirklich gelöscht werden? Dieser Schritt kann nicht rückgängig gemacht werden!")){
-                    arachne.lemma.delete(this.resId).then(() => {this.close();argos.main.refresh()});
-                    }
+            const nValues = {
+                id: seklit.id,
+                kennziffer: iKennziffer.value,
+                signatur: iSignatur.value,
+                alte_signatur: iAlteSignatur.value,
+                name: iName.value,
+                vorname: iVorname.value,
+                titel: iTitel.value,
+                reihe: iReihe.value,
+                weitere_angaben: iWeitereAngaben.value,
+                ort: iOrt.value,
+                jahr: iJahr.value,
+                zusatz: iZusatz.value
+            };
+            arachne.seklit.save(nValues).then(rTxt => {
+                el.status("saved");
+            });
         }
         const tblContent = [
-            ["Lemma:", iLemma, "Wörterbücher:", iLemmaDicts],
-            ["Lemma-Anzeige:", iLemmaDisplay, "Zahlzeichen (bei Homonymen):", iLemmaNr],
-            ["MLW <i class='minorTxt'>(wird ins Wörterbuch aufgenommen)</i>", iMLW,
-                "fraglich <i class='minorTxt'>(mit ? markiert)</i>", iFragezeichen],
-            ["Stern <i class='minorTxt'>(mit * markiert)</i>", iStern,
-                "Klammmerverweis <i class='minorTxt'>(mit [...] markiert)</i>", iKlammerverweis],
-            ["Eintrag ist auszuschließen <i class='minorTxt'>(mit [[...]]  markiert)</i>", iAusschluss, "", ""],
-            ["Kommentar:", iKommentar, iSave, (lemma.zettelCount == 0) ? iDelete: ""]
+            ["Kennziffer:", iKennziffer, "", ""],
+            ["Signatur:", iSignatur, "alte Signatur:", iAlteSignatur],
+            ["Name:", iName, "Vorname:", iVorname],
+            ["Titel:", iTitel, "Reihe:", iReihe],
+            ["Ort:", iOrt, "Jahr:", iJahr],
+            ["weitere Angaben:", iWeitereAngaben, "Zusatz:", iZusatz],
+            ["", "", iSave, ""]
         ];
         let tbl = null;
-        if(this.ctn.id === "zettel_lemma_add"){
-            let tblSingle = [];
-            for(const tblCtn of tblContent){
-                tblSingle.push([tblCtn[0], tblCtn[1]]);
-                tblSingle.push([tblCtn[2], tblCtn[3]]);
-            }
-            tbl = el.table(tblSingle);
-        }
-        else{tbl = el.table(tblContent)}
-        mainBody.appendChild(tbl);
+        mainBody.appendChild(el.table(tblContent));
         /* <td width='18%'></td> <td width='32%'></td>
         <td width='18%'></td><td width='32%'></td> */
         this.ctn.appendChild(mainBody);
