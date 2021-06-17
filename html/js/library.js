@@ -69,8 +69,11 @@ class Viewer extends Oculus{
         let menuTop = document.createElement("DIV");
         menuTop.classList.add("menu_top");
         let editionSpecs = `
-            ${work.opus} <i class="minorTxt">(${edition.editor} ${edition.year} ${edition.volume!=null?edition.volume:""})</i>
+            ${work.opus} <i class="minorTxt">(${edition.ressource==1?"[":""}${edition.editor} ${edition.year} ${edition.volume!=null?edition.volume:""}${edition.ressource==1?"]":""})</i>
         `;
+        if(edition.vol_cont != null or edition.vol_cont != ""){
+            editionSpecs += ` (${edition.vol_cont})`;
+        }
         document.title =  `${work.ac_web} - ${edition.editor} ${edition.year}  ${edition.volume!=null?edition.volume:""}`;
 
         let pages = {};
