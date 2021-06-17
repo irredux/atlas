@@ -1,4 +1,5 @@
 #!/user/bin/env python3
+#import asyncio
 import json
 from os import path, remove
 import requests
@@ -144,6 +145,7 @@ class ArachneTable(object):
 
             rCols: can be "*" to fetch every column, or list with columns
         '''
+        self.__update()
         orderBy = ""
         if oCols:
             orderBy = " ORDER BY "+", ".join(oCols)

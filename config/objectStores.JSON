@@ -1,4 +1,8 @@
 [
+    {"name": "seklit": "keyPath": "id", "indices": {
+        "update": "u_date",
+        "deleted": "deleted"
+    }},
     {"name": "lemma", "keyPath": "id", "indices": {
         "update": "u_date",
         "deleted": "deleted",
