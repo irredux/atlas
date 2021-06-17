@@ -1292,6 +1292,12 @@ class SekLit extends Oculus{
                 cContext.addEntry('tr.loadMore', 'a', 'Neuen Eintrag erstellen', () => {
                     argos.loadEye("sek_lit_edit")
                 });
+                cContext.addEntry('tr.loadMore', 'a', 'Eintrag löschen', async () => {
+                    if(window.confirm("Soll die Edition wirklich gelöscht werden? Die verknüpften Scans werden nicht gelöscht! Dieser Schritt kann nicht rückgängig gemacht werden!")){
+                        await arachne.seklit.delete(parseInt(this.selMarker.main.lastRow));
+                        this.refresh();
+                    }
+                });
             }
             if (Object.keys(cContext.menu).length > 0){this.setContext = cContext.menu;}
         }

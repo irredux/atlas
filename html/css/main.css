@@ -565,7 +565,7 @@
         background-color: var(--minorBG);
     }
 
-    div#lemma_edit, div#lemma_add{
+    div#lemma_edit, div#lemma_add, div#sek_lit_edit{
         position: fixed;
         bottom: 20px;
         left: 20px;
