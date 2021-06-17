@@ -13,6 +13,7 @@
             {"caption": "Bibliothek", "onClick": "library", "access": "e_edit"},
             {"caption": "<i>opera maiora</i>", "onClick": "opera_mai"},
             {"caption": "<i>opera minora</i>", "onClick": "opera_min"},
+            {"caption": "Sekundärliteratur", "onClick": "sek_lit"},
             {"caption": "Volltext-Suche", "onClick": "full_text", "access": "admin"}
         ]
     },

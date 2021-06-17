@@ -6,8 +6,8 @@ import { Lemma, LemmaComment, LemmaEdit, LemmaToProject } from "/file/js/lemma.
 import {
     Library, LibraryEdit, LibrarySelector, LibraryScanImport,
     Opera, OperaExport, OperaUpdate, AuthorEdit, WorkEdit,
-    FullTextSearch
-} from "/file/js/opera.js";
+    SekLit, SekLitEdit,
+    FullTextSearch } from "/file/js/opera.js";
 import { Project, ProjectExport, ProjectOverview, ProjectZettelPreview } from "/file/js/project.js";
 import { Account, Help } from "/file/js/settings.js";
 import { Administration, AdministrationDetail, LocalDatabase, Statistics, Tests } from "/file/js/server.js";
@@ -40,6 +40,8 @@ export class Docker{
             "opera_author_edit": AuthorEdit,
             "opera_update": OperaUpdate,
             "opera_export": OperaExport,
+            "sek_lit": SekLit,
+            "sek_lit_edit": SekLitEdit,
             "full_text": FullTextSearch,
             "project_overview": ProjectOverview,
             "project": Project,
