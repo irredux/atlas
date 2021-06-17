@@ -305,7 +305,7 @@ class Buticula(Bottle):
                             editions = json.loads(opus['editions'])
                             for edition in editions:
                                 sheet_file.write(f'<br /><a href="{edition["url"]}"')
-                                sheet_file.write(f' target="_blank">{edition["label"]}</a>"')
+                                sheet_file.write(f' target="_blank">{edition["label"]}</a>')
                         sheet_file.write(f'</td><td class="c5">{opus.get("work_citation", "")} ')
                         sheet_file.write(f'{opus.get("work_txt_info", "")}</td></tr>')
                     else:
