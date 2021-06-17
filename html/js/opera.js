@@ -174,7 +174,7 @@ class LibraryEdit extends Oculus{
         let work = {};
         if(this.resId > 0){
             edition = await arachne.edition.is(this.resId);
-            work = await arachne.work.is(edition.work_id);
+            if(edition.work_id > 0){work = await arachne.work.is(edition.work_id)}
             mainBody.appendChild(el.h(`${work.opus} <i class="minorTxt">(ID: ${edition.id})</i>`, 3));
         } else {
             mainBody.appendChild(el.h("Neue Edition erstellen", 3));

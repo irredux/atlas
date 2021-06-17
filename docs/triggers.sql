@@ -244,6 +244,45 @@ FOR EACH ROW
     BEGIN
         SET new.c_date = SYSDATE(6);
         SET new.u_date = SYSDATE(6);
+        SET new.ac_vsc = (
+            SELECT 
+                CONCAT(
+                    IF(new.in_use = 0 OR author.in_use = 0, "[", ""),
+                    UPPER(IF(new.author_display IS NULL OR new.author_display = '', author.abbr, new.author_display)),
+                    IF(new.abbr IS NULL OR new.abbr = "", "", CONCAT(" ", new.abbr)),
+                    IF(new.in_use = 0 OR author.in_use = 0, "]", "")
+                )
+            FROM author WHERE author.id = new.author_id
+        );
+        SET new.ac_web = CONCAT(
+            new.ac_vsc,
+            IF(new.is_maior = 1,
+                "",
+                CONCAT(
+                    "; ",
+                    IF(new.citation = "" OR new.citation IS NULL, "", CONCAT(new.citation, " ")),
+                    " (",
+                    IF(new.bibliography IS NULL, "", new.bibliography),
+                    " ",
+                    IF(new.bibliography_cit IS NULL, "", new.bibliography_cit),
+                    ")"
+                )
+            )
+        );
+        SET new.opus = (
+            SELECT CONCAT(
+                IF(new.in_use=1, '', '['),
+                IF(author.in_use=1, '<aut>', '[<aut>'),
+                IF(new.author_display IS NULL OR new.author_display = "", author.abbr, new.author_display),
+                IF(author.in_use=1, '</aut>', '</aut>]'),
+                IF(new.abbr IS NULL,'',CONCAT(' ', new.abbr)),
+                CONCAT(' <cit>', IF(new.is_maior=1, '', IF(new.citation IS NULL OR new.citation = '', '', new.citation)), '</cit>'),
+                IF(new.is_maior=1, '', CONCAT(' (', IF(new.bibliography IS NULL, '', new.bibliography), ' <cit_bib>',
+                    IF(new.bibliography_cit IS NULL OR new.bibliography_cit = '', '', new.bibliography_cit),
+                    '</cit_bib>)')),
+                IF(new.in_use=1, '', ']')
+            ) FROM author WHERE new.author_id = author.id
+        );
     END; //
 DELIMITER ;
 
