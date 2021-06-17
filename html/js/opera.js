@@ -1285,25 +1285,13 @@ class SekLit extends Oculus{
             // contextmenu
             let that = this;
             let cContext = new ContextMenu();
-            if(this.access.includes("l_edit")){
-                cContext.addEntry('tr.loadMore', 'a', 'Lemma bearbeiten',
-                    function(){argos.loadEye("lemma_edit", that.selMarker.main.lastRow)});
-                cContext.addEntry('tr.loadMore', 'a', 'Neues Lemma erstellen',
-                    function(){argos.loadEye("lemma_add")});
-            }
-            if(this.access.includes("comment")){
-                if(cContext.menu.length > 0){
-                cContext.addEntry('tr.loadMore', 'hr', '', null);
-                }
-                cContext.addEntry('tr.loadMore', 'a', 'Notizen',
-                    function(){argos.loadEye("lemma_comment", that.selMarker.main.lastRow)});
-            }
-            if(this.access.includes("editor")){
-                if(cContext.menu.length > 0){
-                cContext.addEntry('tr.loadMore', 'hr', '', null);
-                }
-                cContext.addEntry('tr.loadMore', 'a', 'zu Projekt hinzufügen',
-                    function(){argos.loadEye("lemma_addToProject", that.selMarker.main.lastRow)});
+            if(this.access.includes("o_edit")){
+                cContext.addEntry('tr.loadMore', 'a', 'Eintrag bearbeiten', () => {
+                    argos.loadEye("sek_lit_edit", that.selMarker.main.lastRow)
+                });
+                cContext.addEntry('tr.loadMore', 'a', 'Neuen Eintrag erstellen', () => {
+                    argos.loadEye("sek_lit_edit")
+                });
             }
             if (Object.keys(cContext.menu).length > 0){this.setContext = cContext.menu;}
         }
@@ -1315,8 +1303,11 @@ class SekLit extends Oculus{
         let tr = document.createElement("TR");
         tr.id = values.id; tr.classList.add("loadMore");
         let sig = values.signatur;
-        if(values.alte_signatur != null){sig += ` (${values.alte_signatur})`}
-        let title = `${values.name}, ${values.vorname}, ${values.titel}`;
+        if(values.alte_signatur != "" && values.alte_signatur != null){sig += ` (${values.alte_signatur})`}
+        let title = `${values.name}, ${values.vorname}, <b>${values.titel}</b>`;
+        if(values.reihe != "" && values.reihe != null){title += ", " + values.reihe}
+        title += ", " + values.ort + " " + values.jahr;
+
         let comment = `${values.weitere_angaben} ${values.zusatz}`;
         const tdContents = [values.kennziffer, sig, title, comment];
         for(const tdContent of tdContents){
