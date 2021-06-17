@@ -186,6 +186,7 @@ class LibraryEdit extends Oculus{
         let iEditor = el.text(edition.editor);
         let iYear = el.text(edition.year);
         let iVolume = el.text(edition.volume);
+        let iVolumeContent = el.text(edition.vol_cont);
         let iComment = el.area(edition.comment);
         let editorCityDes = el.span("Editor:");
         if([2,3].includes(edition.ressource)){
@@ -230,6 +231,7 @@ class LibraryEdit extends Oculus{
             [editorCityDes, iEditor],
             ["Jahr:", iYear],
             ["Band:", iVolume],
+            ["Bandinhalt:", iVolumeContent],
             ["Kommentar:", iComment],
             ["Ressource:", iRessource],
             ["Typ:", iType]
@@ -271,6 +273,7 @@ class LibraryEdit extends Oculus{
                 edition_name: iEditionName.value,
                 editor: iEditor.value,
                 volume: iVolume.value,
+                vol_cont: iVolumeContennt.value,
                 comment: iComment.value,
                 year: iYear.value,
                 ressource: iRessource.value
