@@ -1315,7 +1315,7 @@ class SekLit extends Oculus{
         let tr = document.createElement("TR");
         tr.id = values.id; tr.classList.add("loadMore");
         let sig = values.signatur;
-        if(values.alte_signatur != null){sig += f` (${values.alte_signatur})`}
+        if(values.alte_signatur != null){sig += ` (${values.alte_signatur})`}
         let title = `${values.name}, ${values.vorname}, ${values.titel}`;
         let comment = `${values.weitere_angaben} ${values.zusatz}`;
         const tdContents = [values.kennziffer, sig, title, comment];
