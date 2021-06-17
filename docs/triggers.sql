@@ -1,4 +1,24 @@
 DELIMITER //
+CREATE OR REPLACE TRIGGER seklit_create
+BEFORE INSERT ON seklit
+FOR EACH ROW
+    BEGIN
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
+    END; //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE TRIGGER seklit_update
+BEFORE UPDATE ON seklit 
+FOR EACH ROW
+    BEGIN
+        SET new.u_date = SYSDATE(6);
+    END; //
+DELIMITER ;
+
+/* ***************************************************** */
+DELIMITER //
 CREATE OR REPLACE TRIGGER article_create
 BEFORE INSERT ON article 
 FOR EACH ROW

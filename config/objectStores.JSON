@@ -1,5 +1,5 @@
 [
-    {"name": "seklit": "keyPath": "id", "indices": {
+    {"name": "seklit", "keyPath": "id", "indices": {
         "update": "u_date",
         "deleted": "deleted"
     }},
