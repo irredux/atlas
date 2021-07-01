@@ -104,6 +104,8 @@ FOR EACH ROW
     BEGIN
         SET new.c_date = SYSDATE(6);
         SET new.u_date = SYSDATE(6);
+        SET new.opus = (SELECT opus FROM work WHERE work.id = new.work_id);
+        SET new.ac_web = (SELECT ac_web FROM work WHERE work.id = new.work_id);
     END; //
 DELIMITER ;
 
@@ -113,6 +115,10 @@ BEFORE UPDATE ON edition
 FOR EACH ROW
     BEGIN
         SET new.u_date = SYSDATE(6);
+        IF new.work_id != old.work_id THEN
+            SET new.opus = (SELECT opus FROM work WHERE work.id = new.work_id);
+            SET new.ac_web = (SELECT ac_web FROM work WHERE work.id = new.work_id);
+        END IF;
     END; //
 DELIMITER ;
 
@@ -338,6 +344,11 @@ FOR EACH ROW
                 zettel.date_type = new.date_type
             WHERE zettel.lemma_id = new.id;
         END IF;
+        UPDATE edition
+        SET
+            edition.opus = new.opus,
+            edition.ac_web = new.ac_web
+        WHERE edition.work_id = new.id;
     END; //
 DELIMITER ;
 

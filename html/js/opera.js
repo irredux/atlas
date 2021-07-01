@@ -17,6 +17,7 @@ class Library extends Oculus{
         if(this.query==null){this.query = "*"}
         const searchFields = {
             work_id: {name: "Werk-ID", des: "Durchsucht die verknüpften Werke."},
+            ac_web: {name: "Werk", des: "Sucht nach dem verknüpften Werk."},
             id: {name: "ID", des: "Durchsucht die IDs"}
         };
         const displayQuery = this.query;
