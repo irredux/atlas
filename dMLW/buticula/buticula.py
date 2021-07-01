@@ -304,7 +304,7 @@ class Buticula(Bottle):
                         if opus.get('editions', '') != '':
                             editions = json.loads(opus['editions'])
                             for edition in editions:
-                                sheet_file.write(f'<br /><a href="{edition["url"]}"')
+                                sheet_file.write(f'<br /><a class="editionLnk" id="{edition["id"]}" href="{edition["url"]}"')
                                 sheet_file.write(f' target="_blank">{edition["label"]}</a>')
                         sheet_file.write(f'</td><td class="c5">{opus.get("work_citation", "")} ')
                         sheet_file.write(f'{opus.get("work_txt_info", "")}</td></tr>')
@@ -333,7 +333,7 @@ class Buticula(Bottle):
                     if opus.get('editions', None) != None:
                         editions = json.loads(opus['editions'])
                         for edition in editions:
-                            sheet_file.write(f'<br /><a href="{edition["url"]}" target="_blank">{edition["label"]}</a>')
+                            sheet_file.write(f'<br /><a class="editionLnk" id="{edition["id"]}" href="{edition["url"]}" target="_blank">{edition["label"]}</a>')
                     sheet_file.write('</td><td class="c5">')
                     sheet_file.write(f'{opus.get("work_citation", "")} {opus.get("work_txt_info", "")}</td></tr>\n')
                 if row_count > 17:

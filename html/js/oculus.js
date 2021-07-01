@@ -316,14 +316,16 @@ class Oculus{
     /* **************************************** */
     set setContext(content){
         this.context = content;
+        this.eventTarget = null;
         var me = this;
         document.addEventListener('click', function(){
-            var oldContextMenu = document.getElementById('conTextMenu');
+            let oldContextMenu = document.getElementById('conTextMenu');
             if (oldContextMenu != null){oldContextMenu.remove()}
         });
 
         this.ctn.addEventListener('contextmenu', function _openContext(){
             event.preventDefault(); event.stopPropagation();
+            me.eventTarget = event.target;
             var oldContextMenu = document.getElementById('conTextMenu');
             if (oldContextMenu != null){oldContextMenu.remove()}
             me.contextElementId = null;

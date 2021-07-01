@@ -547,10 +547,10 @@ class Opera extends Oculus{
         let cContext = new ContextMenu();
         if(argos.access.includes("o_edit")){
             cContext.addEntry('tr.opera.author', 'a', 'Autor bearbeiten', ()=>{
-            argos.loadEye("opera_author_edit", this.ctn.querySelector("tr#"+this.selMarker.main.lastRow).dataset.author_id);
-        });
+                argos.loadEye("opera_author_edit", this.ctn.querySelector("tr#"+this.selMarker.main.lastRow).dataset.author_id);
+            });
             cContext.addEntry('tr.opera.work', 'a', 'Werk bearbeiten', () =>{
-            argos.loadEye("opera_work_edit", this.ctn.querySelector("tr#"+this.selMarker.main.lastRow).dataset.work_id);
+                argos.loadEye("opera_work_edit", this.ctn.querySelector("tr#"+this.selMarker.main.lastRow).dataset.work_id);
             });
             cContext.addEntry('tr.opera', 'hr', '', null);
             cContext.addEntry('tr.opera', 'a', 'Neuer Autor erstellen', function(){argos.loadEye("opera_author_edit")});
@@ -559,6 +559,9 @@ class Opera extends Oculus{
         }
         if(argos.access.includes("e_edit")){
             cContext.addEntry('*', 'a', 'Opera-Listen aktualisieren', function(){argos.loadEye("opera_update")});
+            cContext.addEntry('a.editionLnk', 'a', 'Edition bearbeiten', () =>{
+                argos.loadEye("library_edit", this.eventTarget.id)
+            });
         }
         cContext.addEntry('*', 'hr', '', null);
         cContext.addEntry('*', 'a', 'Opera-Listen exportieren', function(){argos.loadEye("opera_export")});
