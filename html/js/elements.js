@@ -24,7 +24,7 @@ class Elements {
     }
     div(content=null, attr = {}){
         let div = document.createElement("DIV");
-        if(content!=null){div.innerHTML = html(content)}
+        if(content!=null && typeof content == "string"){div.innerHTML = html(content)}
         if(attr.class!=null){div.classList.add(attr.class)}
         return div;
     }

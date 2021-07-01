@@ -188,10 +188,14 @@ class LibraryEdit extends Oculus{
         let iVolume = el.text(edition.volume);
         let iVolumeContent = el.text(edition.vol_cont);
         let iComment = el.area(edition.comment);
-        let editorCityDes = el.span("Editor:");
+        let iLocation = el.text(edition.location);
+        let iLibrary = el.text(edition.library);
+        let iSignature = el.text(edition.signature);
+
+        /*let editorCityDes = el.span("Editor:");
         if([2,3].includes(edition.ressource)){
             editorCityDes.textContent = "Stadt/Drucker:";
-        }
+        }*/
         let resTypes = {
             0: "textkritische Edition",
             1: "textkritische Edition (veraltet)",
@@ -201,10 +205,31 @@ class LibraryEdit extends Oculus{
         };
         let iRessource = el.select(edition.ressource, resTypes);
         iRessource.onchange = () => {
-            if(iRessource.value === "2" || iRessource.value === "3"){
-                editorCityDes.textContent = "Stadt/Drucker:";
+            if(iRessource.value == 2){
+                // MS
+                divEditor.style.display = "none";
+                divYear.style.display = "none";
+                divVolume.style.display = "none";
+                divLocation.style.display = "block";
+                divLocation.children[0].children[0].children[0].textContent = "Stadt:";
+                divLibSig.style.display = "block";
+            } else if (iRessource.value == 3){
+                // PRINT
+                divEditor.style.display = "block";
+                divEditor.children[0].children[0].children[0].textContent = "Drucker:";
+                divYear.style.display = "block";
+                divVolume.style.display = "none";
+                divLocation.style.display = "block";
+                divLocation.children[0].children[0].children[0].textContent = "Ort:";
+                divLibSig.style.display = "none";
             } else {
-                editorCityDes.textContent = "Editor:";
+                // REST
+                divEditor.style.display = "block";
+                divEditor.children[0].children[0].children[0].textContent = "Editor:";
+                divYear.style.display = "block";
+                divVolume.style.display = "block";
+                divLocation.style.display = "none";
+                divLibSig.style.display = "none";
             }
         }
         const edTypes = {
@@ -227,16 +252,46 @@ class LibraryEdit extends Oculus{
             ["Verknüpftes Werk:", iWork],
             ["", `<span class="minorTxt">${work.bibliography}</span>`],
             ["", openScans],
-            ["Edition:", iEditionName],
-            [editorCityDes, iEditor],
-            ["Jahr:", iYear],
-            ["Band:", iVolume],
-            ["Bandinhalt:", iVolumeContent],
+            ["Edition:", iEditionName]
+        ];
+        mainBody.appendChild(el.table(tbl1, ["20%", "80%"]));
+
+        let divEditor = document.createElement("DIV");
+        divEditor.append(el.table([["Editor:", iEditor]], ["20%", "80%"]));
+        let divLocation = document.createElement("DIV");
+        divLocation.append(el.table([["Ort:", iLocation]], ["20%", "80%"]));
+        let divYear =  document.createElement("DIV");
+        divYear.append(el.table([["Jahr:", iYear]], ["20%", "80%"]));
+        let divVolume =  document.createElement("DIV");
+        divVolume.append(el.table([["Band:", iVolume], ["Bandinhalt:", iVolumeContent]], ["20%", "80%"]));
+        let divLibSig =  document.createElement("DIV");
+        divLibSig.append(el.table([["Bibliothek:", iLibrary], ["Signatur:", iSignature]], ["20%", "80%"]));
+        if(edition.ressource == 2){
+            // MS
+            divEditor.style.display = "none";
+            divYear.style.display = "none";
+            divVolume.style.display = "none";
+        } else if (edition.ressource == 3){
+            // PRINT
+            divEditor.children[0].children[0].children[0].textContent = "Drucker:";
+            divLocation.children[0].children[0].children[0].textContent = "Stadt:";
+            divVolume.style.display = "none";
+            divLibSig.style.display = "none";
+        } else {
+            // REST
+            divLocation.style.display = "none";
+            divLibSig.style.display = "none";
+        }
+        mainBody.append(divEditor);
+        mainBody.append(divLocation);
+        mainBody.append(divYear);
+        mainBody.append(divVolume);
+        mainBody.append(divLibSig);
+        mainBody.append(el.table([
             ["Kommentar:", iComment],
             ["Ressource:", iRessource],
             ["Typ:", iType]
-        ];
-        mainBody.appendChild(el.table(tbl1));
+        ], ["20%", "80%"]));
 
         let linkDIV = document.createElement("DIV");
         let iLink = el.text(edition.url);
@@ -276,7 +331,10 @@ class LibraryEdit extends Oculus{
                 vol_cont: iVolumeContent.value,
                 comment: iComment.value,
                 year: iYear.value,
-                ressource: iRessource.value
+                ressource: iRessource.value,
+                location: iLocation.value,
+                library: iLibrary.value,
+                signature: iSignature.value
             };
             if(this.resId > 0){data.id = this.resId}
             if(iPath.value != ""){data.path = iPath.value}

@@ -613,12 +613,13 @@
     }
 
     .zettel {
-        padding: 0px 0px;
+        padding: 0px 5px 5px 0px;
         margin: 10px 10px;
         position: relative;
         background: none;
         transition: box-shadow 0.5s ease-out;
-        border-radius: 7px;
+        /*border-radius: 7px;*/
+        border-radius: 7px 7px 0px 7px;
     }
     div.zettel.selMarked{
         box-shadow: 0px 0px 18px var(--shadowBG);
@@ -633,16 +634,15 @@
 
     .zettel_menu{
         position: absolute;
-        bottom: 0px;
+        bottom: 5px;
         left: 0px;
-        right: 0px;
+        right: 5px;
         font-size: 18px;
         padding: 15px 12px;
         text-align: center;
         background: rgba(300,300,300,0.5);
         border-radius: 7px;
     }
-
     .zettel_msg{
         position: absolute;
         top: 0px;

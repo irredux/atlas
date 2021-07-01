@@ -47,6 +47,7 @@ class Kasten extends Oculus{
             } else {
                 lemmata = await arachne.lemma.search(`lemma_search:${query.toLowerCase()}.*`, ["id", "lemma_display"], "lemma");
             }
+            lemmata.unshift({"id": 0, "lemma_display": "<i>Kein Lemmata</i>"});
             for(const lemma of lemmata){
                 let lemmaBox = document.createElement("DIV");
                 lemmaBox.classList.add("lemmaBox"); lemmaBox.id = lemma.id;
@@ -80,24 +81,33 @@ class Kasten extends Oculus{
             mainBox.appendChild(mainLoadLabel);
             for(const id of this.selMarker.main.ids){
                 let lemmaMain = document.createElement("DIV");
-                const cLemma = await arachne.lemma.is(parseInt(id));
+                let cLemma = {id: 0, lemma_display: "<i>Kein Lemma</i>"};
+                if(id != "0"){cLemma = await arachne.lemma.is(parseInt(id))}
                 lemmaMain.style.boxShadow = "0 0 3px black";
                 lemmaMain.style.borderRadius = "7px";
-                lemmaMain.style.padding = "5px";
+                lemmaMain.style.padding = "15px 25px";
                 lemmaMain.style.margin = "5px 5px 20px 5px";
                 lemmaMain.style.backgroundColor = "var(--mainBG)";
-                let newHTML = cLemma.lemma_display;
+                let lemmaHeader = document.createElement("DIV");
+                lemmaHeader.classList.add("lemmaHeader");
+                lemmaHeader.style.padding = "0 0 10px 0";
+                lemmaHeader.style.borderBottom = "1px dotted var(--minorColor)";
+                lemmaHeader.innerHTML = html(`<span style="color: var(--contraColor); font-size: 110%;">${cLemma.lemma_display}</span>`);
+                let comments = await arachne.comment.is(cLemma.id, "lemma", false);
+                if(comments.length > 0){
+                    lemmaHeader.innerHTML += `&nbsp;&nbsp;&nbsp;<a onclick="argos.loadEye('lemma_comment', ${cLemma.id});">☜</a>`;
+                }
                 if(cLemma.dicts!=null && cLemma.dicts != ""){
-                    newHTML += `<br /><i class="minorTxt">Wörterbücher: ${cLemma.dicts}</i>`;
+                    lemmaHeader.innerHTML += html(`<i class="minorTxt" style="float:right;">Wörterbücher: ${cLemma.dicts}</i>`);
                 }
                 if(cLemma.comment!=null && cLemma.comment!=""){
-                    newHTML += `<div style="float: right; max-width:300px;">${cLemma.comment}</div>`;
+                    lemmaHeader.innerHTML += html(`<div class="minorTxt" style="margin-left: 10px">${cLemma.comment}</div>`);
                 }
-                newHTML += "<hr style='clear: both;' />";
-                lemmaMain.innerHTML = html(newHTML);
+                lemmaMain.appendChild(lemmaHeader);
                 let mainZettelBox = document.createElement("DIV");
                 mainZettelBox.style.display = "flex";
-                mainZettelBox.style.flexDirection = "column";
+                mainZettelBox.style.flexWrap = "wrap";
+                //mainZettelBox.style.flexDirection = "column";
                 mainZettelBox.style.justifyContent = "center";
                 mainZettelBox.style.alignItems = "center";
                 //mainZettelBox.style.alignContent = "center";
@@ -112,11 +122,64 @@ class Kasten extends Oculus{
                 mainBox.appendChild(lemmaMain);
             }
             mainLoadLabel.remove();
+
+            // contextmenu
+            let cContext = new ContextMenu();
+            argos.main.resultLst = [];
+            for(const id of this.selMarker.main.ids){
+                argos.main.resultLst.push(parseInt(id));
+            }
+            cContext.addEntry('div.zettel', 'a', 'Detailansicht', () => {
+                argos.loadEye("zettel_detail", this.selMarker.main.lastRow);
+            });
+            if(this.access.includes("l_edit")){
+                cContext.addEntry('div.lemmaHeader', 'a', 'Lemma bearbeiten', () => {
+                    argos.loadEye("lemma_edit", this.selMarker.main.lastRow);
+                });
+                cContext.addEntry('div.lemmaHeader', 'a', 'Neues Lemma erstellen', () => {
+                    argos.loadEye("lemma_add");
+                });
+            }
+            if(this.access.includes("comment")){
+                if(cContext.menu.length > 0){
+                cContext.addEntry('div.lemmaHeader', 'hr', '', null);
+                }
+                cContext.addEntry('div.lemmaHeader', 'a', 'Notizen', () => {
+                    argos.loadEye("lemma_comment", this.selMarker.main.lastRow);
+                });
+            }
+            /*
+            }
+            if(this.access.includes("editor")){
+                if(cContext.menu.length > 0){
+                cContext.addEntry('tr.loadMore', 'hr', '', null);
+                }
+                cContext.addEntry('tr.loadMore', 'a', 'zu Projekt hinzufügen',
+                    function(){argos.loadEye("lemma_addToProject", that.selMarker.main.lastRow)});
+            }
+             */
+            /*
+            cContext.addEntry('div.zettel', 'hr', '', null);
+            if(this.access.includes("z_edit")||this.access.includes("editor")){
+                cContext.addEntry('div.zettel', 'a', 'Stapelverarbeitung',
+                    function(){argos.loadEye("zettel_batch")});
+            }
+            if(this.access.includes("z_edit")){
+                cContext.addEntry('*', 'a', 'Neuen Zettel erstellen',
+                    function(){argos.loadEye("zettel_add")});
+            }
+            if(this.access.includes("z_add")){
+                cContext.addEntry('*', 'a', 'Zettel importieren', () => {argos.loadEye("zettel_import")});
+            }
+            cContext.addEntry('*', 'a', 'Zettel exportieren', () => {argos.loadEye("zettel_export")});
+            */
+            if (Object.keys(cContext.menu).length > 0){this.setContext = cContext.menu;}
         }
 
         mainBody.appendChild(mainBox);
         this.ctn.appendChild(mainBody);
         this.setSelection("main", "div.lemmaBox", true);
+        this.setSelection("zettel", "div.zettel", true);
 
     }
 }
@@ -297,7 +360,8 @@ function createZettel(zettel){
         zettelMenu.innerHTML = `<span style='float: left;'>${html(zettel.lemma_display)}</span>
         <span style='float: right;'>${html(zettel.opus)}</span>`;
         box.appendChild(zettelMenu);
-
+        let changeSize = document.createElement("DIV");
+        changeSize.classList.add("changeZettelSize");
     } else {
         box.style.height = "var(--zettelHeight)";//"500px";
         box.innerHTML = `<div class='digitalZettel'>
@@ -307,6 +371,8 @@ function createZettel(zettel){
             <div class='digitalZettelText'>${html(zettel.txt)}</div></div>
         `;
     }
+    box.style.overflow = "hidden";
+    box.style.resize = "both";
     return box;
 }
 
