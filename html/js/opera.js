@@ -36,7 +36,7 @@ class Library extends Oculus{
         searchBar.id = "searchBar"; searchBar.classList.add("card");
         let sbInput = document.createElement("INPUT");
         sbInput.type = "text";
-        (this.query === "*") ? sbInput.value = "" : sbInput.value = this.displayQuery;
+        (this.query === "*") ? sbInput.value = "" : sbInput.value = displayQuery;
         sbInput.id = "searchBarQuery";
         sbInput.spellcheck = "false"; sbInput.autocomplete = "off";
         sbInput.autocorrect = "off"; sbInput.autocapitalize = "off";
