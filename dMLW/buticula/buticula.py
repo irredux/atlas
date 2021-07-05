@@ -221,8 +221,10 @@ class Buticula(Bottle):
         # used in secondary version
         TEMPLATE_PATH.insert(0, path)
 
-    def auth(self, access = ["auth"], logout = False):
-        c_session = request.headers.get("Authorization")
+    def auth(self, c_session = None):
+        access = ["auth"]
+        logout = False
+        if c_session == None: c_session = request.headers.get("Authorization")
         if c_session == "" or c_session == None: abort(401) # unauthorized
         c_session = c_session[7:]
 
@@ -414,66 +416,67 @@ class Buticula(Bottle):
 
     def zettel_import(self):
         # uploading images for zettel-db
-        user = self.auth()
-        u_letter = request.forms.letter
-        if len(u_letter) == 1 and u_letter.isalpha() and "z_add" in user["access"]:
-            u_type = request.forms.type
-            # checking and creating path to new files
-            f_path = self.p + "/zettel/"
-            if path.exists(f_path) == False: mkdir(f_path)
-            f_path += f"{u_letter}/"
-            if path.exists(f_path) == False: mkdir(f_path)
+        with request.body as body:
+            user = self.auth(request.headers.get("Authorization"))
+            u_letter = request.forms.letter
+            if len(u_letter) == 1 and u_letter.isalpha() and "z_add" in user["access"]:
+                u_type = request.forms.type
+                # checking and creating path to new files
+                f_path = self.p + "/zettel/"
+                if path.exists(f_path) == False: mkdir(f_path)
+                f_path += f"{u_letter}/"
+                if path.exists(f_path) == False: mkdir(f_path)
 
-           # set user_id for first editor
-            c_user_id = user['id']
-            if 'admin' in user['access'] and request.forms.user_id_id != '':
-                c_user_id = request.forms.user_id_id
+               # set user_id for first editor
+                c_user_id = user['id']
+                if 'admin' in user['access'] and request.forms.user_id_id != '':
+                    c_user_id = request.forms.user_id_id
 
-           # loop through file-list
-            recto = True
-            if self.doublesided == True:
-                max_files = 500
-            else:
-                max_files = 1000
-            c_path = ""
-            new_id = 0
-            c_loop = 0
-            f_lst = request.files.getall("files")
-            print(len(f_lst))
-            for f in f_lst:
-                c_loop += 1
-                if recto:
-                    # create entry in db
-                    save_dict = {
-                            "user_id": c_user_id,
-                            "letter": u_letter,
-                            "created_by": c_user_id,
-                            "in_use": True
-                            }
-                    if u_type != "0":
-                        save_dict["type"] = u_type
-                    new_id = self.db.save("zettel", save_dict)
-                    self.db.save("zettel", {
-                        "img_folder": f"{(new_id-1)//max_files}",
-                        "img_path": f"/zettel/{u_letter}/{(new_id-1)//max_files}/{new_id}"
-                        },
-                            new_id)
-                    # create subfolder so that no folder has more than 1'000 files
-                    c_path = f_path + f"{(new_id-1)//max_files}/"
-                    if path.exists(c_path) == False: mkdir(c_path)
-                    # save the file
-                    print(c_path + f"{new_id}.jpg")
-                    f.save(c_path + f"{new_id}.jpg")
-                    ##rename(input_path + f, c_path + f"{new_id}.jpg")
-                    if self.doublesided: recto = False
+               # loop through file-list
+                recto = True
+                if self.doublesided == True:
+                    max_files = 500
                 else:
-                    ##rename(input_path + f, c_path + f"{new_id}v.jpg")
-                    print(c_path + f"{new_id}v.jpg")
-                    f.save(c_path + f"{new_id}v.jpg")
-                    recto = True
-            return HTTPResponse(status=201) # created
-        else:
-            return HTTPResponse(status=400) # bad request
+                    max_files = 1000
+                c_path = ""
+                new_id = 0
+                c_loop = 0
+                f_lst = request.files.getall("files")
+                print(len(f_lst))
+                for f in f_lst:
+                    c_loop += 1
+                    if recto:
+                        # create entry in db
+                        save_dict = {
+                                "user_id": c_user_id,
+                                "letter": u_letter,
+                                "created_by": c_user_id,
+                                "in_use": True
+                                }
+                        if u_type != "0":
+                            save_dict["type"] = u_type
+                        new_id = self.db.save("zettel", save_dict)
+                        self.db.save("zettel", {
+                            "img_folder": f"{(new_id-1)//max_files}",
+                            "img_path": f"/zettel/{u_letter}/{(new_id-1)//max_files}/{new_id}"
+                            },
+                                new_id)
+                        # create subfolder so that no folder has more than 1'000 files
+                        c_path = f_path + f"{(new_id-1)//max_files}/"
+                        if path.exists(c_path) == False: mkdir(c_path)
+                        # save the file
+                        print(c_path + f"{new_id}.jpg")
+                        f.save(c_path + f"{new_id}.jpg")
+                        ##rename(input_path + f, c_path + f"{new_id}.jpg")
+                        if self.doublesided: recto = False
+                    else:
+                        ##rename(input_path + f, c_path + f"{new_id}v.jpg")
+                        print(c_path + f"{new_id}v.jpg")
+                        f.save(c_path + f"{new_id}v.jpg")
+                        recto = True
+                return HTTPResponse(status=201) # created
+            else:
+                return HTTPResponse(status=400) # bad request
 
     # ################################################################
     # -III- REST requests

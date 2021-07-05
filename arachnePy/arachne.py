@@ -218,7 +218,7 @@ class Arachne(object):
         self.p = path.dirname(path.abspath(__file__))
         if resetDB and path.exists(self.p+"/arachne.db"): remove(self.p+"/arachne.db")
 
-        if tbls == None: tbls = self.show_tables()
+        if tbls == None: tbls = self.tables()
         for tbl in tbls:
             setattr(self, tbl, ArachneTable(tbl, url, self.__token))
 
