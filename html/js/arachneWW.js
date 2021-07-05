@@ -209,140 +209,139 @@ class ArachneDatabase{
             const tblName = this.tblName;
             this.lastUpdated = Date.now()
             let newDatasets = 0;
-            const url = `/data/${this.tblName}?u_date=${await this.version()}`;
-            return new Promise((resolve, reject) => {
-                fetch(url, {
-                    headers: {"Authorization": `Bearer ${this.token}`}
-                })
-                    .then(response => {
-                        let count = 0;
-                        let restOfChunk = "";
-                        let decoder = new TextDecoder();
-                        const reader = response.body.getReader();
-                        return new ReadableStream({
-                            start(controller){
-                                let pump = () => {
-                                    reader.read().then( ({done, value}) => {
-                                        count ++;
-                                        const txt = restOfChunk+decoder.decode(value);
-                                        let parts = txt.split('}, {"');
-                                        const lastPart = parts[parts.length-1];
+            do{
+                const url = `/data/${this.tblName}?u_date=${await this.version()}`;
+                newDatasets = 0;
+                newDatasets = await new Promise((resolve, reject) => {
+                    fetch(url, {
+                        headers: {"Authorization": `Bearer ${this.token}`}
+                    })
+                        .then(response => {
+                            let count = 0;
+                            let restOfChunk = "";
+                            let decoder = new TextDecoder();
+                            const reader = response.body.getReader();
+                            return new ReadableStream({
+                                start(controller){
+                                    let pump = () => {
+                                        reader.read().then( ({done, value}) => {
+                                            count ++;
+                                            const txt = restOfChunk+decoder.decode(value);
+                                            let parts = txt.split('}, {"');
+                                            const lastPart = parts[parts.length-1];
 
-                                        // check if first item is first chunk!
-                                        if(parts[0].startsWith('[{"')){parts[0] = parts[0].substring(3)}
-                                        // preserve last item
-                                        if(done && parts.length === 1 && parts[0].endsWith("}]")){
-                                            parts[0] = parts[0].substring(0, parts[0].length-2);
-                                            restOfChunk = "[]";
-                                        } else {restOfChunk = parts.pop()}
+                                            // check if first item is first chunk!
+                                            if(parts[0].startsWith('[{"')){parts[0] = parts[0].substring(3)}
+                                            // preserve last item
+                                            if(done && parts.length === 1 && parts[0].endsWith("}]")){
+                                                parts[0] = parts[0].substring(0, parts[0].length-2);
+                                                restOfChunk = "[]";
+                                            } else {restOfChunk = parts.pop()}
 
-                                        //console.log("parts (after cut):", parts);
-                                        let items = [];
-                                        for(const part of parts){
-                                            if (part === ""){console.log(parts);throw "ERROR: empty part!"}
-                                            try{
-                                                items.push(JSON.parse('{"'+part+'}'));
-                                            } catch {
-                                                console.log(parts);
-                                                throw part;
-                                            }
-                                        }
-                                        if(items.length > 0){controller.enqueue(items)}
-                                        if (done && restOfChunk === "[]") {
-                                            controller.close();
-                                            return;
-                                        } else if(done && restOfChunk != "[]"){
-                                           throw "ERROR: Buffer not empty!";
-                                        }
-                                        pump();
-                                    });
-                                }
-                                pump();
-                            }
-                        });
-                    }).
-                    then(stream => {
-                        let count = 0;
-                        const reader = stream.getReader();
-                        return new ReadableStream({
-                            start(controller){
-                                let pump = () => {
-                                    reader.read().then( ({done, value}) => {
-                                        if (done) {
-                                            controller.close();
-                                            return;
-                                        }
-                                        count ++;
-                                        newDatasets += value.length;
-                                        console.log(tblName, "- saving to DB -", count, value.length);
-                                        let request = indexedDB.open(dbName, dbVersion);
-                                        request.onerror = e => {throw e}
-                                        request.onsuccess = () => {
-                                            let db = request.result;
-                                            let tAction = db.transaction(tblName, "readwrite");
-                                            let oStore = tAction.objectStore(tblName);
-                                            let delList = [];
-                                            for(const item of value){
-                                                if(item.deleted != null){delList.push(item.id)}
-                                                oStore.put(item);
-                                            }
-                                            tAction.oncomplete = () => {
-                                                if(delList.length > 0){
-                                                    newDatasets -= delList.length;
-                                                    controller.enqueue(delList)
+                                            //console.log("parts (after cut):", parts);
+                                            let items = [];
+                                            for(const part of parts){
+                                                if (part === ""){console.log(parts);throw "ERROR: empty part!"}
+                                                try{
+                                                    items.push(JSON.parse('{"'+part+'}'));
+                                                } catch {
+                                                    console.log(parts);
+                                                    throw part;
                                                 }
-                                                pump();
                                             }
-                                        }
-                                    });
+                                            if(items.length > 0){controller.enqueue(items)}
+                                            if (done && restOfChunk === "[]") {
+                                                controller.close();
+                                                return;
+                                            } else if(done && restOfChunk != "[]"){
+                                               throw "ERROR: Buffer not empty!";
+                                            }
+                                            pump();
+                                        });
+                                    }
+                                    pump();
                                 }
-                                pump();
-                            }
-                        });
-                    }).
-                    then(stream => {
-                        let count = 0;
-                        const reader = stream.getReader();
-                        return new ReadableStream({
-                            start(controller){
-                                let pump = () => {
-                                    reader.read().then( ({done, value}) => {
-                                        if (done) {
-                                            controller.close();
-                                            resolve(newDatasets);
-                                            return;
-                                        }
-                                        count ++;
-                                        console.log(tblName, "- removing deleted items -", count);
-                                        let request = indexedDB.open(dbName, dbVersion);
-                                        request.onerror = e => {throw e}
-                                        request.onsuccess = () => {
-                                            let db = request.result;
-                                            let tAction = db.transaction(tblName, "readwrite");
-                                            let oStore = tAction.objectStore(tblName);
-                                            for(const delId of value){oStore.delete(delId)}
-                                            tAction.oncomplete = () => {pump()}
-                                        }
-                                    });
+                            });
+                        }).
+                        then(stream => {
+                            let count = 0;
+                            const reader = stream.getReader();
+                            return new ReadableStream({
+                                start(controller){
+                                    let pump = () => {
+                                        reader.read().then( ({done, value}) => {
+                                            if (done) {
+                                                controller.close();
+                                                return;
+                                            }
+                                            count ++;
+                                            newDatasets += value.length;
+                                            console.log(tblName, "- saving to DB -", count, value.length);
+                                            let request = indexedDB.open(dbName, dbVersion);
+                                            request.onerror = e => {throw e}
+                                            request.onsuccess = () => {
+                                                let db = request.result;
+                                                let tAction = db.transaction(tblName, "readwrite");
+                                                let oStore = tAction.objectStore(tblName);
+                                                let delList = [];
+                                                for(const item of value){
+                                                    if(item.deleted != null){delList.push(item.id)}
+                                                    oStore.put(item);
+                                                }
+                                                tAction.oncomplete = () => {
+                                                    if(delList.length > 0){
+                                                        newDatasets -= delList.length;
+                                                        controller.enqueue(delList)
+                                                    }
+                                                    pump();
+                                                }
+                                            }
+                                        });
+                                    }
+                                    pump();
                                 }
-                                pump();
-                            }
-                        });
-                    }).
-                    catch(e => {throw e});
-                
-                // optimize?
-                /*
-                if(this.optimize && (newData || this.data == null)){
-                    this.data = null;
-                    let sIndex = null;
-                    if(this.sOrder!=1){sIndex=this.tblName}
-                    this.getAll(sIndex).then(all => {this.data = all}).catch(e => {throw e});
-                }
-                */
-
-
-            }); // end of promise
+                            });
+                        }).
+                        then(stream => {
+                            let count = 0;
+                            const reader = stream.getReader();
+                            return new ReadableStream({
+                                start(controller){
+                                    let pump = () => {
+                                        reader.read().then( ({done, value}) => {
+                                            if (done) {
+                                                controller.close();
+                                                resolve(newDatasets);
+                                                return;
+                                            }
+                                            count ++;
+                                            console.log(tblName, "- removing deleted items -", count);
+                                            let request = indexedDB.open(dbName, dbVersion);
+                                            request.onerror = e => {throw e}
+                                            request.onsuccess = () => {
+                                                let db = request.result;
+                                                let tAction = db.transaction(tblName, "readwrite");
+                                                let oStore = tAction.objectStore(tblName);
+                                                for(const delId of value){oStore.delete(delId)}
+                                                tAction.oncomplete = () => {pump()}
+                                            }
+                                        });
+                                    }
+                                    pump();
+                                }
+                            });
+                        }).
+                        catch(e => {throw e});
+                    
+                }); // end of promise
+            } while(newDatasets > 9999);
+            // optimize?
+            if(this.optimize && (newDatasets > 0 || this.data == null)){
+                this.data = null;
+                let sIndex = null;
+                if(this.sOrder!=1){sIndex=this.tblName}
+                this.getAll(sIndex).then(all => {this.data = all}).catch(e => {throw e});
+            }
         }
     }
 
@@ -416,69 +415,67 @@ class ArachneDatabase{
         let data = []
         if(this.optimize&&this.data != null){data = this.data}
         else{data = await this.getAll(orderIndex)}
+
+
         if(query === "*"){
             if(limit!=null){return data.slice(0, limit)}
-            else{return data}
+            else{console.timeEnd("search");return data}
         } else {
-            let oStore = await this.getStore(orderIndex);
-            return new Promise((resolve, reject) => {
-                query = stringToQuery(query);
-                let request = oStore.openCursor();
-                let results = [];
-                let i = 0;
-                request.onsuccess = () => {
-                    let cursor = request.result;
-                    if(cursor && (limit===null || i < limit)){
-                        let found = false;
-                        for (const q of query){
-                            found = false;
-                            if(q.col === "*"){
-                                // any row
-                                let re = new RegExp(q.value, "i");
-                                for(const key in cursor.value){
-                                    if(q.negative === false && `${cursor.value[key]}`.match(re)){found = true}
-                                    else if(q.negative === true && !`${cursor.value[key]}`.match(re)){found = true}
-                                }
-                            } else if (Object.keys(cursor.value).includes(q.col)){
-                                // row given
-                                if(q.regex === false && q.negative === false  &&
-                                    q.greater === false && q.smaller === false &&
-                                    cursor.value[q.col] == q.value){found = true}
-                                if(q.regex === false && q.negative === false  &&
-                                    q.greater === false && q.smaller === false &&
-                                    q.value === "NULL" &&
-                                    cursor.value[q.col] == null){found = true}
-                                else if(q.regex === false && q.negative === true &&
-                                    q.greater === false && q.smaller === false &&
-                                    cursor.value[q.col] != q.value){found = true}
-                                else if(q.regex === false && q.greater === true &&
-                                    cursor.value[q.col] > q.value){found = true}
-                                else if(q.regex === false && q.smaller === true &&
-                                    cursor.value[q.col] < q.value){found = true}
-                                else if(q.regex == true && cursor.value[q.col]!=null){
-                                    // regex
-                                    const re = new RegExp(q.value, "gi");
-                                    if(cursor.value[q.col].match(re)){found = true}
-                                }
+            query = stringToQuery(query);
+            let i = 0;
+            let re = data.filter(dataItem => {
+                if(limit===null || i < limit){
+                    let found = false;
+                    for (const q of query){
+                        found = false;
+                        if(q.col === "*"){
+                            // any row
+                            let re = new RegExp(q.value, "i");
+                            for(const key in dataItem){
+                                if(q.negative === false && `${dataItem[key]}`.match(re)){found = true}
+                                else if(q.negative === true && !`${dataItem[key]}`.match(re)){found = true}
                             }
-                            if(!found){break}
-                        }
-                        if(found){
-                            i++;
-                            if(returnCols==="*"){results.push(cursor.value)}
-                            else{
-                                let rItem = {};
-                                for(const returnCol of returnCols){
-                                    rItem[returnCol] = cursor.value[returnCol];
-                                }
-                                results.push(rItem);
+                        } else if (Object.keys(dataItem).includes(q.col)){
+                            // row given
+                            if(q.regex === false && q.negative === false  &&
+                                q.greater === false && q.smaller === false &&
+                                dataItem[q.col] == q.value){found = true}
+                            if(q.regex === false && q.negative === false  &&
+                                q.greater === false && q.smaller === false &&
+                                q.value === "NULL" &&
+                                dataItem[q.col] == null){found = true}
+                            else if(q.regex === false && q.negative === true &&
+                                q.greater === false && q.smaller === false &&
+                                dataItem[q.col] != q.value){found = true}
+                            else if(q.regex === false && q.greater === true &&
+                                dataItem[q.col] > q.value){found = true}
+                            else if(q.regex === false && q.smaller === true &&
+                                dataItem[q.col] < q.value){found = true}
+                            else if(q.regex == true && dataItem[q.col]!=null){
+                                // regex
+                                const re = new RegExp(q.value, "gi");
+                                if(dataItem[q.col].match(re)){found = true}
                             }
                         }
-                        cursor.continue();
-                    } else {resolve(results)}
-                }
-                request.onerror = () => {reject()}
+                        if(!found){break}
+                    }
+                    if(found){
+                        i++;
+                        /*
+                        if(returnCols==="*"){results.push(dataItem)}
+                        else{
+                            let rItem = {};
+                            for(const returnCol of returnCols){
+                                rItem[returnCol] = dataItem[returnCol];
+                            }
+                            results.push(rItem);
+                        }
+                        */
+                        return true;
+                    } else {return false;}
+                } else {return false;}
             });
+            return re;
         }
     }
 }
@@ -491,10 +488,7 @@ onmessage = async (input) => {
     switch(data.request){
         case "LOAD":
             athene.load(data.tblName, data.dbName, data.dbVersion, data.optimize, data.sOrder);
-            let newDatasets = 0;
-            do{
-                newDatasets = await athene.update(true);
-            } while(newDatasets > 9999);
+            await athene.update(true);
             postMessage({workId: data.workId});
             break;
         case "UPDATE":
