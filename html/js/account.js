@@ -36,6 +36,12 @@ class Login extends Oculus{
             });
 
         }
+        document.body.addEventListener("keypress", function enterLogin(){
+            if(event.keyCode == 13){
+                this.removeEventListener("keypress", enterLogin);
+                submitLogin.click();
+            }
+        });
         login.appendChild(el.p("E-Mail:"));
         login.appendChild(email);
         login.appendChild(el.p("Passwort:"));

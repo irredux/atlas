@@ -523,19 +523,127 @@ class Opera extends Oculus{
         super(res, resId, access, main);
     }
     async load(){
-        let list = "mai";
-        if(this.res.endsWith("min")){list = "min"}
-
         let mainBody = document.createDocumentFragment();
         let operaBox = document.createElement("DIV");
         operaBox.classList.add("operaBox");
+        let list = "mai";
+        if(this.res.endsWith("min")){list = "min"}
+        const opTbl = await this.createOperaTbl(list);
+        let rowCount = 0;
+        let totalRowCount = -1;
+        let sheetCount = 1;
+        const MAX_ROW = 17;
+        let cTbl = document.createElement("TABLE");
+        let TRHeader = document.createElement("TR");
+        if(list=="mai"){
+            // maiora list
+            TRHeader.innerHTML = "<th>Datum</th><th>Abkürzung</th><th>Bezeichung</th><th>Editionen</th><th>Kommentar</th>";
+            cTbl.append(TRHeader);
+            for(const entry of opTbl){
+                rowCount ++;
+                totalRowCount ++;
+                let tr = document.createElement("TR");
+                tr.classList.add("opera");//, "author", "work");
+                if(entry.work_id != 0){tr.classList.add("work")}
+                if(entry.author_id != 0){tr.classList.add("author")}
+                tr.id = "o"+totalRowCount;
+                tr.dataset.author_id = entry.author_id;
+                tr.dataset.work_id = entry.work_id;
+                let td1 = document.createElement("TD");
+                td1.classList.add("c1");
+                td1.innerHTML = entry.date_display
+                tr.append(td1);
+                let td2 = document.createElement("TD");
+                td2.classList.add("c2");
+                td2.innerHTML = entry.abbr;
+                tr.append(td2);
+                let td3 = document.createElement("TD");
+                td3.classList.add("c3");
+                td3.innerHTML = entry.full;
+                tr.append(td3);
+                let td4 = document.createElement("TD");
+                td4.classList.add("c4");
+                td4.innerHTML = entry.editions;
+                tr.append(td4);
+                let td5 = document.createElement("TD");
+                td5.classList.add("c5");
+                td5.innerHTML = entry.comment;
+                tr.append(td5);
+                cTbl.append(tr);
+                if((MAX_ROW+1) < rowCount){
+                    let cTblDiv = document.createElement("DIV");
+                    cTblDiv.id = "opera_"+sheetCount;
+                    //cTbl.style.textAlign = "left";
+                    cTblDiv.append(cTbl);
+                    operaBox.append(cTblDiv);
+
+                    rowCount = 0;
+                    sheetCount ++;
+                    cTbl = document.createElement("TABLE");
+                }
+            }
+        }else{
+            // minora list
+            TRHeader.innerHTML = "<th>Datum</th><th>Zitierweise</th><th>Kommentar</th>";
+            cTbl.append(TRHeader);
+            for(const entry of opTbl){
+                rowCount ++;
+                totalRowCount ++;
+                let tr = document.createElement("TR");
+                tr.classList.add("opera", "author", "work");
+                tr.id = "o"+totalRowCount;
+                tr.dataset.author_id = entry.author_id;
+                tr.dataset.work_id = entry.work_id;
+                let td1 = document.createElement("TD");
+                td1.classList.add("c1_min");
+                td1.innerHTML = entry.date_display
+                tr.append(td1);
+                let td2 = document.createElement("TD");
+                td2.classList.add("c2_min");
+                td2.innerHTML = entry.opus;
+                tr.append(td2);
+                let td3 = document.createElement("TD");
+                td3.classList.add("c5_min");
+                td3.innerHTML = `${entry.comment}${entry.editions}`;
+                tr.append(td3);
+                cTbl.append(tr);
+                if((MAX_ROW+1) < rowCount){
+                    let cTblDiv = document.createElement("DIV");
+                    cTblDiv.id = "opera_"+sheetCount;
+                    //cTbl.style.textAlign = "left";
+                    cTblDiv.append(cTbl);
+                    operaBox.append(cTblDiv);
+
+                    rowCount = 0;
+                    sheetCount ++;
+                    cTbl = document.createElement("TABLE");
+                }
+            }
+        }
+        operaBox.onscroll = () => {
+            let nearestElement = null;
+            let toFar = false; 
+            this.ctn.querySelectorAll("div.operaBox > div").forEach(function(e){
+                if (toFar == false && e.getBoundingClientRect().top <= 260){
+                    nearestElement = e;
+                } else {toFar = true};
+            });
+            iPage.value = nearestElement.id.substring(6);
+        }
         mainBody.appendChild(operaBox);
 
         let ctl = document.createElement("DIV");
         ctl.classList.add("controller");
         let iPage = el.text("");
         iPage.style.width = "100px"; iPage.style.border = "none"; iPage.style.textAlign = "right";
+        iPage.value = 1;
+        iPage.onchange = () => {
+            if(!isNaN(iPage.value)){
+                this.ctn.querySelector("div#opera_"+iPage.value).scrollIntoView();
+            }
+        }
         let iMax = document.createElement("SPAN");
+        iMax.textContent = "/"+sheetCount;
         ctl.appendChild(iPage);
         ctl.appendChild(iMax);
         mainBody.appendChild(ctl);
@@ -566,33 +674,111 @@ class Opera extends Oculus{
         cContext.addEntry('*', 'hr', '', null);
         cContext.addEntry('*', 'a', 'Opera-Listen exportieren', function(){argos.loadEye("opera_export")});
         this.setContext = cContext.menu;
-        
-        await fetch(`/site/opera/${list}`, {
-            headers: {"Authorization": `Bearer ${arachne.key.token}`}
-        })
-            .then(response => response.text())
-            .then(table => {
-                operaBox.innerHTML = table;
-                iPage.value = "1";
-                let maxSheets = document.querySelectorAll("div.operaBox div");
-                iMax.innerHTML = `/${maxSheets.length}`;
-                this.ctn.querySelector("div.operaBox").onscroll = () => {
-                    let nearestElement = null;
-                    let toFar = false; 
-                    this.ctn.querySelectorAll("div.operaBox > div").forEach(function(e){
-                        if (toFar == false && e.getBoundingClientRect().top <= 260){
-                            nearestElement = e;
-                        } else {toFar = true};
-                    });
-                    iPage.value = nearestElement.id.substring(6);
-                }
-                iPage.onchange = () => {
-                    if(!isNaN(iPage.value)){
-                        this.ctn.querySelector("div#opera_"+iPage.value).scrollIntoView();
+    }
+
+    async createOperaTbl(lstName){
+        const vWork = await arachne.work.version();
+        const vAuthor = await arachne.author.version();
+        const vEdition = await arachne.edition.version();
+        let vLatest = vWork<vAuthor?vAuthor:vWork;
+        vLatest = vLatest<vEdition?vEdition:vLatest;
+        const vLocal = localStorage.getItem("opera_version");
+        if(vLocal == null || vLatest > vLocal){
+            console.log("calculate opera lists...");
+            let authors = await arachne.author.getAll();
+            authors.sort((a, b) => {if(a.abbr_sort > b.abbr_sort){return 1;}else{return 0;}});
+            let tblMai = [];
+            let tblMin = [];
+            let authorAdded = false;
+            for(const author of authors){
+                authorAdded = false;
+                let works = await arachne.work.is(author.id, "author", false);
+                works.sort((a, b) => {if(a.abbr_sort > b.abbr_sort){return 1;}else{return 0;}});
+                for(const work of works){
+                    const editions = await arachne.edition.is(work.id, "work", false);
+                    let editionsTxt = "";
+                    for(const edition of editions){
+                        editionsTxt += `<p><a href="${html(edition.url)}" target="_blank">${html(edition.label)}</a></p>`;
+                    }
+                    if(work.is_maior == 1){
+                        // opus maius
+                        if(authorAdded == false && work.abbr != null){
+                            // author on separat line
+                            tblMai.push({
+                                author_id: author.id,
+                                work_id: 0,
+                                date_display: html(author.date_display),
+                                abbr: html(`<aut>${(author.in_use == 1)?author.abbr:"["+author.abbr+"]"}</aut>`),
+                                full: html(author.full),
+                                editions: "",
+                                comment: html(author.txt_info)
+                            });
+                        }
+                        if(authorAdded == false && work.abbr == null){
+                            // author + work on same line
+                            let nData = {
+                                author_id: author.id,
+                                work_id: work.id,
+                                date_display: html(work.date_display),
+                                abbr: html(`<aut>${(author.in_use == 1)?author.abbr:"["+author.abbr+"]"}</aut>`),
+                                full: "",
+                                editions: `${html(work.bibliography)}${editionsTxt}`,
+                                comment: html(work.citation)+" "+html(work.txt_info)
+                            }
+                            if(author.full!=null){
+                                nData.full += html(author.full);
+                            }
+                            if(work.reference!=null && work.reference!=""){
+                                nData.full += ` v. ${html(work.reference)}`;
+                            }
+                            tblMai.push(nData);
+                        } else {
+                            // work
+                            let nWorkData = {
+                                author_id: 0,
+                                work_id: work.id,
+                                date_display: html(work.date_display),
+                                abbr: html(`&nbsp;&nbsp;&nbsp;${(work.in_use == 1)?work.abbr:"["+work.abbr+"]"}`),
+                                full: "&nbsp;&nbsp;&nbsp;",
+                                editions: `${html(work.bibliography)}${editionsTxt}`,
+                                comment: html(work.citation)+" "+html(work.txt_info)
+                            };
+                            if(work.author_display!=null && work.author_display!= ""){
+                                nWorkData.abbr = `<aut>${html(work.author_display)}</aut> ${html(work.abbr)}`;
+                                if(work.in_use != 1){
+                                    nWorkData.abbr = "["+nWorkData.abbr+"]";
+                                }
+                            }
+                            if(work.full!=null){nWorkData.full += html(work.full)
+                            }
+                            if(work.reference!=null && work.reference!=""){
+                                nWorkData.full += ` v. ${html(work.reference)}`;
+                            }
+                            tblMai.push(nWorkData);
+                        }
+                        authorAdded = true;
+                    } else {
+                        // opus minus
+                        tblMin.push({
+                            author_id: author.id,
+                            work_id: work.id,
+                            date_display: html(work.date_display),
+                            opus: html(work.opus.replace(" <cit></cit> ( <cit_bib></cit_bib>)", "")),
+                            editions: editionsTxt,
+                            comment: html(work.txt_info)
+                        });
                     }
                 }
-            })
-            .catch(e => {throw e});
+            }
+            localStorage.setItem("opera_maiora", JSON.stringify(tblMai));
+            localStorage.setItem("opera_minora", JSON.stringify(tblMin));
+            localStorage.setItem("opera_version", vLatest);
+            if(lstName == "mai"){return tblMai;}
+            else{return tblMin;}
+        } else {
+            if(lstName == "mai"){return JSON.parse(localStorage.getItem("opera_maiora"));}
+            else{return JSON.parse(localStorage.getItem("opera_minora"));}
+        }
     }
 }
 
@@ -610,7 +796,7 @@ class AuthorEdit extends Oculus{
             author = await arachne.author.is(this.resId);
             mainBody.appendChild(el.h(`${author.full} <i class='minorTxt'>(ID: ${author.id})</i>`, 3))
         }else{mainBody.appendChild(el.h("Neuer Autor erstellen", 3))}
-        let iFull = el.text(author.full);
+        let iFull = el.text(html(author.full));
         let iDateDisplay = el.text(author.date_display);
         let iAbbr = el.text(author.abbr);
         let iAbbrSort = el.text(author.abbr_sort);
@@ -1511,4 +1697,3 @@ class SekLitEdit extends Oculus{
         this.ctn.appendChild(mainBody);
     }
 }
-

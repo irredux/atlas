@@ -483,10 +483,17 @@ class ZettelImport extends Oculus{
                 console.log("Uploading next group...");
                 await fetch("/file/zettel", {method: "POST", body: uItem,
                 headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
-                    then(re => {console.log(re.status)}).
+                    then(re => {
+                        console.log(re.status);
+                        if(re.status != 201){
+                            alert("Ein Fehler ist aufgetreten! Bitte überprüfen Sie die hochgeladenen Zettel.");
+                            throw "Error: Fehler beim Zettel-Upload!";
+                        }
+
+                    }).
                     catch(e => {throw e});
             }
-            console.log("Upload complete!");
+            console.log("upload complete!");
             alert("Bilder erfolgreich hochgeladen. Bitte laden Sie die Seite neu.");
             this.close();
         }
