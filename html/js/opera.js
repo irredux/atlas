@@ -719,7 +719,6 @@ class Opera extends Oculus{
                             <li>
                                 <a href="${editionURL}" class="editionLnk" id="${edition.id}" target="_blank">${html(edition.label)}</a>
                             </li>`;
-                        editionLnk
                     }
                     editionsTxt += "</ul>";
                     if(work.is_maior == 1){
