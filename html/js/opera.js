@@ -582,6 +582,11 @@ class Opera extends Oculus{
                     cTbl = document.createElement("TABLE");
                 }
             }
+            let cTblDiv = document.createElement("DIV");
+            cTblDiv.id = "opera_"+sheetCount;
+            //cTblDiv.style.scrollSnapAlign = "unset";
+            cTblDiv.append(cTbl);
+            operaBox.append(cTblDiv);
         }else{
             // minora list
             TRHeader.innerHTML = "<th>Datum</th><th>Zitierweise</th><th>Kommentar</th>";
@@ -619,7 +624,17 @@ class Opera extends Oculus{
                     cTbl = document.createElement("TABLE");
                 }
             }
+            let cTblDiv = document.createElement("DIV");
+            cTblDiv.id = "opera_"+sheetCount;
+            cTblDiv.append(cTbl);
+            operaBox.append(cTblDiv);
+            operaBox.append(el.p(""));
         }
+        let lastDiv = document.createElement("DIV");
+        lastDiv.style.scrollSnapAlign = "start";
+        lastdiv.style.height = "50px";
+        operaBox.append(lastDiv);
+
         operaBox.onscroll = () => {
             let nearestElement = null;
             let toFar = false; 
@@ -686,14 +701,14 @@ class Opera extends Oculus{
         if(vLocal == null || vLatest > vLocal){
             console.log("calculate opera lists...");
             let authors = await arachne.author.getAll();
-            authors.sort((a, b) => {if(a.abbr_sort > b.abbr_sort){return 1;}else{return 0;}});
+            authors.sort((a, b) => {if(a.abbr_sort.toLowerCase() > b.abbr_sort.toLowerCase()){return 1;}else{return -1;}});
             let tblMai = [];
             let tblMin = [];
             let authorAdded = false;
             for(const author of authors){
                 authorAdded = false;
                 let works = await arachne.work.is(author.id, "author", false);
-                works.sort((a, b) => {if(a.abbr_sort > b.abbr_sort){return 1;}else{return 0;}});
+                works.sort((a, b) => {if(a.abbr_sort!=null&&b.abbr_sort!=null&&a.abbr_sort.toLowerCase() > b.abbr_sort.toLowerCase()){return 1;}else{return -1;}});
                 for(const work of works){
                     const editions = await arachne.edition.is(work.id, "work", false);
                     let editionsTxt = "";
