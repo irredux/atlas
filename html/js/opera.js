@@ -711,10 +711,15 @@ class Opera extends Oculus{
                 works.sort((a, b) => {if(a.abbr_sort!=null&&b.abbr_sort!=null&&a.abbr_sort.toLowerCase() > b.abbr_sort.toLowerCase()){return 1;}else{return -1;}});
                 for(const work of works){
                     const editions = await arachne.edition.is(work.id, "work", false);
-                    let editionsTxt = "";
+                    let editionsTxt = "<ul>";
                     for(const edition of editions){
-                        editionsTxt += `<p><a href="${html(edition.url)}" target="_blank">${html(edition.label)}</a></p>`;
+                        if(edition.url!=null&&edition.url!=""){
+                            editionsTxt += `<li><a href="${html(edition.url)}" target="_blank">${html(edition.label)}</a></li>`;
+                        } else {
+                            editionsTxt += `<li><a href="/site/viewer/${edition.id}" target="_blank">${html(edition.label)}</a></li>`;
+                        }
                     }
+                    editionsTxt += "</ul>";
                     if(work.is_maior == 1){
                         // opus maius
                         if(authorAdded == false && work.abbr != null){

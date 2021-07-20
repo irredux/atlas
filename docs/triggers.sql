@@ -119,6 +119,7 @@ FOR EACH ROW
             SET new.opus = (SELECT opus FROM work WHERE work.id = new.work_id);
             SET new.ac_web = (SELECT ac_web FROM work WHERE work.id = new.work_id);
         END IF;
+        SET new.label = CONCAT(new.editor, " ", new.year);
     END; //
 DELIMITER ;
 
