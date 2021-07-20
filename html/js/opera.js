@@ -711,7 +711,7 @@ class Opera extends Oculus{
                 works.sort((a, b) => {if(a.abbr_sort!=null&&b.abbr_sort!=null&&a.abbr_sort.toLowerCase() > b.abbr_sort.toLowerCase()){return 1;}else{return -1;}});
                 for(const work of works){
                     const editions = await arachne.edition.is(work.id, "work", false);
-                    let editionsTxt = "<ul>";
+                    let editionsTxt = "<ul style='list-style-type: none; margin: 0; padding: 0;'>";
                     for(const edition of editions){
                         if(edition.url!=null&&edition.url!=""){
                             editionsTxt += `<li><a href="${html(edition.url)}" target="_blank">${html(edition.label)}</a></li>`;
