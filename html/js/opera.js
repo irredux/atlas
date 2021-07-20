@@ -632,7 +632,7 @@ class Opera extends Oculus{
         }
         let lastDiv = document.createElement("DIV");
         lastDiv.style.scrollSnapAlign = "start";
-        lastdiv.style.height = "50px";
+        lastDiv.style.height = "50px";
         operaBox.append(lastDiv);
 
         operaBox.onscroll = () => {
