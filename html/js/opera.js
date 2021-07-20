@@ -713,7 +713,7 @@ class Opera extends Oculus{
                     const editions = await arachne.edition.is(work.id, "work", false);
                     let editionsTxt = "<ul style='list-style-type: none; margin: 0; padding: 0;'>";
                     for(const edition of editions){
-                        let editionURL = "/site/viewer/"+${edition.id}; 
+                        let editionURL = "/site/viewer/"+edition.id; 
                         if(edition.url!=null&&edition.url!=""){editionURL = html(edition.url)}
                         editionsTxt += `
                             <li>
