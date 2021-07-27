@@ -22,39 +22,27 @@ from binascii import hexlify
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInfoDispatcher
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from configparser import ConfigParser
-from datetime import datetime, timedelta, date
-from flask import abort, Flask, request, send_file, Response, render_template as template
+from datetime import datetime, timedelta
+from flask import abort, Flask, request, send_file, Response
 from hashlib import pbkdf2_hmac
 import json
-from os import path, urandom, mkdir, remove, listdir
+from os import path, urandom, mkdir
 from shutil import rmtree
 from sys import argv
 import subprocess
 from uuid import uuid4
-import urllib.parse
 
-from py.tiro import Tiro
 from py.arachne import Arachne
-
 
 p = path.dirname(path.abspath(__file__))
 
 #load cfg
-if len(argv) > 1:
-    cfg_path = argv[1]
-else:
-    cfg_path = p+"/config/localhost.ini"
-
+if len(argv) > 1: cfg_path = argv[1]
+else: cfg_path = p+"/config/localhost.ini"
 cfg = ConfigParser()
 cfg.read(cfg_path)
 
-# start logger
-tiro = Tiro(cfg.get('log', 'stream'), cfg.get('log', 'logfile'),
-        cfg.get('log', 'lvl'))
-tiro.log("Starting Buticula...")
-
 # set global vars and methods
-tiro.log(f"\t... main path: {p}")
 full_update = "2021-05-31 09:54:00" # local client-sided database
 
 # set db
@@ -65,7 +53,6 @@ db = Arachne(cfg['database'])
 # set server
 app = Flask(__name__)
 server_cfg = cfg["connection"]
-# server_cfg.get('server') == "cheroot"
 server = WSGIServer((server_cfg.get('host'), int(server_cfg.get('port'))), WSGIPathInfoDispatcher({"/": app}))
 
 if server_cfg.get("https") == "True":
@@ -98,13 +85,9 @@ class Server_Settings:
             self.oStores = json.load(config_file)
 
         # doublesided zettel
-        if server_cfg.get("doublesided") == "True":
-            self.doublesided = True
-        else:
-            self.doublesided = False
+        if server_cfg.get("doublesided") == "True": self.doublesided = True
+        else: self.doublesided = False
 srv_set = Server_Settings()
-
-tiro.log("\tButicula started.")
 
 # ################################################################
 # -I- assorted functions
@@ -188,8 +171,7 @@ def pw_set(pw_raw):
 @app.route("/site/<res>")
 @app.route("/site/<res>/<res_id>")
 def site(res = None, res_id = None):
-    return template("index.html")#, captions=self.captions["index"],
-            #user=None, full_update=self.full_update)
+    return send_file(p+"/static/html/index.html")
 
 # session
 @app.route("/session", methods=["POST"])
@@ -488,10 +470,8 @@ def f_zettel(letter, dir_nr, img): # NOT SAVE!!!!!!!! + NEEDS AUTH
 
 @app.route("/file/<f_type>/<res>")
 def file_read(f_type, res):
-    # css
     if f_type == "css" and res in srv_set.static_files["css"]:
         return send_file(p+"/static/css/"+res)
-    # js
     elif f_type == "js" and res in srv_set.static_files["js"]:
         return send_file(p+"/static/js/"+res)
 
@@ -509,6 +489,4 @@ def exec_on_server(res, res_id = None):
         return get_scan_files(res_id)
     else: return abort(404) # not found
 
-if __name__ == '__main__':
-    #app.run()
-    server.start()
+if __name__ == '__main__': server.start()
