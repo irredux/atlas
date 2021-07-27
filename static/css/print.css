@@ -1,0 +1,116 @@
+/* opera print */
+@page{
+    size: 148mm 94mm;
+    margin: 0mm;
+}
+@media print {
+    div#headerMenu, div.main, .noPrint{
+        display:none !important;
+    }
+
+    /* Zettel */
+    .zettel:not(:first-child){
+        page-break-before: always;
+    }
+    .zettel{
+        position: relative;
+        width: 100%;
+        height: 94mm;
+        /* 148 x 105 */
+        /*
+        width: 138mm; 
+        height: 94mm;
+        */
+        background-color: red;
+        page-break-inside: avoid;
+    }
+    .zettel img{
+        width: 100%;
+        height: 100%;
+    }
+    .digitalZettelLemma{
+        position: relative;
+        top: 20px;
+        left: 30px;
+    }
+    .digitalZettelDate{
+        position: absolute;
+        top: 20px;
+        right: 30px;
+    }
+    .digitalZettelWork{
+        position: relative;
+        top: 80px;
+        left: 10px;
+        right: 10px;
+        text-align: center;
+    }
+    .digitalZettelText{
+        position: relative;
+        top: 140px;
+        left: 30px;
+        right: 30px;
+        text-align: left;
+    }
+    .digitalZettelAuthor{
+        position: absolute;
+        bottom: 0px;
+        right: 20px;
+    }
+}
+
+
+
+@media screen {
+    table.exportTable{
+        display: none;
+    }
+}
+@media print {
+    aut{font-variant:small-caps}
+    table.exportTable{
+        font-size: 13pt;
+        width: 100%;
+        padding: 10px 5px;
+        border-collapse: collapse;
+    }
+    table.exportTable td{
+        padding: 5px 10px;
+        vertical-align: top;
+        text-align: left;
+    }
+    .c1{
+        width: 11%;
+    }
+    .c2{
+        border-left: 1px solid black;
+        width: 11%;
+    }
+    .c3{
+        border-left: 1px solid black;
+        width: 26%;
+    }
+    .c4{
+        border-left: 1px solid black;
+        width: 26%;
+        font-style: italic;
+    }
+    .c5{
+        border-left: double;
+        width: 26%;
+        font-size: 80%;
+    }
+
+    .c1_min{
+        width: 15%;
+    }
+    .c2_min{
+        border-left: 1px solid black;
+        width: 55%;
+    }
+    .c5_min{
+        border-left: double;
+        width: 30%;
+        font-size: 80%;
+    }
+}
