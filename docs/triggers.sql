@@ -106,6 +106,45 @@ FOR EACH ROW
         SET new.u_date = SYSDATE(6);
         SET new.opus = (SELECT opus FROM work WHERE work.id = new.work_id);
         SET new.ac_web = (SELECT ac_web FROM work WHERE work.id = new.work_id);
+        IF new.ressource = 1 THEN
+            SET new.label = CONCAT("[", new.editor, " ", new.year, "]");
+        ELSEIF new.ressource = 2 THEN
+            /*Handschrift*/
+            SET new.label = CONCAT("cod. ", "???");
+        ELSEIF new.ressource = 3 THEN
+            /*alter Druck*/
+            SET new.label = CONCAT(new.editor, " ", new.location);
+        ELSE
+            /*0: textkritische Edition; 4: sonstiges*/
+            SET new.label = CONCAT(
+                new.editor,
+                " ",
+                new.year,
+                IF(
+                    (new.volume != "" AND new.volume IS NOT NULL) OR (new.vol_cont != "" AND new.vol_cont IS NOT NULL),
+                    " (",
+                    ""
+                ),
+                IF(
+                    new.volume != "" AND new.volume IS NOT NULL,
+                    new.volume,
+                    ""
+                ),
+                IF(
+                    new.vol_cont != "" AND new.vol_cont IS NOT NULL,
+                    CONCAT(
+                        if(new.volume!="" AND new.volume IS NOT NULL, " ", ""),
+                        new.vol_cont
+                    ),
+                    ""
+                ),
+                IF(
+                    (new.volume != "" AND new.volume IS NOT NULL) OR (new.vol_cont != "" AND new.vol_cont IS NOT NULL),
+                    ")",
+                    ""
+                )
+            );
+        END IF;
     END; //
 DELIMITER ;
 
@@ -119,7 +158,45 @@ FOR EACH ROW
             SET new.opus = (SELECT opus FROM work WHERE work.id = new.work_id);
             SET new.ac_web = (SELECT ac_web FROM work WHERE work.id = new.work_id);
         END IF;
-        SET new.label = CONCAT(new.editor, " ", new.year);
+        IF new.ressource = 1 THEN
+            SET new.label = CONCAT("[", new.editor, " ", new.year, "]");
+        ELSEIF new.ressource = 2 THEN
+            /*Handschrift*/
+            SET new.label = CONCAT("cod. ", "???");
+        ELSEIF new.ressource = 3 THEN
+            /*alter Druck*/
+            SET new.label = CONCAT(new.editor, " ", new.location);
+        ELSE
+            /*0: textkritische Edition; 4: sonstiges*/
+            SET new.label = CONCAT(
+                new.editor,
+                " ",
+                new.year,
+                IF(
+                    (new.volume != "" AND new.volume IS NOT NULL) OR (new.vol_cont != "" AND new.vol_cont IS NOT NULL),
+                    " (",
+                    ""
+                ),
+                IF(
+                    new.volume != "" AND new.volume IS NOT NULL,
+                    new.volume,
+                    ""
+                ),
+                IF(
+                    new.vol_cont != "" AND new.vol_cont IS NOT NULL,
+                    CONCAT(
+                        if(new.volume!="" AND new.volume IS NOT NULL, " ", ""),
+                        new.vol_cont
+                    ),
+                    ""
+                ),
+                IF(
+                    (new.volume != "" AND new.volume IS NOT NULL) OR (new.vol_cont != "" AND new.vol_cont IS NOT NULL),
+                    ")",
+                    ""
+                )
+            );
+        END IF;
     END; //
 DELIMITER ;
 
