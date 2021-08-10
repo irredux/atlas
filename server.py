@@ -481,7 +481,15 @@ def file_read(f_type, res):
     elif f_type == "js" and res in srv_set.static_files["js"]:
         return send_file(p+"/static/js/"+res)
     elif f_type == "webfonts" and res in srv_set.static_files["webfonts"]:
-        return send_file(p+"/static/webfonts/"+res)        
+        return send_file(p+"/static/webfonts/"+res)
+    elif f_type == "scan":
+        user = auth(request.headers.get("Authorization"))
+        if "library" in user["access"]:
+            page = db.search("scan", {"id": res}, ["path", "filename"])[0]
+            print(p + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
+            return send_file(p + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
+        else: return HTTPResponse(status=401)
+
 
 # functions
 @app.route("/exec/<res>", methods=["GET", "POST"])
