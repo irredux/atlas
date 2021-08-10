@@ -1,20 +1,20 @@
 {
-    "Zettel": {
+    "Zettel- und Wortmaterial": {
         "access": "*",
         "items": [
-            {"caption": "Lemmaliste", "onClick": "lemma"},
             {"caption": "Zettel-Datenbank", "onClick": "zettel"},
-            {"caption": "Zettelkasten", "onClick": "kasten", "access": "admin"}
+            {"caption": "Zettel-Datenbank (neu)", "onClick": "zettel-neu", "access": "admin"},
+            {"caption": "Lemmaliste", "onClick": "lemma"},
+            {"caption": "Volltext-Suche", "onClick": "full_text", "access": "admin"}
         ]
     },
-    "Autoren und Werke": {
+    "Verzeichnisse": {
         "access": "*",
         "items": [
-            {"caption": "Bibliothek", "onClick": "library", "access": "e_edit"},
             {"caption": "<i>opera maiora</i>", "onClick": "opera_mai"},
             {"caption": "<i>opera minora</i>", "onClick": "opera_min"},
-            {"caption": "Sekundärliteratur", "onClick": "sek_lit"},
-            {"caption": "Volltext-Suche", "onClick": "full_text", "access": "admin"}
+            {"caption": "Ressourcen", "onClick": "library", "access": "e_edit"},
+            {"caption": "Sekundärliteratur", "onClick": "sek_lit"}
         ]
     },
     "Editor": {
@@ -23,20 +23,15 @@
             {"caption": "Projektübersicht", "onClick": "project_overview", "id": "projectOverview"}
         ]
     },
-    "Server": {
-        "access": "*",
-        "items":[
-            {"caption": "Kontenverwaltung", "onClick": "user_access", "access": "admin"},
-            {"caption": "Statistiken", "onClick": "server_stats"},
-            {"caption": "Lokale Datenbank", "onClick": "local_database"},
-            {"caption": "Tests", "onClick": "tests", "access": "admin", "access": "admin"}
-        ]
-    },
     "Einstellungen": {
         "access": "*",
         "items": [
             {"caption": "Hilfe", "onClick": "help"},
             {"caption": "Konto", "onClick": "account"},
+            {"caption": "Kontenverwaltung", "onClick": "user_access", "access": "admin"},
+            {"caption": "Statistiken", "onClick": "server_stats"},
+            {"caption": "Lokale Datenbank", "onClick": "local_database"},
+            {"caption": "Tests", "onClick": "tests", "access": "admin", "access": "admin"},
             {"caption": "abmelden", "onClick": "logout"}
         ]
     }

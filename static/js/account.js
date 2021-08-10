@@ -24,17 +24,14 @@ class Login extends Oculus{
         password.type = "password";
         let submitLogin = el.button("Login");
         submitLogin.style.float = "right";
-        submitLogin.onclick = () => {
-            let data = {user: email.value, password: password.value};
-            fetch("/session", {
-                method: "post",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(data)
-            }).then(response => response.text()).then(token => {
-                if(token!=""){arachne.key.token = token; argos.login()}
-                else {el.status("error", "Login fehlgeschlagen.")}
-            });
-
+        submitLogin.onclick = async () => {
+            const login = await arachne.login(email.value, password.value, true, ["zettel", "lemma"]);
+            if(login){
+                argos.login();
+            } else {
+                el.status("error", "Login fehlgeschlagen.")
+                localStorage.removeItem("key");
+            }
         }
         document.body.addEventListener("keypress", function enterLogin(){
             if(event.keyCode == 13){

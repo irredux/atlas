@@ -246,7 +246,6 @@ class Zettel extends Oculus{
             (query === "") ? query = "*" : query = query;
             this.query = query;
             this.refresh();
-            //this.load(query);
         }
         searchBar.appendChild(sbButton);
         let helpContent = `
@@ -315,15 +314,6 @@ class Zettel extends Oculus{
             }
             cContext.addEntry('*', 'a', 'Zettel exportieren', () => {argos.loadEye("zettel_export")});
             this.setContext = cContext.menu;
-            /*
-            // open zettel detail, if in query
-            this.ctn.querySelector("div.zettel_box").addEventListener("dblclick", function(){
-                argos.loadEye("zettel_detail", this.selMarker.main.lastRow)
-            });
-            if(argos.getQuery("detail") != null){
-                argos.loadEye("zettel_detail", argos.getQuery("detail"))
-            }
-            */
         }
         mainBody.appendChild(resultBox);
         this.ctn.appendChild(mainBody);
@@ -360,8 +350,6 @@ function createZettel(zettel){
         zettelMenu.innerHTML = `<span style='float: left;'>${html(zettel.lemma_display)}</span>
         <span style='float: right;'>${html(zettel.opus)}</span>`;
         box.appendChild(zettelMenu);
-        let changeSize = document.createElement("DIV");
-        changeSize.classList.add("changeZettelSize");
     } else {
         box.style.height = "var(--zettelHeight)";//"500px";
         box.innerHTML = `<div class='digitalZettel'>
@@ -372,7 +360,6 @@ function createZettel(zettel){
         `;
     }
     box.style.overflow = "hidden";
-    box.style.resize = "both";
     return box;
 }
 

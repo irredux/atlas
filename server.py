@@ -19,6 +19,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from binascii import hexlify
+
+from flask.templating import render_template
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInfoDispatcher
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from configparser import ConfigParser
@@ -167,12 +169,16 @@ def pw_set(pw_raw):
 # ################################################################
 # open argos 
 @app.route("/")
+def login():
+    return send_file(p+"/static/html/login.html")
 @app.route("/site")
-@app.route("/site/<res>")
-@app.route("/site/<res>/<res_id>")
-def site(res = None, res_id = None):
-    return send_file(p+"/static/html/index.html")
-
+@app.route("/site/viewer/<resId>")
+def site(resId=None):
+    return send_file(p+"/static/html/site.html")
+@app.route("/site/zettel")
+def zettel():
+    return render_template("zettel.html")
+    
 # session
 @app.route("/session", methods=["POST"])
 def session_create():
@@ -474,6 +480,8 @@ def file_read(f_type, res):
         return send_file(p+"/static/css/"+res)
     elif f_type == "js" and res in srv_set.static_files["js"]:
         return send_file(p+"/static/js/"+res)
+    elif f_type == "webfonts" and res in srv_set.static_files["webfonts"]:
+        return send_file(p+"/static/webfonts/"+res)        
 
 # functions
 @app.route("/exec/<res>", methods=["GET", "POST"])

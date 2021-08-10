@@ -419,7 +419,7 @@ class ArachneDatabase{
 
         if(query === "*"){
             if(limit!=null){return data.slice(0, limit)}
-            else{console.timeEnd("search");return data}
+            else{return data}
         } else {
             query = stringToQuery(query);
             let i = 0;

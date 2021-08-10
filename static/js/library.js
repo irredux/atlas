@@ -225,7 +225,7 @@ class Viewer extends Oculus{
 
         if(this.access.includes("l_edit")){
             cContext.addEntry('*', 'hr', '', null);
-            cContext.addEntry('*', 'a', 'Edition bearbeiten', () => {
+            cContext.addEntry('*', 'a', 'Ressource bearbeiten', () => {
                 argos.loadEye("library_edit", this.resId);
             });
             cContext.addEntry('*', 'a', 'Volltext bearbeiten', () => {

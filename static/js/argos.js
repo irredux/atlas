@@ -1,134 +1,75 @@
-import { Docker } from "/file/js/docker.js";
 import { ShortCuts } from "/file/js/shortcuts.js";
-
 
 export class Argos{
     // windows handler; holds an controls DOM elements 'Oculus'
-    constructor(requestedLastFullUpdate){
-        this.serverUpdate = this.setServerUpdate(requestedLastFullUpdate);
-
-        // set default Select-Key depending on operating system
+    constructor(dock){
+        this.dock = dock;
         this.SelectKey = 'Ctrl';
         if (navigator.appVersion.indexOf('Mac') > -1){this.SelectKey = 'Cmd';}
 
-        // set displayValues
         this.getUserDisplay();
         
-        // holds element id which fired current contextmenu
-        this.contextElementId = 0;
-
-        // set shortcuts
+        this.contextElementId = 0; // holds element id which fired current contextmenu
         this.shortCuts = new ShortCuts(this);
 
-        // set main eye
-        this.docker = new Docker();
-
-        // set token timeout
-        arachne.key.ontimeout = () => {
-            let res = "login";
-            let resId = null;
-            this.loadMain(res, resId)
-        };
-        if(arachne.key.token!=null){this.login()}
-    }
-    
-    user(){
-        return fetch("/session", {headers: {"Authorization": `Bearer ${arachne.key.token}`}}).
-            then(re => re.json()).
-            catch(e => {throw e});
-    }
-    setServerUpdate(date){
-        const year = date.substring(0,4);
-        const month = parseInt(date.substring(5,7))-1;
-        const day = parseInt(date.substring(8, 10));
-        const hours = parseInt(date.substring(11, 13))-1;
-        const minutes = parseInt(date.substring(14, 16))-1;
-        const seconds = parseInt(date.substring(17, 19))-1;
-        return Date.UTC(year, month, day, hours, minutes, seconds);
-    }
-
-    async login(){
-        this.URLSearch = this.getSearch();
-        console.log(this.URLSearch);
-
-        document.body.textContent = "";
-        const lastFullUpdate = localStorage.getItem("lastFullUpdate");
-        await arachne.createDB();
-        if(!location.pathname.startsWith("/site/viewer/")){
-            let loadLabel = document.createElement("DIV"); loadLabel.id = "loadLabel";
-            loadLabel.textContent = "Datenbank wird aktualisiert... ";
-            let loadLabelCurrent = document.createElement("SPAN");
-            loadLabelCurrent.style.fontStyle = "italic";
-            loadLabel.appendChild(loadLabelCurrent);
-            document.body.appendChild(loadLabel);
-            let backToLogin = document.createElement("DIV");
-            backToLogin.textContent = "abbrechen";
-            backToLogin.style.color = "var(--mainColor)";
-            backToLogin.style.fontSize = "14px";
-            backToLogin.style.position = "fixed";
-            backToLogin.style.bottom = "10px";
-            backToLogin.style.left = "10px";
-            backToLogin.onclick = () => {
-                localStorage.removeItem("key");
-                location.reload();
+        // login
+        const login = async () => {
+            this.access = await fetch("/config/access", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
+                .then(re => {
+                    if(re.status === 200){return re.json()}
+                    else{window.open("/", "_self")}
+                });
+            if(!location.pathname.startsWith("/site/viewer/")){
+                await arachne.login();
+                await this.loadMainNav();
+            } else {
+                // start up viewer
+                await arachne.login(false);
+                this.loadMain("viewer", location.pathname.substring(13));
             }
-            document.body.appendChild(backToLogin);
-            await arachne.loadDB(loadLabelCurrent, true, ["zettel", "lemma"]);
-            fetch("/config/access", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
-                .then(re => {if(re.status === 200){return re.json()}})
-                .then((access) => {
-                    this.access = access;
-                    return fetch("/config/menu", {headers: {"Authorization": `Bearer ${arachne.key.token}`}});
-                })
-                .then(re => {if(re.status === 200){return re.json()}})
-                .then((items) => {
-                    backToLogin.remove();
-                    let headerMenu = document.createElement("DIV");
-                    headerMenu.id = "headerMenu";
-                     // GET mainMenu -> display here!
-                    for(const item of items){
-                        let mainMenuEntry = document.createElement("DIV");
-                        mainMenuEntry.classList.add("mainMenuEntry");
-                        let mainMenuButton = document.createElement("DIV");
-                        mainMenuButton.classList.add("mainMenuButton");
-                        mainMenuButton.textContent = item[0];
-                        mainMenuEntry.appendChild(mainMenuButton);
+        }
+        this.URLSearch = this.getSearch();
+        login();
 
-                        let mainMenuContent = document.createElement("DIV");
-                        mainMenuContent.classList.add("mainMenuContent");
-                        for(const subItem of item[1]){
-                            let subMenu = document.createElement("DIV");
-                            let subMenuA = document.createElement("A");
-                            subMenuA.innerHTML = subItem.caption;
-                            subMenuA.onclick = () => {argos.loadMain(subItem.onClick)};
-                            subMenu.appendChild(subMenuA);
-                            mainMenuContent.appendChild(subMenu);
-                        }
-                        mainMenuEntry.appendChild(mainMenuContent);
+    }
 
-                        headerMenu.appendChild(mainMenuEntry);
-                    }
-                    document.body.appendChild(headerMenu);
-                    let res = null;
-                    let resId = null;
-                    let path = location.pathname;
-                    if(path.startsWith("/site")){
-                        path = path.slice(6);
-                        path = path.split("/");
-                        if(path[0]===""){
-                        } else if(path.length===1){
-                            res = path[0];
-                        } else if(path.length===2){
-                            res = path[0];
-                            resId = path[1];
-                        }
-                    }
-                    if(res!==null){this.loadMain(res, resId)}
-                })
-                .catch(e => {throw e});
+    async user(){ // ==> ARACHNE
+        try {
+            const re = await fetch("/session", { headers: { "Authorization": `Bearer ${arachne.key.token}` } });
+            return await re.json();
+        } catch (e) {
+            throw e;
+        }
+    }
+
+    async loginOLD(){
+        console.log(this.URLSearch);
+        //const lastFullUpdate = localStorage.getItem("lastFullUpdate");
+        if(!location.pathname.startsWith("/site/viewer/")){ 
+            this.access = await fetch("/config/access", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
+                .then(re => {if(re.status === 200){return re.json()}});
+
+            document.body.innerHTML = "<main></main><aside></aside><footer></footer>";
+            await this.loadMainNav();
+
+            let res = null;
+            let resId = null;
+            let path = location.pathname;
+            if(path.startsWith("/site")){
+                path = path.slice(6);
+                path = path.split("/");
+                if(path[0]===""){
+                } else if(path.length===1){
+                    res = path[0];
+                } else if(path.length===2){
+                    res = path[0];
+                    resId = path[1];
+                }
+            }
+            if(res!==null){this.loadMain(res, resId)}
         } else {
             // start up viewer
-            await arachne.loadDB(null, false)
+            await arachne.loadDB(false)
             fetch("/config/access", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
                 .then(re => {if(re.status === 200){return re.json()}})
                 .then((access) => {
@@ -138,6 +79,42 @@ export class Argos{
                 })
                 .catch(e => {throw e});
         }
+    }
+    async loadMainNav(){
+        const items = await fetch("/config/menu", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
+            .then(re => {
+                if(re.status === 200){return re.json()}
+                else{window.open("/", "_self")}
+            });
+        let headerMenu = document.createElement("NAV");
+        headerMenu.id = "headerMenu";
+        let displayHeaderMenu = document.createElement("DIV");
+        displayHeaderMenu.classList.add("fas", "fa-ellipsis-v");
+        displayHeaderMenu.id = "displayHeaderMenu";
+        const toggleShow = () => {
+            displayHeaderMenu.classList.toggle("show");
+            displayHeaderMenu.classList.toggle("fa-ellipsis-v");
+            displayHeaderMenu.classList.toggle("fa-ellipsis-h");
+            headerMenu.classList.toggle("show");
+        }
+        displayHeaderMenu.onclick = toggleShow;
+        document.body.append(displayHeaderMenu);
+        let headerMenuUL = document.createElement("UL");
+        headerMenu.append(headerMenuUL);
+        for(const item of items){
+            let mainMenuEntry = document.createElement("LI");
+            mainMenuEntry.innerHTML = "<span>"+item[0]+"</span>";
+            for(const subItem of item[1]){
+                let subMenuEntry = document.createElement("LI");
+                let subMenuA = document.createElement("A");
+                subMenuA.innerHTML = subItem.caption;
+                subMenuA.onclick = () => {toggleShow(); argos.loadMain(subItem.onClick)};
+                subMenuEntry.append(subMenuA);
+                mainMenuEntry.append(subMenuEntry);
+            }
+            headerMenuUL.append(mainMenuEntry);
+        }
+        document.body.append(headerMenu);
     }
 
     /* **************************************** */
@@ -165,39 +142,52 @@ export class Argos{
     /*          load and close elements         */
     /* **************************************** */
     loadMain(res, resId=null){
-        let url = `/site/${res}`;
-        if(resId){url+=`/${resId}`}
-        if(event!=null && ((this.SelectKey == 'Ctrl' && event.ctrlKey) ||
-            (this.SelectKey == 'Cmd' && event.metaKey))){
-            Object.assign(document.createElement("A"), {target: "_blank", href: url}).click();
-        } else {
-            // sets new site
-            if(this.main!=null){this.main.close()}
-            this.main = this.docker.load(res, resId, this.access, true);
-            if(res!="login"){history.pushState('', '', url)}
 
-            // set shortcuts
-            this.shortCuts.load(res);
+        switch(res){
+            case "zettel-neu":
+                if(this.main!=null){this.main.close()}
+                mainZettel();
+                break;
+            default:
+                let mainBody = document.querySelector("main");
+                let mainHeader = document.querySelector("header");
+                let mainFooter = document.querySelector("footer");
+                let mainAside = document.querySelector("aside");
+                mainBody.style.display = "none";
+                mainHeader.style.display = "none";
+                mainFooter.style.display = "none";
+                mainAside.style.display = "none";
 
-            /*
-            this.setQuery("main", res);
-            if (this.mainId != res){
-                if (this.o[this.mainId] != null){this.o[this.mainId].close()}
-                // load fresh content
-                if(resId==null){
-                    this.mainId = res;
-                    this.o[this.mainId] = new Oculus(this.mainId, {classList: ['main']});
-                }else{
-                    this.mainId = res;
-                    this.o[this.mainId] = new Oculus(this.mainId, {classList: ['main'], resId: resId});
+                let url = `/site/${res}`;
+                if(resId){url+=`/${resId}`}
+                if(event!=null && ((this.SelectKey == 'Ctrl' && event.ctrlKey) ||
+                    (this.SelectKey == 'Cmd' && event.metaKey))){
+                    Object.assign(document.createElement("A"), {target: "_blank", href: url}).click();
+                } else {
+                    // sets new site
+                    if(this.main!=null){this.main.close()}
+                    this.main = this.load(res, resId, this.access, true);
+                    this.main.ctn.style.position = "absolute";
+                    this.main.ctn.style.top = "0";
+                    this.main.ctn.style.left = "0";
+                    this.main.ctn.style.right = "0";
+                    this.main.ctn.style.bottom = "0";
+                    this.main.ctn.style.overflow = "scroll";
+
+                    if(res!="login"){history.pushState('', '', url)}
+
+                    // set shortcuts
+                    this.shortCuts.load(res);
                 }
-            }
-            */
         }
     }
     loadEye(res, resId=null, query=null){
-        this.main.o[res]=this.docker.load(res, resId, this.access, false);
-        //this.o[res] = new Oculus(res, {resId: resId, query: query});
+        this.main.o[res]=this.load(res, resId, this.access, false);
+    }
+    load(res, resId = null, access= [], main = false){
+        if(this.dock[res] != null){
+            return new this.dock[res](res, resId, access, main);
+        }else{throw `Argos: No dock found for res "${res}".`}
     }
     popEye(){
         // removes the last eye from main; used the close popover windows with "w"
@@ -235,29 +225,23 @@ export class Argos{
             return re;
         } else {return {};}
     }
-    /*
-    setQuery(nPara, nValue) {
-        nPara = encodeURIComponent(nPara);
-        nValue = encodeURIComponent(nValue);
-        var cParas = document.location.search.substr(1).replace(/=/g, '":"').replace(/&/g, '","');
-        if (cParas != ''){
-            cParas = JSON.parse('{"' + cParas + '"}');
-        } else {
-            cParas = {};
-        }
-        if (nValue != ''){
-            cParas[nPara] = nValue;
-        } else if (nValue == '' && cParas[nPara] != null){
-            delete cParas[nPara];
-        }
-        var nParas = JSON.stringify(cParas);
-        if (nParas != '{}'){
-            nParas = '?' + nParas.substring(2, nParas.length-2).replace(/":"/g, '=').replace(/","/g, '&');
-        } else {
-            nParas = '';
-        }
-        history.pushState('', '', '/'+nParas);
-    }
-    */
+}
 
+async function mainZettel(){
+    let mainBody = document.querySelector("main");
+    let mainHeader = document.querySelector("header");
+    let mainFooter = document.querySelector("footer");
+    let mainAside = document.querySelector("aside");
+    mainHeader.style.display = "block";
+    mainBody.style.display = "block";
+    mainHeader.innerHTML = `
+        <input type="text" placeholder="Suchbegriff eingeben..." style="width: 80%;" />
+        <input type="button" value="suchen" />
+    `;
+    const mainTxt = await fetch("/site/zettel", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
+    .then(re => {
+        if(re.status === 200){return re.text()}
+        else{window.open("/", "_self")}
+    });
+    mainBody.innerHTML = mainTxt;
 }

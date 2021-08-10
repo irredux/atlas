@@ -9,7 +9,7 @@ class Oculus{
         this.access = access;
         this.type = "DIV";
         this.classList = "";
-        if(main){this.classList="main"}
+        //if(main){this.type = "MAIN"}
         //if (p["type"] != null){this.type = p["type"]}else{this.type = "div"}
         //if (p["classList"] != null){this.classList = p["classList"]}else{this.classList = []}
 
@@ -31,15 +31,13 @@ class Oculus{
     /*               load and close             */
     /* **************************************** */
     async refresh(){
-        var newElement = document.createElement(this.type);
+        let newElement = document.createElement(this.type);
         newElement.id = this.res;
         newElement.classList = this.classList;
-        if(this.ctn == null){
-            if(this.classList.includes("main")){
-                document.body.insertBefore(newElement,document.body.firstChild);
-            }else{document.body.appendChild(newElement)}
-        }else{document.body.replaceChild(newElement, this.ctn)}
+        if(this.ctn == null){document.body.appendChild(newElement)}
+        else{document.body.replaceChild(newElement, this.ctn)}
         this.ctn = newElement;
+        
         this.ctn.innerHTML = "<div id='loadLabel'>Inhalt wird geladen...</div>";
         await this.load();
         try{document.getElementById("loadLabel").remove()}
@@ -163,6 +161,7 @@ class Oculus{
     /*                 load more                */
     /* **************************************** */
     setLoadMore(LMctn, resultList){
+        console.log("im setting loadmore");
         this.loadMore = {ctn: LMctn, resultList: resultList, position: 0};
         this.ctn.onscroll = () =>{
             if(this.ctn.scrollHeight - 200 <= this.ctn.offsetHeight+this.ctn.scrollTop){

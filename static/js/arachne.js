@@ -4,42 +4,22 @@ const fetch = require("node-fetch");
 module.exports = Arachne;
 */
 class Key{
-    constructor(h=0, m=0, s=0){
-        this.TimeLimit = (h*3600000)+(m*60000)+(s*1000);
-        this.ontimeout = null;
-        //replace token with BroadCastChannel!
-        /*
-        try{
-            const mlwChannel = new BroadcastChannel("mlwChannel");
-            mlwChannel.onmessage = e => {
-                if(e.data === "token?" && cToken != null){mlwChannel.postMessage(cToken)}
-                else if(this.token==null){this.login(e.data)}
-            }
-            if(cToken == null){mlwChannel.postMessage("token?")}
-        } catch {// not supported in safari}
-         */
-        if(localStorage.getItem("key") != null){
-            let cKey = JSON.parse(localStorage.getItem("key"));
-            if(cKey.timeOut>Date.now()){
-                this.myToken = cKey.token;
-                this.timeOut = cKey.timeOut;
-            }
-        }
+    constructor(){
     }
     removeToken(){
-        this.myToken = null;
         localStorage.removeItem("key");
-        this.timeOut = 0;
+        window.open("/", "_self");
     }
     get token(){
-        if(this.timeOut > Date.now()){return this.myToken}
-        else if(this.ontimeout!=null){this.ontimeout()}
-        else{return null}
+        return localStorage.getItem("key");
     }
     set token(nToken){
+        throw "SET TOKEN????";
+        /*
         this.myToken = nToken;
         this.timeOut = Date.now()+this.TimeLimit;
         localStorage.setItem("key", JSON.stringify({timeOut: this.timeOut, token: this.myToken}));
+        */
     }
 }
 
@@ -317,7 +297,31 @@ class Arachne{
         this.dbVersion = 1;
     }
 
-    async createDB(){
+    async login(sync = true, sOrderLst = []){
+        let loadLabel = document.createElement("DIV");
+        let loadLabelCurrent = document.createElement("SPAN");
+        let backToLogin = document.createElement("DIV");
+        if(sync){
+            let mainBody = document.querySelector("main");
+            loadLabel.id = "loadLabel";
+            loadLabel.textContent = "Datenbank wird aktualisiert... ";
+            loadLabelCurrent.style.fontStyle = "italic";
+            loadLabel.appendChild(loadLabelCurrent);
+            mainBody.appendChild(loadLabel);
+            backToLogin.textContent = "abbrechen";
+            backToLogin.style.color = "var(--mainColor)";
+            backToLogin.style.fontSize = "14px";
+            backToLogin.style.position = "fixed";
+            backToLogin.style.bottom = "10px";
+            backToLogin.style.left = "10px";
+            backToLogin.onclick = () => {
+                localStorage.removeItem("key");
+                location.reload();
+            }
+            mainBody.appendChild(backToLogin);
+        }
+
+        // CREATE DB
         this.oStoresSchema = await fetch("/config/oStores", {
             headers: {"Authorization": `Bearer ${this.key.token}`}
         })
@@ -334,8 +338,9 @@ class Arachne{
         for(const oStoreSchema of this.oStoresSchema){
             this.oStores.push(oStoreSchema.name);
         }
+
         //if(deleteFirst){await this.deleteDB()}
-        return new Promise((resolve, reject) => {
+        await new Promise((resolve, reject) => {
             let request = indexedDB.open(this.dbName, this.dbVersion);
             request.onerror = e => {reject(e)}
             request.onupgradeneeded = () => {
@@ -351,12 +356,10 @@ class Arachne{
             }
             request.onsuccess = () => {resolve()};
         });
-    }
 
-    async loadDB(loadLabel=null, sync = true, sOrderLst = []){
+        // SYNC DB
         this.optimize = argos.userDisplay.optimize;
         for(const tbl of this.oStores){
-            if(loadLabel!=null){loadLabel.textContent = tbl}
             this[tbl] = new ArachneWrapper(
                 tbl,
                 this.dbName,
@@ -364,10 +367,12 @@ class Arachne{
                 (this.optimize.includes(tbl) ? true : false),
                 (sOrderLst.includes(tbl) ? true : false)
             );
-            if(sync){await this[tbl].load()}
-            else{this[tbl].load()}
+            if(sync){
+                loadLabelCurrent.textContent = tbl;
+                await this[tbl].load()
+            } else {this[tbl].load()}
         }
-        if(loadLabel!=null){loadLabel.parentNode.remove()}
+        if(sync){loadLabel.remove();backToLogin.remove();return true;}
         else{el.status("updated")}
     }
 

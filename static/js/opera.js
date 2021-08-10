@@ -113,11 +113,11 @@ class Library extends Oculus{
             // contextmenu
             if(argos.access.includes("e_edit")){
                 let cContext = new ContextMenu();
-                cContext.addEntry('tr.edition', 'a', 'Edition bearbeiten', () => {
+                cContext.addEntry('tr.edition', 'a', 'Ressource bearbeiten', () => {
                     argos.loadEye("library_edit", this.selMarker.main.lastRow)
                 });
-                cContext.addEntry('tr.edition', 'a', 'Edition erstellen', () => {argos.loadEye("library_edit")});
-                cContext.addEntry('tr.edition', 'a', 'Edition löschen', async () => {
+                cContext.addEntry('tr.edition', 'a', 'Neue Ressource erstellen', () => {argos.loadEye("library_edit")});
+                cContext.addEntry('tr.edition', 'a', 'Ressource löschen', async () => {
                     if(window.confirm("Soll die Edition wirklich gelöscht werden? Die verknüpften Scans werden nicht gelöscht! Dieser Schritt kann nicht rückgängig gemacht werden!")){
                         const editionId = parseInt(this.selMarker.main.lastRow);
                         const scan_lnks = await arachne.scan_lnk.is(editionId, "edition", false);
@@ -178,16 +178,24 @@ class LibraryEdit extends Oculus{
             if(edition.work_id > 0){work = await arachne.work.is(edition.work_id)}
             mainBody.appendChild(el.h(`${work.opus} <i class="minorTxt">(ID: ${edition.id})</i>`, 3));
         } else {
-            mainBody.appendChild(el.h("Neue Edition erstellen", 3));
+            mainBody.appendChild(el.h("Neue Ressource erstellen", 3));
         }
         let iWork = el.text(work.ac_web);
         iWork.dataset.selected = edition.work_id;
         await this.bindAutoComplete(iWork, "work", ["id", "ac_web"]);
-        let iEditionName = el.area(edition.edition_name);
+        const serieTypes = {
+            0: "",
+            1: "Migne/PL",
+            2: "ASBen.",
+            3: "ASBoll",
+            4: "AnalBoll.",
+            5: "Mon. Boica"
+        };
         let iEditor = el.text(edition.editor);
         let iYear = el.text(edition.year);
         let iVolume = el.text(edition.volume);
         let iVolumeContent = el.text(edition.vol_cont);
+        let iSerie = el.select(edition.serie, serieTypes);
         let iComment = el.area(edition.comment);
         let iLocation = el.text(edition.location);
         let iLibrary = el.text(edition.library);
@@ -198,11 +206,12 @@ class LibraryEdit extends Oculus{
             editorCityDes.textContent = "Stadt/Drucker:";
         }*/
         let resTypes = {
-            0: "textkritische Edition",
-            1: "textkritische Edition (veraltet)",
+            0: "Edition (relevant)",
+            1: "Edition (veraltet)",
             2: "Handschrift",
-            3: "Alter Druck",
-            4: "Sonstiges"
+            3: "Alter Druck (relevant)",
+            4: "Alter Druck (veraltet)",
+            5: "Sonstiges"
         };
         let iRessource = el.select(edition.ressource, resTypes);
         iRessource.onchange = () => {
@@ -246,14 +255,14 @@ class LibraryEdit extends Oculus{
             if(iType.value == 1){scanDIV.style.display = "none"; linkDIV.style.display = "block";}
             else{linkDIV.style.display = "none"; scanDIV.style.display = "block"}
         }
-        // 20-80
         let openScans = `<a class="minorTxt" href="/site/viewer/${edition.id}" target="_blank">Digitalisat öffnen</a>`;
         if(this.res = "viewer"){openScans = ""}
         let tbl1 = [
             ["Verknüpftes Werk:", iWork],
             ["", `<span class="minorTxt">${work.bibliography}</span>`],
             ["", openScans],
-            ["Edition:", iEditionName]
+            ["Ressource:", iRessource]
+
         ];
         mainBody.appendChild(el.table(tbl1, ["20%", "80%"]));
 
@@ -264,7 +273,7 @@ class LibraryEdit extends Oculus{
         let divYear =  document.createElement("DIV");
         divYear.append(el.table([["Jahr:", iYear]], ["20%", "80%"]));
         let divVolume =  document.createElement("DIV");
-        divVolume.append(el.table([["Band:", iVolume], ["Bandinhalt:", iVolumeContent]], ["20%", "80%"]));
+        divVolume.append(el.table([["Band:", iVolume], ["Bandinhalt:", iVolumeContent], ["Reihe:", iSerie]], ["20%", "80%"]));
         let divLibSig =  document.createElement("DIV");
         divLibSig.append(el.table([["Bibliothek:", iLibrary], ["Signatur:", iSignature]], ["20%", "80%"]));
         if(edition.ressource == 2){
@@ -290,7 +299,6 @@ class LibraryEdit extends Oculus{
         mainBody.append(divLibSig);
         mainBody.append(el.table([
             ["Kommentar:", iComment],
-            ["Ressource:", iRessource],
             ["Typ:", iType]
         ], ["20%", "80%"]));
 
@@ -312,8 +320,7 @@ class LibraryEdit extends Oculus{
         let scanTbl = [
             ["Dateipfad auf Server:", iPath],
             ["Ursprünglicher Dateiname:", edition.dir_name],
-            ["Scan-Seiten bearbeiten:", iSelector]/*,
-            ["Letzte Seite:", iDefaultPage]*/
+            ["Scan-Seiten bearbeiten:", iSelector]
         ];
         scanDIV.appendChild(el.table(scanTbl));
 
@@ -326,7 +333,6 @@ class LibraryEdit extends Oculus{
         iSave.onclick = () => {
             let data = {
                 work_id: iWork.dataset.selected,
-                edition_name: iEditionName.value,
                 editor: iEditor.value,
                 volume: iVolume.value,
                 vol_cont: iVolumeContent.value,
@@ -337,6 +343,7 @@ class LibraryEdit extends Oculus{
                 library: iLibrary.value,
                 signature: iSignature.value
             };
+            if(iSerie.value!=0){data.serie = iSerie.value}
             if(this.resId > 0){data.id = this.resId}
             if(iPath.value != ""){data.path = iPath.value}
             if(iType == 0){
@@ -682,7 +689,7 @@ class Opera extends Oculus{
         }
         if(argos.access.includes("e_edit")){
             //cContext.addEntry('*', 'a', 'Opera-Listen aktualisieren', function(){argos.loadEye("opera_update")});
-            cContext.addEntry('a.editionLnk', 'a', 'Edition bearbeiten', () =>{
+            cContext.addEntry('a.editionLnk', 'a', 'Ressource bearbeiten', () =>{
                 argos.loadEye("library_edit", this.eventTarget.id)
             });
         }
@@ -1064,7 +1071,7 @@ class WorkEdit extends Oculus{
         `;
         dateOwnDesType.appendChild(el.pop("(?)", helpContentSortType, "left", "relative"));
         const tblContent = [
-            ["Name:", iFull, "Anzeigedatum:", iDateDisplay],
+            ["Werktitel:", iFull, "Anzeigedatum:", iDateDisplay],
             ["Abkürzung:", iAbbr, "Abkürzung (Sortierung):", iAbbrSort],
             [dateOwnDes, iDateSort, dateOwnDesType, iDateType],
             ["Abweichender Autorenname<br />(z.B. bei VITA):", iAuthorDisplay, "", ""],
