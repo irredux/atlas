@@ -167,7 +167,7 @@ export class Argos{
                     // sets new site
                     if(this.main!=null){this.main.close()}
                     this.main = this.load(res, resId, this.access, true);
-                    if(res!="login"){history.pushState('', '', url)}
+                    //if(res!="login"){history.pushState('', '', url)}
 
                     // set shortcuts
                     this.shortCuts.load(res);
