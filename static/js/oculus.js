@@ -171,10 +171,12 @@ class Oculus{
     /* **************************************** */
     setLoadMore(LMctn, resultList){
         console.log("im setting loadmore");
-        this.loadMore = {ctn: LMctn, resultList: resultList, position: 0};
-        this.ctn.onscroll = () =>{
-            if(this.ctn.scrollHeight - 200 <= this.ctn.offsetHeight+this.ctn.scrollTop){
-                this.startLoadMore();
+        this.loadMore = {ctn: LMctn, resultList: resultList, position: 0, locked=false};
+        this.ctn.onscroll = async () =>{
+            if(this.loadMore.locked!=false && this.ctn.scrollHeight - 200 <= this.ctn.offsetHeight+this.ctn.scrollTop){
+                this.loadMore.locked = true;
+                await this.startLoadMore();
+                this.loadMore.locked = false;
             }
         }
         this.startLoadMore();
