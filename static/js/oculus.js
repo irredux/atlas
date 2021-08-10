@@ -4,6 +4,7 @@ class Oculus{
     // loads any kind of additional data from server into HTML element
     constructor(res, resId=null, access=[], main=false){//p={}){
         // save values
+        this.main = main;
         this.res = res;
         this.resId = parseInt(resId);
         this.access = access;
@@ -37,6 +38,14 @@ class Oculus{
         if(this.ctn == null){document.body.appendChild(newElement)}
         else{document.body.replaceChild(newElement, this.ctn)}
         this.ctn = newElement;
+        if(this.main){
+            this.ctn.style.position = "absolute";
+            this.ctn.style.top = "0";
+            this.ctn.style.left = "0";
+            this.ctn.style.right = "0";
+            this.ctn.style.bottom = "0";
+            this.ctn.style.overflow = "scroll";
+        }
         
         this.ctn.innerHTML = "<div id='loadLabel'>Inhalt wird geladen...</div>";
         await this.load();
