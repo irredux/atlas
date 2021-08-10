@@ -167,13 +167,6 @@ export class Argos{
                     // sets new site
                     if(this.main!=null){this.main.close()}
                     this.main = this.load(res, resId, this.access, true);
-                    this.main.ctn.style.position = "absolute";
-                    this.main.ctn.style.top = "0";
-                    this.main.ctn.style.left = "0";
-                    this.main.ctn.style.right = "0";
-                    this.main.ctn.style.bottom = "0";
-                    this.main.ctn.style.overflow = "scroll";
-
                     if(res!="login"){history.pushState('', '', url)}
 
                     // set shortcuts
