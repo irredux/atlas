@@ -1,8 +1,5 @@
 export { Arachne };
-/*
-const fetch = require("node-fetch");
-module.exports = Arachne;
-*/
+
 class Key{
     constructor(){
     }

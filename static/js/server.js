@@ -147,7 +147,11 @@ class LocalDatabase extends Oculus{
             if(cAll.length==serverInfo.length){length = "<span style='color:green'>Ja</span>"}
             tblContent.push([tbl, maxDate, length]);
         }
-        cardDB.appendChild(el.table(tblContent));
+        let overviewTbl = el.table(tblContent);
+        for(const c of overviewTbl.children){
+            c.style.borderBottom = "1px solid var(--minorColor)";
+        }
+        cardDB.appendChild(overviewTbl);
         mainBody.appendChild(cardDB);
 
         this.ctn.appendChild(mainBody);
