@@ -228,8 +228,8 @@ async function mainZettel(){
     mainHeader.style.display = "block";
     mainBody.style.display = "block";
     mainHeader.innerHTML = `
-        <input type="text" placeholder="Suchbegriff eingeben..." style="width: 80%;" />
-        <input type="button" value="suchen" />
+        <!--<input type="text" placeholder="Suchbegriff eingeben..." style="width: 80%;" />
+        <input type="button" value="suchen" />-->
     `;
     const mainTxt = await fetch("/site/zettel", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
     .then(re => {

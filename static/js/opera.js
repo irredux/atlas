@@ -185,11 +185,13 @@ class LibraryEdit extends Oculus{
         await this.bindAutoComplete(iWork, "work", ["id", "ac_web"]);
         const serieTypes = {
             0: "",
-            1: "Migne/PL",
+            1: "Migne PL",
             2: "ASBen.",
-            3: "ASBoll",
+            3: "ASBoll.",
             4: "AnalBoll.",
-            5: "Mon. Boica"
+            5: "Mon. Boica",
+            6: "Ma. Schatzverzeichnisse",
+            7: "Ma. Bibliothekskataloge"
         };
         let iEditor = el.text(edition.editor);
         let iYear = el.text(edition.year);
