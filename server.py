@@ -32,9 +32,10 @@ from os import path, urandom, mkdir
 from shutil import rmtree
 from sys import argv
 import subprocess
+import timeit
 from uuid import uuid4
 
-from py.arachne import Arachne
+from arachne import Arachne
 
 p = path.dirname(path.abspath(__file__))
 
@@ -505,4 +506,106 @@ def exec_on_server(res, res_id = None):
         return get_scan_files(res_id)
     else: return abort(404) # not found
 
-if __name__ == '__main__': server.start()
+# dMLW-specific functions
+def html(input):
+    return input
+
+def create_opera_lists():
+    authors = db.command(f"SELECT * FROM author ORDER BY abbr_sort")
+    tbl_mai = []
+    tbl_min = []
+    for author in authors:
+        #print(f"next author: {author['abbr']}")
+        author_added = False
+        works = db.command(f"SELECT * FROM work WHERE author_id = {author['id']} ORDER BY abbr_sort")
+        for work in works:
+            #print(f"   next work: {work['abbr']}")
+            editions = db.command(f"SELECT * FROM edition WHERE work_id = {work['id']}")
+            editionsTxt = "<ul style='list-style-type: none; margin: 0; padding: 0;'>"
+            for edition in editions:
+                #print("      next edition!")
+                editionURL = f"/site/viewer/{edition['id']}" 
+                if(edition["url"]!=None and edition["url"]!=""):
+                    editionURL = html(edition["url"])
+                editionsTxt += f"<li><a href='{html(editionURL)}' class='editionLnk' id='{edition['id']}' target='_blank'>{html(edition.get('label', ''))}</a></li>"
+            editionsTxt += "</ul>"
+            if(work["is_maior"]==1):
+                # opus maius
+                if author_added == False and work["abbr"] != None:
+                    # author on separat line
+                    abbr = f"<aut>{html(author['abbr'])}</aut>"
+                    if author["in_use"] != 1:
+                        abbr = f"<aut>[{html(author['abbr'])}]</aut>"
+                    tbl_mai.append({
+                        "author_id": author["id"],
+                        "work_id": 0,
+                        "date_display": html(author["date_display"]),
+                        "abbr": abbr,
+                        "full": html(author["full"]),
+                        "editions": "",
+                        "comment": html(author["txt_info"])
+                    })
+                elif author_added == False and work["abbr"] == None:
+                    # author + work on same line
+                    abbr = f"<aut>{html(author['abbr'])}</aut>"
+                    if author["in_use"] != 1:
+                        abbr = f"<aut>[{html(author['abbr'])}]</aut>"
+
+                    nData = {
+                        "author_id": author["id"],
+                        "work_id": work["id"],
+                        "date_display": html(work["date_display"]),
+                        "abbr": abbr,
+                        "full": "",
+                        "editions": f"{html(work['bibliography'])}{editionsTxt}",
+                        "comment": html(f"{work['citation']} {work['txt_info']}")
+                    }
+                    if author["full"]!=None:
+                        nData["full"] += html(author["full"])
+                    if work["reference"]!=None and work["reference"]!="":
+                        nData["full"] += f" v. ${html(work['reference'])}"
+                    tbl_mai.append(nData)
+                else:
+                    # work
+                    abbr = html(f"&nbsp;&nbsp;&nbsp;{work['abbr']}")
+                    if work["in_use"] != 1:
+                        abbr = html(f"&nbsp;&nbsp;&nbsp;[{work['abbr']}]")
+                    nWorkData = {
+                        "author_id": 0,
+                        "work_id": work["id"],
+                        "date_display": html(work["date_display"]),
+                        "abbr": abbr,
+                        "full": "&nbsp;&nbsp;&nbsp;",
+                        "editions": f"{html(work['bibliography'])}{editionsTxt}",
+                        "comment": html(f"{work['citation']} {work['txt_info']}")
+                    }
+                    if work["author_display"]!=None and work["author_display"]!= "":
+                        nWorkData["abbr"] = f"<aut>{html(work['author_display'])}</aut> {html(work['abbr'])}"
+                        if work["in_use"] != 1:
+                            nWorkData["abbr"] = "["+nWorkData["abbr"]+"]"
+                    if work["full"]!=None:
+                        nWorkData["full"] += html(work["full"])
+                    if work["reference"]!=None and work["reference"]!="":
+                        nWorkData["full"] += f" v. {html(work['reference'])}"
+                    tbl_mai.append(nWorkData)
+                author_added = True
+            else:
+                # opus minus
+                tbl_min.append({
+                    "author_id": author["id"],
+                    "work_id": work["id"],
+                    "date_display": html(work["date_display"]),
+                    "opus": html(work["opus"].replace(" <cit></cit> ( <cit_bib></cit_bib>)", "")),
+                    "editions": editionsTxt,
+                    "comment": html(work["txt_info"])
+                })
+    return (tbl_mai, tbl_min)
+
+
+if __name__ == '__main__':
+    #print("start timeing")
+    #create_opera_lists()
+    #print(timeit.timeit("create_opera_lists()", setup="from __main__ import create_opera_lists"))
+    #print(mai, min)
+    print("starting server...")
+    server.start()
