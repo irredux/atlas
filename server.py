@@ -364,17 +364,13 @@ def data_read(res, res_id=None):
         json_query = json.loads(jQuery)
         q_lst = []
         q_txt = ""
-        for c, v in json_query.items():
-            o = "="
-            if v[0] in [">", "<"]:
-                o = v[0]
-                v = v[1:]
-            elif v.find("*"):
-                o = "LIKE"
-                v = v.replace("*", "%")
-            q_lst.append(f"{c} {o} %s")
-            v_cols.append(v)
-        q_txt = ", ".join(q_lst)
+        for q in json_query:
+            if q["v"].find("*")>-1:
+                q["o"] = "LIKE"
+                q["v"] = q["v"].replace("*", "%")
+            q_lst.append(f"{q['c']} {q['o']} %s")
+            v_cols.append(q["v"])
+        q_txt = " AND ".join(q_lst)
         q_txt = f" {q_txt} "        
         w_txt = ""
         if user_id != "" or q_txt != "":

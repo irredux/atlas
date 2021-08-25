@@ -1,6 +1,8 @@
 /* zettel */
 #navItems{
     /*border: 1px solid var(--minorBG);*/
+    position: sticky;
+    top: 20px;
     background-color: var(--minorBG);
     border-radius: 7px;
     width: max-content;

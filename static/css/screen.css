@@ -319,7 +319,7 @@
     /*                   MAIN DOCUMENT                  */
     /* ************************************************ */
     header{
-        position: sticky;
+        /*position: absolute;*/
         background-color: var(--mainBG);
         top: 0;
         left: 0;
