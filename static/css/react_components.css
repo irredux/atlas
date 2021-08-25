@@ -1,0 +1,17 @@
+/* zettel */
+#navItems{
+    /*border: 1px solid var(--minorBG);*/
+    background-color: var(--minorBG);
+    border-radius: 7px;
+    width: max-content;
+    padding: 5px 10px;
+    color: var(--mainColor);
+    box-shadow: 0 0 1px var(--shadowBG);
+    float: right;
+}
+#navSelect{
+    padding: 0 10px 0 10px;
+    border-left: 1px solid var(--mainColor);
+    border-right: 1px solid var(--mainColor);
+    margin: 0 10px 0 10px;
+}
