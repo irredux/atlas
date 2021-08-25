@@ -219,22 +219,33 @@ export class Argos{
         } else {return {};}
     }
 }
-
+/*
 async function mainZettel(){
     let mainBody = document.querySelector("main");
     let mainHeader = document.querySelector("header");
-    let mainFooter = document.querySelector("footer");
-    let mainAside = document.querySelector("aside");
+    //let mainFooter = document.querySelector("footer");
+    //let mainAside = document.querySelector("aside");
     mainHeader.style.display = "block";
     mainBody.style.display = "block";
+    /*
     mainHeader.innerHTML = `
         <!--<input type="text" placeholder="Suchbegriff eingeben..." style="width: 80%;" />
         <input type="button" value="suchen" />-->
     `;
-    const mainTxt = await fetch("/site/zettel", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
-    .then(re => {
-        if(re.status === 200){return re.text()}
-        else{window.open("/", "_self")}
-    });
-    mainBody.innerHTML = mainTxt;
+    mainBody.innerHTML = "";
+
+    class ReactTest extends React.Component{
+        constructor(props){
+            super(props);
+        }
+        render(){
+            return "hello";
+        }
+
+    }
+
+    //const text = <h1>test</h1>;
+    ReactDOM.render(<ReactTest />, mainBody);
+    //const test = await loadData("zettel", {lemma:"kal*"}, {limit:1})
 }
+*/

@@ -354,31 +354,44 @@ def data_read(res, res_id=None):
             break
     else:
         abort(403) # forbidden
-    jQuery = request.args.get("jQuery", None)
+    jQuery = request.args.get("query", None) # query in json format: [{c: col, o: operator, v: value}, ...]
     if jQuery != None:
+        # search with query
+        qLimit = request.args.get("limit", 10000)
+        qOffset = request.args.get("offset", 0)
+        qCount = request.args.get("count", 0)
+
         json_query = json.loads(jQuery)
         q_lst = []
         q_txt = ""
-        for q in json_query:
-            if q["c"] == "*": break;
-            q_lst.append(f"{q['c']} {q['o']} %s")
-            v_cols.append(q["v"])
-        else:
-            q_txt = ", ".join(q_lst)
-            q_txt = f" {q_txt} "
+        for c, v in json_query.items():
+            o = "="
+            if v[0] in [">", "<"]:
+                o = v[0]
+                v = v[1:]
+            elif v.find("*"):
+                o = "LIKE"
+                v = v.replace("*", "%")
+            q_lst.append(f"{c} {o} %s")
+            v_cols.append(v)
+        q_txt = ", ".join(q_lst)
+        q_txt = f" {q_txt} "        
         w_txt = ""
         if user_id != "" or q_txt != "":
             w_txt = f"WHERE{user_id}{q_txt} "
-        sql = f"SELECT {r_cols} FROM {res} {w_txt}LIMIT 10000"
-        print(sql)
+        if qCount != 0: r_cols = "COUNT(*) AS count"
+        sql = f"SELECT {r_cols} FROM {res} {w_txt}LIMIT {qLimit} OFFSET {qOffset}"
+        print(sql, v_cols)
         results = db.command(sql, v_cols)
         return Response(json.dumps(results, default=str), mimetype="application/json")
     elif res_id == None:
+        # sync with local db
         u_date = request.args.get("u_date", "2020-01-01 01:00:00")
         v_cols.append(u_date)
         results = db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC LIMIT 10000", v_cols)
         return Response(json.dumps(results, default=str), mimetype="application/json")
     else:
+        # search with dataset id
         v_cols.append(res_id)
         results = db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} id = %s", v_cols)
         return Response(json.dumps(results, default=str), mimetype="application/json")

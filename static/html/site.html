@@ -4,16 +4,24 @@
         <link rel="shortcut icon" href="#" />
         <title>dMLW</title>
         <link rel="stylesheet" type="text/css" href="/file/css/screen.css">
+        <link rel="stylesheet" type="text/css" href="/file/css/react_components.css">
         <link rel="stylesheet" type="text/css" href="/file/css/all.css">
         <link rel="stylesheet" type="text/css" href="/file/css/print.css">
         <link rel="stylesheet" type="text/css" href="/file/css/mocha.css">
         <script src="/file/js/purify.min.js"></script>
         <script src="/file/js/mocha.js"></script>
         <script src="/file/js/chai.js"></script>
+        <!-- Load React. -->
+        <!-- Note: when deploying, replace "development.js" with "production.min.js". -->
+        <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+        <script src="/file/js/reactor.js" type="text/babel"></script>
         <script type="module">
             import { Argos } from "/file/js/argos.js";
             import { Arachne } from "/file/js/arachne.js";
             import { Elements } from "/file/js/elements.js";
+            //import { Reactor } from "/file/js/react_components.js";
             /* ******************************** */
             import {
                 Zettel, ZettelAdd, ZettelBatch, ZettelDetail, ZettelExport, ZettelImport,
@@ -33,6 +41,7 @@
             /* ******************************** */
             globalThis.el = new Elements();
             globalThis.arachne = new Arachne("dmlw");
+            //globalThis.reactor = new Reactor();
             const dock = {
                 "zettel": Zettel,
                 "zettel_add": ZettelAdd,
