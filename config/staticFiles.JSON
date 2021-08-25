@@ -1,0 +1,35 @@
+{
+    "css": [
+        "print.css",
+        "screen.css",
+        "react_components.css",
+        "mocha.css",
+        "all.css"
+    ],
+    "js": [
+        "argos.js",
+        "oculus.js",
+        "elements.js",
+        "arachne.js",
+        "docker.js",
+        "contextmenu.js",
+        "shortcuts.js",
+        "zettel.js",
+        "project.js",
+        "opera.js",
+        "lemma.js",
+        "settings.js",
+        "server.js",
+        "reactor.js",
+        "account.js", "library.js", "arachneWW.js",
+        "purify.min.js.map", "purify.min.js",
+        "mocha.js", "chai.js", 
+        "chart.js"
+    ],
+    "webfonts": [
+        "fa-solid-900.woff2",
+        "fa-solid-900.woff",
+        "fa-solid-900.ttf",
+        "fa-solid-900.svg"
+    ]
+}
