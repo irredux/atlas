@@ -19,7 +19,7 @@ class Zettel extends React.Component{
             box.appendChild(imgMSG);
             */
             const box =
-            <div className="zettel" id={zettel.id} style={style}>
+            <div className="zettel" id={zettel.id} style={style} onDoubleClick={() => {this.props.showDetail(this.props.item)}}>
                 <img className={classList} src={zettel.img_path+".jpg"}></img>,
                 <div className="zettel_msg"></div>/*,
                 <div className="zettel_menu">
@@ -31,7 +31,7 @@ class Zettel extends React.Component{
         } else {
             style.height = "var(--zettelHeight)";
             const box =
-            <div className="zettel" id={zettel.id} style={style}>
+            <div className="zettel" id={zettel.id} style={style} onDoubleClick={() =>{this.props.showDetail(this.props.item)}}>
                 <div className="digitalZettel">
                     <div className='digitalZettelLemma'>{zettel.lemma_display}</div>
                     <div className='digitalZettelDate'>{zettel.date_display}</div>
@@ -144,6 +144,32 @@ function mainZettel(){
             else {alert("Geben Sie einen Suchtext ein!")}
         }
     }
+    class ZettelAside extends React.Component{
+        render(){
+            const style = {
+                position: "fixed",
+                top: 0,
+                bottom: 0,
+                right: 0,
+                width: "400px",
+                padding: "10px 15px",
+                backgroundColor: "var(--mainColor)",
+                display: "grid",
+                gridTemplateColumns: "150px auto"
+            }
+            return (
+                <div style={style}>
+                    <div>Zetteltyp:</div><div>{this.props.item.type}</div>
+                    <div>Lemma:</div><div>{this.props.item.lemma_display}</div>
+                    <div>Werk:</div><div>{this.props.item.opus}</div>	
+                    <div>Datum:</div><div>x</div>
+                    <div>MLW relevant:</div><div>x</div>	
+                    <div>Text:</div><div>x</div>
+                    <div>Edition:</div><div>x</div>
+                </div>
+            );
+        }
+    }
     class ZettelBox extends React.Component{
         constructor(props){
             super(props);
@@ -152,11 +178,16 @@ function mainZettel(){
             ReactDOM.render(<SearchBox searchQuery={(q) => {this.loadQuery(q)}} />, mainHeader);
             this.state = {count:0};
         }
+        showDetail(item){
+            let mainAside = document.querySelector("aside");
+            mainAside.style.display = "block";
+            ReactDOM.render(<ZettelAside item={item} />, mainAside);
+        }
         render(){
             if(this.state.count>0){
                 let cEls = [];
                 for(const cEl of this.state.currentElements){
-                    cEls.push(<Zettel item={cEl} key={cEl.id} />);
+                    cEls.push(<Zettel item={cEl} key={cEl.id}  showDetail={item => {this.showDetail(item)}} />);
                 }
 
                 let txt =

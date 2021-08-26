@@ -168,7 +168,10 @@ def pw_set(pw_raw):
 # ################################################################
 # -II- routes
 # ################################################################
-# open argos 
+@app.route("/react/<path:filename>")
+def react(filename): # unsave!
+    return send_file(p+"/static/react/"+filename)
+
 @app.route("/")
 def login():
     return send_file(p+"/static/html/login.html")
