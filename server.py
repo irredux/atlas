@@ -21,6 +21,7 @@ limitations under the License.
 from binascii import hexlify
 
 from flask.templating import render_template
+from flask_cors import CORS
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInfoDispatcher
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from configparser import ConfigParser
@@ -55,6 +56,7 @@ db = Arachne(cfg['database'])
 
 # set server
 app = Flask(__name__)
+CORS(app)
 server_cfg = cfg["connection"]
 server = WSGIServer((server_cfg.get('host'), int(server_cfg.get('port'))), WSGIPathInfoDispatcher({"/": app}))
 
@@ -360,26 +362,35 @@ def data_read(res, res_id=None):
     jQuery = request.args.get("query", None) # query in json format: [{c: col, o: operator, v: value}, ...]
     if jQuery != None:
         # search with query
-        qLimit = request.args.get("limit", 10000)
-        qOffset = request.args.get("offset", 0)
-        qCount = request.args.get("count", 0)
+        qLimit = request.args.get("limit", None)
+        qOffset = request.args.get("offset", None)
+        qCount = request.args.get("count", None)
+        qSelect = request.args.get("select", None)
 
         json_query = json.loads(jQuery)
         q_lst = []
         q_txt = ""
         for q in json_query:
-            if q["v"].find("*")>-1:
+            if type(q["v"]) is str and q["v"].find("*")>-1:
                 q["o"] = "LIKE"
                 q["v"] = q["v"].replace("*", "%")
             q_lst.append(f"{q['c']} {q['o']} %s")
             v_cols.append(q["v"])
         q_txt = " AND ".join(q_lst)
-        q_txt = f" {q_txt} "        
+        q_txt = f" {q_txt} "
         w_txt = ""
         if user_id != "" or q_txt != "":
-            w_txt = f"WHERE{user_id}{q_txt} "
-        if qCount != 0: r_cols = "COUNT(*) AS count"
-        sql = f"SELECT {r_cols} FROM {res} {w_txt}LIMIT {qLimit} OFFSET {qOffset}"
+            w_txt = f"WHERE{user_id}{q_txt}"
+        if qCount != None: r_cols = "COUNT(*) AS count"
+        if qSelect!=None:
+            qSelect = json.loads(qSelect)
+            if r_cols == "*" or qSelect.issubset(r_cols): r_cols = ", ".join(qSelect)
+            else: abort(403) # forbidden
+        limit_txt = ""
+        if qLimit!=None: limit_txt = f" LIMIT {qLimit}"
+        offset_txt = ""
+        if qOffset!=None: offset_txt = f" OFFSET {qOffset}"
+        sql = f"SELECT {r_cols} FROM {res} {w_txt}{limit_txt}{offset_txt}"
         print(sql, v_cols)
         results = db.command(sql, v_cols)
         return Response(json.dumps(results, default=str), mimetype="application/json")
