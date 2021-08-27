@@ -371,11 +371,16 @@ def data_read(res, res_id=None):
         q_lst = []
         q_txt = ""
         for q in json_query:
-            if type(q["v"]) is str and q["v"].find("*")>-1:
-                q["o"] = "LIKE"
-                q["v"] = q["v"].replace("*", "%")
-            q_lst.append(f"{q['c']} {q['o']} %s")
-            v_cols.append(q["v"])
+            if q["v"] == "NULL" and q["o"] == "=":
+                q_lst.append(f"{q['c']} IS NULL")
+            elif q["v"] == "NULL" and q["o"] == "!=":
+                q_lst.append(f"{q['c']} IS NOT NULL")
+            else:
+                if type(q["v"]) is str and q["v"].find("*")>-1:
+                    q["o"] = "LIKE"
+                    q["v"] = q["v"].replace("*", "%")
+                q_lst.append(f"{q['c']} {q['o']} %s")
+                v_cols.append(q["v"])
         q_txt = " AND ".join(q_lst)
         q_txt = f" {q_txt} "
         w_txt = ""
