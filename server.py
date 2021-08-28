@@ -366,6 +366,7 @@ def data_read(res, res_id=None):
         qOffset = request.args.get("offset", None)
         qCount = request.args.get("count", None)
         qSelect = request.args.get("select", None)
+        qOrder = request.args.get("order", None)
 
         json_query = json.loads(jQuery)
         q_lst = []
@@ -395,7 +396,11 @@ def data_read(res, res_id=None):
         if qLimit!=None: limit_txt = f" LIMIT {qLimit}"
         offset_txt = ""
         if qOffset!=None: offset_txt = f" OFFSET {qOffset}"
-        sql = f"SELECT {r_cols} FROM {res} {w_txt}{limit_txt}{offset_txt}"
+        order_txt = ""
+        if qOrder!=None:
+            qOrder = json.loads(qOrder)
+            order_txt = f" ORDER BY {', '.join(qOrder)}"
+        sql = f"SELECT {r_cols} FROM {res} {w_txt}{order_txt}{limit_txt}{offset_txt}"
         print(sql, v_cols)
         results = db.command(sql, v_cols)
         return Response(json.dumps(results, default=str), mimetype="application/json")
