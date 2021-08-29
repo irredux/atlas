@@ -212,6 +212,7 @@ FOR EACH ROW
         SET new.zettel_count = 0;
         SET new.comments_count = 0;
         SET new.lemma_search = LOWER(new.lemma);
+        SET new.lemma_ac = REMOVEHTML(new.lemma_display);
         IF new.lemma_nr IS NULL THEN
             SET new.lemma_nr = 0;
         END IF;
@@ -225,12 +226,14 @@ FOR EACH ROW
     BEGIN
         SET new.u_date = SYSDATE(6);
         SET new.lemma_search = LOWER(new.lemma);
+        SET new.lemma_ac = REMOVEHTML(new.lemma_display);
         UPDATE zettel
         SET
             zettel.lemma = new.lemma,
             zettel.lemma_nr = new.lemma_nr,
             zettel.lemma_search = new.lemma_search,
-            zettel.lemma_display = new.lemma_display
+            zettel.lemma_display = new.lemma_display,
+            zettel.lemma_ac = REMOVEHTML(new.lemma_display)
         WHERE zettel.lemma_id = new.id;
     END; //
 DELIMITER ;
@@ -448,6 +451,7 @@ FOR EACH ROW
             SET new.lemma_nr = (SELECT lemma_nr FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_search = (SELECT lemma_search FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_display = (SELECT lemma_display FROM lemma WHERE new.lemma_id = lemma.id);
+            SET new.lemma_ac = (SELECT REMOVEHTML(lemma_display) FROM lemma WHERE new.lemma_id = lemma.id);
         ELSE
             SET new.lemma = "";
             SET new.lemma_nr = 0;
@@ -505,6 +509,7 @@ FOR EACH ROW
             SET new.lemma_nr = (SELECT lemma_nr FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_search = (SELECT lemma_search FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_display = (SELECT lemma_display FROM lemma WHERE new.lemma_id = lemma.id);
+            SET new.lemma_ac = (SELECT REMOVEHTML(lemma_display) FROM lemma WHERE new.lemma_id = lemma.id);
         END IF;
         IF new.work_id != old.work_id OR (old.work_id IS NULL AND new.work_id IS NOT NULL) THEN
             SET new.ac_web = (SELECT work.ac_web FROM work WHERE new.work_id = work.id);
