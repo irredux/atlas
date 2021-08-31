@@ -3,7 +3,6 @@
         "access": "*",
         "items": [
             {"caption": "Zettel-Datenbank", "onClick": "zettel"},
-            {"caption": "Zettel-Datenbank (neu)", "onClick": "zettel-neu", "access": "admin"},
             {"caption": "Lemmaliste", "onClick": "lemma"},
             {"caption": "Volltext-Suche", "onClick": "full_text", "access": "admin"}
         ]
