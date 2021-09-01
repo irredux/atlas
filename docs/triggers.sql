@@ -544,9 +544,9 @@ FOR EACH ROW
                 FROM work WHERE new.work_id = work.id
             );
             SET new.date_type = (SELECT IF(work.date_type IS NULL, 0, work.date_type) FROM work WHERE new.work_id = work.id);
-        ELSE
+        /*ELSE
             SET new.date_sort = IF(new.date_own IS NULL, 0, new.date_own);
-            SET new.date_type = 0;
+            SET new.date_type = 0;*/
         END IF;
         UPDATE zettel_lnk
         SET
