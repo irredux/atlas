@@ -26,7 +26,7 @@ from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInf
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from configparser import ConfigParser
 from datetime import datetime, timedelta
-from flask import abort, Flask, request, send_file, Response
+from flask import abort, Flask, request, send_file, Response, session
 from hashlib import pbkdf2_hmac
 import json
 from os import path, urandom, mkdir
@@ -38,11 +38,11 @@ from uuid import uuid4
 
 from arachne import Arachne
 
-p = path.dirname(path.abspath(__file__))
+dir_path = path.dirname(path.abspath(__file__))
 
 #load cfg
 if len(argv) > 1: cfg_path = argv[1]
-else: cfg_path = p+"/config/localhost.ini"
+else: cfg_path = dir_path+"/config/localhost.ini"
 cfg = ConfigParser()
 cfg.read(cfg_path)
 
@@ -50,12 +50,15 @@ cfg.read(cfg_path)
 full_update = "2021-05-31 09:54:00" # local client-sided database
 
 # set db
-search_cols = f"{p}{cfg['default_path']['search_columns']}"
-access_config = f"{p}{cfg['default_path']['access_config']}"
+search_cols = f"{dir_path}{cfg['default_path']['search_columns']}"
+access_config = f"{dir_path}{cfg['default_path']['access_config']}"
 db = Arachne(cfg['database'])
 
 # set server
 app = Flask(__name__)
+secret_key = urandom(24)
+secret_key = hexlify(secret_key)
+app.config["SECRET_KEY"] = secret_key
 #CORS(app)
 server_cfg = cfg["connection"]
 server = WSGIServer((server_cfg.get('host'), int(server_cfg.get('port'))), WSGIPathInfoDispatcher({"/": app}))
@@ -74,19 +77,19 @@ class Server_Settings:
         self.s_minutes = 0
 
         # load JSON files from /config
-        with open(p + "/config/staticFiles.JSON") as static_file:
+        with open(dir_path + "/config/staticFiles.JSON") as static_file:
             self.static_files = json.load(static_file)
-        with open(p + "/config/mainMenu.JSON") as menu_file:
+        with open(dir_path + "/config/mainMenu.JSON") as menu_file:
             self.main_menu = json.load(menu_file)
-        with open(p + "/config/accessCREATE.JSON") as access_file:
+        with open(dir_path + "/config/accessCREATE.JSON") as access_file:
             self.accessCREATE = json.load(access_file)
-        with open(p + "/config/accessREAD.JSON") as access_file:
+        with open(dir_path + "/config/accessREAD.JSON") as access_file:
             self.accessREAD = json.load(access_file)
-        with open(p + "/config/accessUPDATE.JSON") as access_file:
+        with open(dir_path + "/config/accessUPDATE.JSON") as access_file:
             self.accessUPDATE = json.load(access_file)
-        with open(p + "/config/accessDELETE.JSON") as access_file:
+        with open(dir_path + "/config/accessDELETE.JSON") as access_file:
             self.accessDELETE = json.load(access_file)
-        with open(p + "/config/objectStores.JSON") as config_file:
+        with open(dir_path + "/config/objectStores.JSON") as config_file:
             self.oStores = json.load(config_file)
 
         # doublesided zettel
@@ -129,17 +132,17 @@ def auth(c_session):
 def create_mlw_file(i_datas):
     o_datas = []
     for i_data in i_datas:
-        with open(p + "/MLW-Software/input.mlw", "w") as i_file:
+        with open(dir_path + "/MLW-Software/input.mlw", "w") as i_file:
             i_file.write(i_data)
-        if path.exists(p + "/MLW-Software/Ausgabe"): rmtree(p + "/MLW-Software/Ausgabe")
+        if path.exists(dir_path + "/MLW-Software/Ausgabe"): rmtree(dir_path + "/MLW-Software/Ausgabe")
         subprocess.run(
-                f"python3 {p}/MLW-Software/MLWServer.py --port 9997 {p}/MLW-Software/input.mlw",
+                f"python3 {dir_path}/MLW-Software/MLWServer.py --port 9997 {dir_path}/MLW-Software/input.mlw",
                 shell=True)
         o_data = {}
-        with open(p + "/MLW-Software/Ausgabe/HTML-Vorschau/input.html", "r") as html_file:
+        with open(dir_path + "/MLW-Software/Ausgabe/HTML-Vorschau/input.html", "r") as html_file:
             o_data["html"] = html_file.read()
         o_datas.append(o_data)
-    subprocess.run(f"python3 {p}/MLW-Software/MLWServer.py --port 9997 --stopserver", shell=True)
+    subprocess.run(f"python3 {dir_path}/MLW-Software/MLWServer.py --port 9997 --stopserver", shell=True)
     return json.dumps(o_datas)
 
 def login_check(user, pw):
@@ -172,15 +175,15 @@ def pw_set(pw_raw):
 # ################################################################
 @app.route("/react/<path:filename>")
 def react(filename): # unsave!
-    return send_file(p+"/static/react/"+filename)
+    return send_file(dir_path+"/static/react/"+filename)
 
 @app.route("/")
 def login():
-    return send_file(p+"/static/html/login.html")
+    return send_file(dir_path+"/static/html/login.html")
 @app.route("/site")
 @app.route("/site/viewer/<resId>")
 def site(resId=None):
-    return send_file(p+"/static/html/site.html")
+    return send_file(dir_path+"/static/html/site.html")
 @app.route("/site/zettel")
 def zettel():
     return render_template("zettel.html")
@@ -199,6 +202,7 @@ def session_create():
                     "agent":request.headers.get('User-Agent')
                     }
             db.save("user", data, user_login["id"])
+            session["session"] = data["session"]
             return data["session"]
         else: abort(401) # unauthorized
     else: abort(401) # unauthorized
@@ -344,6 +348,7 @@ def data_create(res, inData=None):
 @app.route("/data/<res>", methods=["GET"])
 @app.route("/data/<res>/<int:res_id>", methods=["GET"])
 def data_read(res, res_id=None):
+    print("current session:", session.get("session"))
     user = auth(request.headers.get("Authorization"))
     if res not in srv_set.accessREAD.keys(): abort(404) # not found
     r_cols = ""
@@ -450,6 +455,41 @@ def data_delete(res, res_id):
     return Response("", status=200) # ok
 
 # static files
+@app.route("/file/scan", methods=["POST"])
+def scan_import():
+    # upload scan imgs
+    user = auth(request.headers.get("Authorization"))
+    if "e_edit" in user["access"]:
+        # check if path exists
+        edition_id = request.form.get("edition_id", None)
+        path_lst = request.form.get("path", "").strip("/").split("/")
+        if edition_id==None or len(path_lst)!=2 or path.exists(dir_path+f"/content/scans/{path_lst[0]}/")==False:
+            abort(400)
+        dbPath = f"/{path_lst[0]}/{path_lst[1]}/"
+        newPath = dir_path+"/content/scans"+dbPath
+        if path.exists(newPath) == False: mkdir(newPath)
+
+        # save imgs
+        f_lst = request.files.getlist("files")
+        r_lst = []
+        for f in f_lst:
+            if path.exists(newPath + f.filename) == False:
+                # create entry in db
+                save_dict = {
+                    "filename": f.filename[:4], # better: secure_filename(f.filename) // from werkzeug.utils import secure_filename
+                    "path": dbPath
+                }
+                new_id = db.save("scan", save_dict)
+                db.save("scan_lnk", {"scan_id": new_id, "edition_id": edition_id})
+                # save the file
+                f.save(newPath + f.filename)
+            else:
+                r_lst.append(f.filename)
+        return Response(json.dumps(r_lst), status=201) # created
+
+    else: abort(401) # unauthorized
+    
+
 @app.route("/file/zettel", methods=["POST"])
 def zettel_import():
     # uploading images for zettel-db
@@ -457,7 +497,7 @@ def zettel_import():
     u_letter = request.form.get("letter", "A")
     if len(u_letter) == 1 and u_letter.isalpha() and "z_add" in user["access"]:
         u_type = request.form.get("type", "0")
-        f_path = p + "/zettel/"
+        f_path = dir_path + "/zettel/"
         if path.exists(f_path) == False: mkdir(f_path)
         f_path += f"{u_letter}/"
         if path.exists(f_path) == False: mkdir(f_path)
@@ -506,23 +546,23 @@ def zettel_import():
 @app.route("/zettel/<letter>/<dir_nr>/<img>")
 def f_zettel(letter, dir_nr, img): # NOT SAVE!!!!!!!! + NEEDS AUTH
     #self.auth()
-    return send_file(p+f"/zettel/{letter}/{dir_nr}/"+img)
+    return send_file(dir_path+f"/zettel/{letter}/{dir_nr}/"+img)
 
 @app.route("/file/<f_type>/<res>")
 def file_read(f_type, res):
     if f_type == "css" and res in srv_set.static_files["css"]:
-        return send_file(p+"/static/css/"+res)
+        return send_file(dir_path+"/static/css/"+res)
     elif f_type == "js" and res in srv_set.static_files["js"]:
-        return send_file(p+"/static/js/"+res)
+        return send_file(dir_path+"/static/js/"+res)
     elif f_type == "webfonts" and res in srv_set.static_files["webfonts"]:
-        return send_file(p+"/static/webfonts/"+res)
+        return send_file(dir_path+"/static/webfonts/"+res)
     elif f_type == "scan":
         user = auth(request.headers.get("Authorization"))
         if "library" in user["access"]:
             page = db.search("scan", {"id": res}, ["path", "filename"])[0]
-            print(p + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
-            return send_file(p + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
-        else: return HTTPResponse(status=401)
+            print(dir_path + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
+            return send_file(dir_path + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
+        else: abort(401)
 
 
 # functions
@@ -539,106 +579,6 @@ def exec_on_server(res, res_id = None):
         return get_scan_files(res_id)
     else: return abort(404) # not found
 
-# dMLW-specific functions
-def html(input):
-    return input
-
-def create_opera_lists():
-    authors = db.command(f"SELECT * FROM author ORDER BY abbr_sort")
-    tbl_mai = []
-    tbl_min = []
-    for author in authors:
-        #print(f"next author: {author['abbr']}")
-        author_added = False
-        works = db.command(f"SELECT * FROM work WHERE author_id = {author['id']} ORDER BY abbr_sort")
-        for work in works:
-            #print(f"   next work: {work['abbr']}")
-            editions = db.command(f"SELECT * FROM edition WHERE work_id = {work['id']}")
-            editionsTxt = "<ul style='list-style-type: none; margin: 0; padding: 0;'>"
-            for edition in editions:
-                #print("      next edition!")
-                editionURL = f"/site/viewer/{edition['id']}" 
-                if(edition["url"]!=None and edition["url"]!=""):
-                    editionURL = html(edition["url"])
-                editionsTxt += f"<li><a href='{html(editionURL)}' class='editionLnk' id='{edition['id']}' target='_blank'>{html(edition.get('label', ''))}</a></li>"
-            editionsTxt += "</ul>"
-            if(work["is_maior"]==1):
-                # opus maius
-                if author_added == False and work["abbr"] != None:
-                    # author on separat line
-                    abbr = f"<aut>{html(author['abbr'])}</aut>"
-                    if author["in_use"] != 1:
-                        abbr = f"<aut>[{html(author['abbr'])}]</aut>"
-                    tbl_mai.append({
-                        "author_id": author["id"],
-                        "work_id": 0,
-                        "date_display": html(author["date_display"]),
-                        "abbr": abbr,
-                        "full": html(author["full"]),
-                        "editions": "",
-                        "comment": html(author["txt_info"])
-                    })
-                elif author_added == False and work["abbr"] == None:
-                    # author + work on same line
-                    abbr = f"<aut>{html(author['abbr'])}</aut>"
-                    if author["in_use"] != 1:
-                        abbr = f"<aut>[{html(author['abbr'])}]</aut>"
-
-                    nData = {
-                        "author_id": author["id"],
-                        "work_id": work["id"],
-                        "date_display": html(work["date_display"]),
-                        "abbr": abbr,
-                        "full": "",
-                        "editions": f"{html(work['bibliography'])}{editionsTxt}",
-                        "comment": html(f"{work['citation']} {work['txt_info']}")
-                    }
-                    if author["full"]!=None:
-                        nData["full"] += html(author["full"])
-                    if work["reference"]!=None and work["reference"]!="":
-                        nData["full"] += f" v. ${html(work['reference'])}"
-                    tbl_mai.append(nData)
-                else:
-                    # work
-                    abbr = html(f"&nbsp;&nbsp;&nbsp;{work['abbr']}")
-                    if work["in_use"] != 1:
-                        abbr = html(f"&nbsp;&nbsp;&nbsp;[{work['abbr']}]")
-                    nWorkData = {
-                        "author_id": 0,
-                        "work_id": work["id"],
-                        "date_display": html(work["date_display"]),
-                        "abbr": abbr,
-                        "full": "&nbsp;&nbsp;&nbsp;",
-                        "editions": f"{html(work['bibliography'])}{editionsTxt}",
-                        "comment": html(f"{work['citation']} {work['txt_info']}")
-                    }
-                    if work["author_display"]!=None and work["author_display"]!= "":
-                        nWorkData["abbr"] = f"<aut>{html(work['author_display'])}</aut> {html(work['abbr'])}"
-                        if work["in_use"] != 1:
-                            nWorkData["abbr"] = "["+nWorkData["abbr"]+"]"
-                    if work["full"]!=None:
-                        nWorkData["full"] += html(work["full"])
-                    if work["reference"]!=None and work["reference"]!="":
-                        nWorkData["full"] += f" v. {html(work['reference'])}"
-                    tbl_mai.append(nWorkData)
-                author_added = True
-            else:
-                # opus minus
-                tbl_min.append({
-                    "author_id": author["id"],
-                    "work_id": work["id"],
-                    "date_display": html(work["date_display"]),
-                    "opus": html(work["opus"].replace(" <cit></cit> ( <cit_bib></cit_bib>)", "")),
-                    "editions": editionsTxt,
-                    "comment": html(work["txt_info"])
-                })
-    return (tbl_mai, tbl_min)
-
-
 if __name__ == '__main__':
-    #print("start timeing")
-    #create_opera_lists()
-    #print(timeit.timeit("create_opera_lists()", setup="from __main__ import create_opera_lists"))
-    #print(mai, min)
     print("starting server...")
     server.start()
