@@ -571,12 +571,12 @@ def file_read(f_type, res):
 def exec_on_server(res, res_id = None):
     user = auth(request.headers.get("Authorization"))
     if res == "opera_update" and "e_edit" in user["access"]:
-        #self.create_opera()
+        db.command("CALL updateOperaLists()")
         return Response("", status=200) # OK
-    elif res == "mlw_preview" and "editor" in user["access"]:
-        return create_mlw_file(request.json)
-    elif res == "scan_add" and "e_edit" in user["access"]:
-        return get_scan_files(res_id)
+    #elif res == "mlw_preview" and "editor" in user["access"]:
+    #    return create_mlw_file(request.json)
+    #elif res == "scan_add" and "e_edit" in user["access"]:
+    #    return get_scan_files(res_id)
     else: return abort(404) # not found
 
 if __name__ == '__main__':
