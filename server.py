@@ -103,8 +103,12 @@ srv_set = Server_Settings()
 def auth(c_session):
     access = ["auth"]
     logout = False
-    if c_session == "" or c_session == None: abort(401) # unauthorized
-    c_session = c_session[7:]
+
+    if session.get("session", None) == None:
+        if c_session == "" or c_session == None: abort(401) # unauthorized
+        c_session = c_session[7:]
+    else:
+        c_session = session.get("session", None)
 
     usr_i = db.search("user", {"session": c_session}, ["id", "first_name",
         "last_name", "email", "session_last_active", "access", "settings", "password"])
@@ -211,7 +215,7 @@ def session_create():
 def session_read():
     user = auth(request.headers.get("Authorization"))
     r_user = {"id": user["id"], "first_name": user["first_name"],
-            "last_name": user["last_name"], "email": user["email"]}
+            "last_name": user["last_name"], "email": user["email"], "access": user["access"]}
     return json.dumps(r_user)
 
 @app.route("/session", methods=["DELETE"])
@@ -348,7 +352,6 @@ def data_create(res, inData=None):
 @app.route("/data/<res>", methods=["GET"])
 @app.route("/data/<res>/<int:res_id>", methods=["GET"])
 def data_read(res, res_id=None):
-    print("current session:", session.get("session"))
     user = auth(request.headers.get("Authorization"))
     if res not in srv_set.accessREAD.keys(): abort(404) # not found
     r_cols = ""
@@ -406,7 +409,7 @@ def data_read(res, res_id=None):
             qOrder = json.loads(qOrder)
             order_txt = f" ORDER BY {', '.join(qOrder)}"
         sql = f"SELECT {r_cols} FROM {res} {w_txt}{order_txt}{limit_txt}{offset_txt}"
-        print(sql, v_cols)
+        #print(sql, v_cols)
         results = db.command(sql, v_cols)
         return Response(json.dumps(results, default=str), mimetype="application/json")
     elif res_id == None:
@@ -560,7 +563,7 @@ def file_read(f_type, res):
         user = auth(request.headers.get("Authorization"))
         if "library" in user["access"]:
             page = db.search("scan", {"id": res}, ["path", "filename"])[0]
-            print(dir_path + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
+            #print(dir_path + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
             return send_file(dir_path + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
         else: abort(401)
 
