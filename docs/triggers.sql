@@ -106,16 +106,41 @@ FOR EACH ROW
         SET new.u_date = SYSDATE(6);
         SET new.opus = (SELECT opus FROM work WHERE work.id = new.work_id);
         SET new.ac_web = (SELECT ac_web FROM work WHERE work.id = new.work_id);
-        IF new.ressource = 1 THEN
+        IF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 1 THEN
+            /* Migne/PL */
+            SET new.label = CONCAT("PL ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 2 THEN
+            /* ASBen. */
+            SET new.label = CONCAT("ASBen. ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 3 THEN
+            /* ASBoll. */
+            SET new.label = CONCAT("ASBoll. ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 4 THEN
+            /* AnalBoll. */
+            SET new.label = CONCAT("AnalBoll. ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 5 THEN
+            /* Mon. Boica */
+            SET new.label = CONCAT("Mon. Boica ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 6 THEN
+            /* Ma. Schatzverzeichnisse */
+            SET new.label = CONCAT("Ma. Schatzverzeichnisse ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 7 THEN
+            /* Ma. Bibliothekskataloge */
+            SET new.label = CONCAT("Ma. Bibliothekskataloge ", new.volume);
+        ELSEIF new.ressource = 1 THEN
+            /* Edition veraltet */
             SET new.label = CONCAT("[", new.editor, " ", new.year, "]");
         ELSEIF new.ressource = 2 THEN
             /*Handschrift*/
-            SET new.label = CONCAT("cod. ", "???");
+            SET new.label = CONCAT("cod. ", new.signature);
         ELSEIF new.ressource = 3 THEN
             /*alter Druck*/
             SET new.label = CONCAT(new.editor, " ", new.location);
+        ELSEIF new.ressource = 4 THEN
+            /* alter Druck, veraltet */
+            SET new.label = CONCAT("[", new.editor, " ", new.location, "]");
         ELSE
-            /*0: textkritische Edition; 4: sonstiges*/
+            /*0: Edition relevant; 5: sonstiges*/
             SET new.label = CONCAT(
                 new.editor,
                 " ",
@@ -158,16 +183,41 @@ FOR EACH ROW
             SET new.opus = (SELECT opus FROM work WHERE work.id = new.work_id);
             SET new.ac_web = (SELECT ac_web FROM work WHERE work.id = new.work_id);
         END IF;
-        IF new.ressource = 1 THEN
+        IF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 1 THEN
+            /* Migne/PL */
+            SET new.label = CONCAT("PL ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 2 THEN
+            /* ASBen. */
+            SET new.label = CONCAT("ASBen. ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 3 THEN
+            /* ASBoll. */
+            SET new.label = CONCAT("ASBoll. ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 4 THEN
+            /* AnalBoll. */
+            SET new.label = CONCAT("AnalBoll. ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 5 THEN
+            /* Mon. Boica */
+            SET new.label = CONCAT("Mon. Boica ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 6 THEN
+            /* Ma. Schatzverzeichnisse */
+            SET new.label = CONCAT("Ma. Schatzverzeichnisse ", new.volume);
+        ELSEIF (new.ressource = 0 OR new.ressource = 1) AND new.serie = 7 THEN
+            /* Ma. Bibliothekskataloge */
+            SET new.label = CONCAT("Ma. Bibliothekskataloge ", new.volume);
+        ELSEIF new.ressource = 1 THEN
+            /* Edition veraltet */
             SET new.label = CONCAT("[", new.editor, " ", new.year, "]");
         ELSEIF new.ressource = 2 THEN
             /*Handschrift*/
-            SET new.label = CONCAT("cod. ", "???");
+            SET new.label = CONCAT("cod. ", new.signature);
         ELSEIF new.ressource = 3 THEN
             /*alter Druck*/
             SET new.label = CONCAT(new.editor, " ", new.location);
+        ELSEIF new.ressource = 4 THEN
+            /* alter Druck, veraltet */
+            SET new.label = CONCAT("[", new.editor, " ", new.location, "]");
         ELSE
-            /*0: textkritische Edition; 4: sonstiges*/
+            /*0: Edition relevant; 5: sonstiges*/
             SET new.label = CONCAT(
                 new.editor,
                 " ",
@@ -280,6 +330,15 @@ FOR EACH ROW
     END; //
 DELIMITER ;
 
+DELIMITER //
+CREATE OR REPLACE TRIGGER scan_update_after
+AFTER UPDATE ON scan
+FOR EACH ROW
+    BEGIN
+        UPDATE scan_lnk SET deleted = deleted WHERE scan_lnk.scan_id = new.id;
+    END; //
+DELIMITER ;
+
 /* ***************************************************** */
 
 DELIMITER //
@@ -289,6 +348,10 @@ FOR EACH ROW
     BEGIN
         SET new.c_date = SYSDATE(6);
         SET new.u_date = SYSDATE(6);
+        IF new.scan_id IS NOT NULL THEN
+            SET new.filename = (SELECT filename FROM scan WHERE scan.id=new.scan_id);
+            SET new.full_text = (SELECT full_text FROM scan WHERE scan.id=new.scan_id);
+        END IF;
     END; //
 DELIMITER ;
 
@@ -298,6 +361,12 @@ BEFORE UPDATE ON scan_lnk
 FOR EACH ROW
     BEGIN
         SET new.u_date = SYSDATE(6);
+        SET new.filename = (SELECT filename FROM scan WHERE scan.id=new.scan_id);
+        SET new.full_text = (SELECT full_text FROM scan WHERE scan.id=new.scan_id);
+        IF new.scan_id IS NOT NULL THEN
+            SET new.filename = (SELECT filename FROM scan WHERE scan.id=new.scan_id);
+            SET new.full_text = (SELECT full_text FROM scan WHERE scan.id=new.scan_id);
+        END IF;
     END; //
 DELIMITER ;
 

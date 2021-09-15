@@ -21,7 +21,7 @@ limitations under the License.
 from binascii import hexlify
 
 from flask.templating import render_template
-#from flask_cors import CORS
+from flask_cors import CORS
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInfoDispatcher
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from configparser import ConfigParser
@@ -33,7 +33,6 @@ from os import path, urandom, mkdir
 from shutil import rmtree
 from sys import argv
 import subprocess
-import timeit
 from uuid import uuid4
 
 from arachne import Arachne
@@ -59,7 +58,7 @@ app = Flask(__name__)
 secret_key = urandom(24)
 secret_key = hexlify(secret_key)
 app.config["SECRET_KEY"] = secret_key
-#CORS(app)
+CORS(app)
 server_cfg = cfg["connection"]
 server = WSGIServer((server_cfg.get('host'), int(server_cfg.get('port'))), WSGIPathInfoDispatcher({"/": app}))
 
@@ -177,9 +176,9 @@ def pw_set(pw_raw):
 # ################################################################
 # -II- routes
 # ################################################################
-@app.route("/react/<path:filename>")
-def react(filename): # unsave!
-    return send_file(dir_path+"/static/react/"+filename)
+@app.route("/react/index.html")
+def react():
+    return send_file(dir_path+"/static/react/db/index.html")
 
 @app.route("/")
 def login():
