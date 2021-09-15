@@ -36,7 +36,7 @@ class Arachne(object):
         conn = connect(host=self.__host, user=self.__user,
                 password=self.__password, database=self.__database_name,
                 port=self.__port, unix_socket=self.__unix_socket,
-                charset=self.__charset)
+                charset=self.__charset, connect_timeout=120)
         cur = conn.cursor(cursors.DictCursor)
         cur.execute(statement, values)
         if commit: conn.commit()
