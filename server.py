@@ -573,8 +573,8 @@ def file_read(f_type, res):
 def exec_on_server(res, res_id = None):
     user = auth(request.headers.get("Authorization"))
     if res == "opera_update" and "e_edit" in user["access"]:
-        db.command("CALL updateOperaMaiora()")
         db.command("CALL updateOperaMinora()")
+        db.command("CALL updateOperaMaiora()")
         return Response("", status=200) # OK
     #elif res == "mlw_preview" and "editor" in user["access"]:
     #    return create_mlw_file(request.json)
