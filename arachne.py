@@ -31,12 +31,23 @@ class Arachne(object):
         self.__port = int(db_cfg["port"])
         self.__unix_socket = db_cfg.get("unix_socket", "")
         self.__charset = db_cfg.get("charset", "")
+    
+    def call(self, command, values=None):
+        print("call:", command)
+        conn = connect(host=self.__host, user=self.__user,
+                password=self.__password, database=self.__database_name,
+                port=self.__port, unix_socket=self.__unix_socket,
+                charset=self.__charset, autocommit=True)
+        cur = conn.cursor()
+        if values: re = cur.callproc(command, values)
+        else: re = cur.callproc(command)
+        return re
 
     def command(self, statement, values = [], commit = False):
         conn = connect(host=self.__host, user=self.__user,
                 password=self.__password, database=self.__database_name,
                 port=self.__port, unix_socket=self.__unix_socket,
-                charset=self.__charset, connect_timeout=120)
+                charset=self.__charset)
         cur = conn.cursor(cursors.DictCursor)
         cur.execute(statement, values)
         if commit: conn.commit()

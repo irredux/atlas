@@ -26,7 +26,7 @@ from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInf
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from configparser import ConfigParser
 from datetime import datetime, timedelta
-from flask import abort, Flask, request, send_file, Response, session
+from flask import abort, Flask, request, send_file, Response, session, redirect
 from hashlib import pbkdf2_hmac
 import json
 from os import path, urandom, mkdir
@@ -76,9 +76,9 @@ class Server_Settings:
         self.s_minutes = 0
 
         # load JSON files from /config
-        with open(dir_path + "/config/staticFiles.JSON") as static_file:
+        with open(dir_path + "/config/staticFiles.JSON") as static_file: # old version
             self.static_files = json.load(static_file)
-        with open(dir_path + "/config/mainMenu.JSON") as menu_file:
+        with open(dir_path + "/config/mainMenu.JSON") as menu_file: # old version
             self.main_menu = json.load(menu_file)
         with open(dir_path + "/config/accessCREATE.JSON") as access_file:
             self.accessCREATE = json.load(access_file)
@@ -88,7 +88,7 @@ class Server_Settings:
             self.accessUPDATE = json.load(access_file)
         with open(dir_path + "/config/accessDELETE.JSON") as access_file:
             self.accessDELETE = json.load(access_file)
-        with open(dir_path + "/config/objectStores.JSON") as config_file:
+        with open(dir_path + "/config/objectStores.JSON") as config_file: # old version
             self.oStores = json.load(config_file)
 
         # doublesided zettel
@@ -179,14 +179,15 @@ def pw_set(pw_raw):
 @app.route("/react/index.html")
 def react():
     return send_file(dir_path+"/static/react/db/index.html")
-
 @app.route("/")
 def login():
     return send_file(dir_path+"/static/html/login.html")
 @app.route("/site")
-@app.route("/site/viewer/<resId>")
-def site(resId=None):
+def site():
     return send_file(dir_path+"/static/html/site.html")
+@app.route("/site/viewer/<resId>") # legacy can be removed in new version
+def viewer(resId):
+    return redirect(f"/static/react/viewer/index.html?edition={resId}")
 @app.route("/site/zettel")
 def zettel():
     return render_template("zettel.html")
@@ -483,7 +484,7 @@ def scan_import():
                 }
                 new_id = db.save("scan", save_dict)
                 db.save("scan_lnk", {"scan_id": new_id, "edition_id": edition_id})
-                # save the file
+                # save file
                 f.save(newPath + f.filename)
             else:
                 r_lst.append(f.filename)
@@ -546,7 +547,7 @@ def zettel_import():
     else: abort(400) # bad request
 
 @app.route("/zettel/<letter>/<dir_nr>/<img>")
-def f_zettel(letter, dir_nr, img): # NOT SAVE!!!!!!!! + NEEDS AUTH
+def f_zettel(letter, dir_nr, img): # NOT SAVE!!!!!!!! NEEDS AUTH
     #self.auth()
     return send_file(dir_path+f"/zettel/{letter}/{dir_nr}/"+img)
 
@@ -562,26 +563,18 @@ def file_read(f_type, res):
         user = auth(request.headers.get("Authorization"))
         if "library" in user["access"]:
             page = db.search("scan", {"id": res}, ["path", "filename"])[0]
-            #print(dir_path + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
             return send_file(dir_path + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
         else: abort(401)
 
-
 # functions
 @app.route("/exec/<res>", methods=["GET", "POST"])
-@app.route("/exec/<res>/<res_id>", methods=["GET"])
-def exec_on_server(res, res_id = None):
+def exec_on_server(res):
     user = auth(request.headers.get("Authorization"))
     if res == "opera_update" and "e_edit" in user["access"]:
-        db.command("CALL updateOperaMinora()")
-        db.command("CALL updateOperaMaiora()")
+        db.call("updateOperaLists")
         return Response("", status=200) # OK
     #elif res == "mlw_preview" and "editor" in user["access"]:
     #    return create_mlw_file(request.json)
-    #elif res == "scan_add" and "e_edit" in user["access"]:
-    #    return get_scan_files(res_id)
     else: return abort(404) # not found
 
-if __name__ == '__main__':
-    print("starting server...")
-    server.start()
+if __name__ == '__main__': server.start()
