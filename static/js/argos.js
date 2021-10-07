@@ -11,10 +11,9 @@ export class Argos{
         
         this.contextElementId = 0; // holds element id which fired current contextmenu
         this.shortCuts = new ShortCuts(this);
-
         // login
         const login = async () => {
-            this.access = await fetch("/config/access", {headers: {"Authorization": `Bearer ${arachne.key.token}`}})
+            this.access = await fetch("/config/access")
                 .then(re => {
                     if(re.status === 200){return re.json()}
                     else{window.open("/", "_self")}
@@ -22,10 +21,6 @@ export class Argos{
             if(!location.pathname.startsWith("/site/viewer/")){
                 await arachne.login();
                 await this.loadMainNav();
-            } else {
-                // start up viewer
-                await arachne.login(false);
-                this.loadMain("viewer", location.pathname.substring(13));
             }
         }
         this.URLSearch = this.getSearch();

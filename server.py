@@ -176,22 +176,18 @@ def pw_set(pw_raw):
 # ################################################################
 # -II- routes
 # ################################################################
-@app.route("/react/index.html")
-def react():
-    return send_file(dir_path+"/static/react/db/index.html")
+@app.route("/react/index.html") # legacy reroute; can be removed in next version
 @app.route("/")
 def login():
-    return send_file(dir_path+"/static/html/login.html")
+    return send_file(dir_path+"/static/react/db/index.html")
+    #return send_file(dir_path+"/static/html/login.html")
 @app.route("/site")
 def site():
     return send_file(dir_path+"/static/html/site.html")
-@app.route("/site/viewer/<resId>") # legacy can be removed in new version
+@app.route("/site/viewer/<resId>") # legacy reroute; can be removed in next version
 def viewer(resId):
     return redirect(f"/static/react/viewer/index.html?edition={resId}")
-@app.route("/site/zettel")
-def zettel():
-    return render_template("zettel.html")
-    
+
 # session
 @app.route("/session", methods=["POST"])
 def session_create():

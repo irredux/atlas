@@ -1,19 +1,8 @@
 {
-    "Zettel- und Wortmaterial": {
-        "access": "*",
-        "items": [
-            {"caption": "Zettel-Datenbank", "onClick": "zettel"},
-            {"caption": "Lemmaliste", "onClick": "lemma"},
-            {"caption": "Volltext-Suche", "onClick": "full_text", "access": "admin"}
-        ]
-    },
     "Verzeichnisse": {
         "access": "*",
         "items": [
-            {"caption": "<i>opera maiora</i>", "onClick": "opera_mai"},
-            {"caption": "<i>opera minora</i>", "onClick": "opera_min"},
-            {"caption": "Ressourcen", "onClick": "library", "access": "e_edit"},
-            {"caption": "Sekundärliteratur", "onClick": "sek_lit"}
+            {"caption": "Ressourcen", "onClick": "library", "access": "e_edit"}
         ]
     },
     "Editor": {
@@ -25,12 +14,6 @@
     "Einstellungen": {
         "access": "*",
         "items": [
-            {"caption": "Hilfe", "onClick": "help"},
-            {"caption": "Konto", "onClick": "account"},
-            {"caption": "Kontenverwaltung", "onClick": "user_access", "access": "admin"},
-            {"caption": "Statistiken", "onClick": "server_stats"},
-            {"caption": "Lokale Datenbank", "onClick": "local_database"},
-            {"caption": "Tests", "onClick": "tests", "access": "admin", "access": "admin"},
             {"caption": "abmelden", "onClick": "logout"}
         ]
     }
