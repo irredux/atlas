@@ -76,8 +76,6 @@ class Server_Settings:
         self.s_minutes = 0
 
         # load JSON files from /config
-        with open(dir_path + "/config/staticFiles.JSON") as static_file: # old version
-            self.static_files = json.load(static_file)
         with open(dir_path + "/config/mainMenu.JSON") as menu_file: # old version
             self.main_menu = json.load(menu_file)
         with open(dir_path + "/config/accessCREATE.JSON") as access_file:
@@ -549,11 +547,11 @@ def f_zettel(letter, dir_nr, img): # NOT SAVE!!!!!!!! NEEDS AUTH
 
 @app.route("/file/<f_type>/<res>")
 def file_read(f_type, res):
-    if f_type == "css" and res in srv_set.static_files["css"]:
+    if f_type == "css": # old version
         return send_file(dir_path+"/static/css/"+res)
-    elif f_type == "js" and res in srv_set.static_files["js"]:
+    elif f_type == "js": # old version
         return send_file(dir_path+"/static/js/"+res)
-    elif f_type == "webfonts" and res in srv_set.static_files["webfonts"]:
+    elif f_type == "webfonts": # old version
         return send_file(dir_path+"/static/webfonts/"+res)
     elif f_type == "scan":
         user = auth(request.headers.get("Authorization"))
