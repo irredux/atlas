@@ -21,7 +21,7 @@ limitations under the License.
 from binascii import hexlify
 
 from flask.templating import render_template
-from flask_cors import CORS
+#from flask_cors import CORS
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInfoDispatcher
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from configparser import ConfigParser
@@ -58,7 +58,7 @@ app = Flask(__name__)
 secret_key = urandom(24)
 secret_key = hexlify(secret_key)
 app.config["SECRET_KEY"] = secret_key
-CORS(app)
+#CORS(app)
 server_cfg = cfg["connection"]
 server = WSGIServer((server_cfg.get('host'), int(server_cfg.get('port'))), WSGIPathInfoDispatcher({"/": app}))
 
