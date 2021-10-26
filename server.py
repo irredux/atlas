@@ -78,6 +78,8 @@ class Server_Settings:
         # load JSON files from /config
         with open(dir_path + "/config/mainMenu.JSON") as menu_file: # old version
             self.main_menu = json.load(menu_file)
+        with open(dir_path + "/config/objectStores.JSON") as config_file: # old version
+            self.oStores = json.load(config_file)
         with open(dir_path + "/config/accessCREATE.JSON") as access_file:
             self.accessCREATE = json.load(access_file)
         with open(dir_path + "/config/accessREAD.JSON") as access_file:
@@ -86,8 +88,6 @@ class Server_Settings:
             self.accessUPDATE = json.load(access_file)
         with open(dir_path + "/config/accessDELETE.JSON") as access_file:
             self.accessDELETE = json.load(access_file)
-        with open(dir_path + "/config/objectStores.JSON") as config_file: # old version
-            self.oStores = json.load(config_file)
 
         # doublesided zettel
         if server_cfg.get("doublesided") == "True": self.doublesided = True
