@@ -599,14 +599,14 @@ BEFORE UPDATE ON zettel
 FOR EACH ROW
     BEGIN
         SET new.u_date = SYSDATE(6);
-        IF new.lemma_id != old.lemma_id OR (old.lemma_id IS NULL AND new.lemma_id IS NOT NULL) THEN
+        IF new.lemma_id != old.lemma_id OR (old.lemma_id IS NULL AND new.lemma_id IS NOT NULL) OR (old.lemma_id IS NOT NULL AND new.lemma_id IS NULL) THEN
             SET new.lemma = (SELECT lemma FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_nr = (SELECT lemma_nr FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_search = (SELECT lemma_search FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_display = (SELECT lemma_display FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_ac = (SELECT REMOVEHTML(lemma_display) FROM lemma WHERE new.lemma_id = lemma.id);
         END IF;
-        IF new.work_id != old.work_id OR (old.work_id IS NULL AND new.work_id IS NOT NULL) THEN
+        IF new.work_id != old.work_id OR (old.work_id IS NULL AND new.work_id IS NOT NULL) OR (old.work_id IS NOT NULL AND new.work_id IS NULL) THEN
             SET new.ac_web = (SELECT work.ac_web FROM work WHERE new.work_id = work.id);
             SET new.opus = (
                 SELECT
