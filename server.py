@@ -1,6 +1,6 @@
 #!/user/bin/env python3
 # -*- coding: utf-8 -*-
-"""buticula.py - modifies bottle.py to send and receive data from dMLW Database
+"""server.py - uses flask to send and receive data from dMLW Database
 
 Author: Alexander Häberlin <alexander.haeberlin@mlw.badw.de>
 
@@ -21,7 +21,7 @@ limitations under the License.
 from binascii import hexlify
 
 from flask.templating import render_template
-#from flask_cors import CORS
+from flask_cors import CORS
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInfoDispatcher
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from configparser import ConfigParser
@@ -58,7 +58,7 @@ app = Flask(__name__)
 secret_key = urandom(24)
 secret_key = hexlify(secret_key)
 app.config["SECRET_KEY"] = secret_key
-#CORS(app)
+CORS(app)
 server_cfg = cfg["connection"]
 server = WSGIServer((server_cfg.get('host'), int(server_cfg.get('port'))), WSGIPathInfoDispatcher({"/": app}))
 
@@ -569,8 +569,8 @@ def exec_on_server(res):
     if res == "opera_update" and "e_edit" in user["access"]:
         db.call("updateOperaLists")
         return Response("", status=200) # OK
-    #elif res == "mlw_preview" and "editor" in user["access"]:
-    #    return create_mlw_file(request.json)
+    elif res == "mlw_preview" and "editor" in user["access"]:
+        return create_mlw_file(request.json)
     else: return abort(404) # not found
 
 if __name__ == '__main__': server.start()
