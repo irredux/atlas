@@ -406,24 +406,37 @@ FOR EACH ROW
                     IF(new.in_use = 0 OR author.in_use = 0, "[", ""),
                     UPPER(IF(new.author_display IS NULL OR new.author_display = '', author.abbr, new.author_display)),
                     IF(new.abbr IS NULL OR new.abbr = "", "", CONCAT(" ", new.abbr)),
-                    IF(new.in_use = 0 OR author.in_use = 0, "]", "")
+                    IF(new.in_use = 0 OR author.in_use = 0, "]", ""),
+                    IF(new.is_maior = 1, "", CONCAT(
+                        "; ",
+                        IF(new.citation = "" OR new.citation IS NULL, "", CONCAT(new.citation, " ")),
+                        "((",
+                        IF(new.bibliography IS NULL, "", new.bibliography),
+                        IF(new.bibliography_cit IS NULL, "", CONCAT("; ", new.bibliography_cit)),
+                        "))"
+                    ))
                 )
             FROM author WHERE author.id = new.author_id
         );
-        SET new.ac_web = CONCAT(
-            new.ac_vsc,
-            IF(new.is_maior = 1,
-                "",
+        SET new.ac_web = (
+            SELECT 
                 CONCAT(
-                    "; ",
-                    IF(new.citation = "" OR new.citation IS NULL, "", CONCAT(new.citation, " ")),
-                    " (",
-                    IF(new.bibliography IS NULL, "", new.bibliography),
-                    " ",
-                    IF(new.bibliography_cit IS NULL, "", new.bibliography_cit),
-                    ")"
+                    IF(new.in_use = 0 OR author.in_use = 0, "[", ""),
+                    UPPER(IF(new.author_display IS NULL OR new.author_display = '', author.abbr, new.author_display)),
+                    IF(new.abbr IS NULL OR new.abbr = "", "", CONCAT(" ", new.abbr)),
+                    IF(new.in_use = 0 OR author.in_use = 0, "]", ""),
+                    IF(new.is_maior = 1, "",
+                        CONCAT(
+                            "; ",
+                            IF(new.citation = "" OR new.citation IS NULL, "", CONCAT(new.citation, " ")),
+                            "(",
+                            IF(new.bibliography IS NULL, "", new.bibliography),
+                            IF(new.bibliography_cit IS NULL, "", CONCAT(" ", new.bibliography_cit)),
+                            ")"
+                        )
+                    )
                 )
-            )
+            FROM author WHERE author.id = new.author_id
         );
         SET new.opus = (
             SELECT CONCAT(
@@ -454,24 +467,37 @@ FOR EACH ROW
                     IF(new.in_use = 0 OR author.in_use = 0, "[", ""),
                     UPPER(IF(new.author_display IS NULL OR new.author_display = '', author.abbr, new.author_display)),
                     IF(new.abbr IS NULL OR new.abbr = "", "", CONCAT(" ", new.abbr)),
-                    IF(new.in_use = 0 OR author.in_use = 0, "]", "")
+                    IF(new.in_use = 0 OR author.in_use = 0, "]", ""),
+                    IF(new.is_maior = 1, "", CONCAT(
+                        "; ",
+                        IF(new.citation = "" OR new.citation IS NULL, "", CONCAT(new.citation, " ")),
+                        "((",
+                        IF(new.bibliography IS NULL, "", new.bibliography),
+                        IF(new.bibliography_cit IS NULL, "", CONCAT("; ", new.bibliography_cit)),
+                        "))"
+                    ))
                 )
             FROM author WHERE author.id = new.author_id
         );
-        SET new.ac_web = CONCAT(
-            new.ac_vsc,
-            IF(new.is_maior = 1,
-                "",
+        SET new.ac_web = (
+            SELECT 
                 CONCAT(
-                    "; ",
-                    IF(new.citation = "" OR new.citation IS NULL, "", CONCAT(new.citation, " ")),
-                    " (",
-                    IF(new.bibliography IS NULL, "", new.bibliography),
-                    " ",
-                    IF(new.bibliography_cit IS NULL, "", new.bibliography_cit),
-                    ")"
+                    IF(new.in_use = 0 OR author.in_use = 0, "[", ""),
+                    UPPER(IF(new.author_display IS NULL OR new.author_display = '', author.abbr, new.author_display)),
+                    IF(new.abbr IS NULL OR new.abbr = "", "", CONCAT(" ", new.abbr)),
+                    IF(new.in_use = 0 OR author.in_use = 0, "]", ""),
+                    IF(new.is_maior = 1, "",
+                        CONCAT(
+                            "; ",
+                            IF(new.citation = "" OR new.citation IS NULL, "", CONCAT(new.citation, " ")),
+                            "(",
+                            IF(new.bibliography IS NULL, "", new.bibliography),
+                            IF(new.bibliography_cit IS NULL, "", CONCAT(" ", new.bibliography_cit)),
+                            ")"
+                        )
+                    )
                 )
-            )
+            FROM author WHERE author.id = new.author_id
         );
         SET new.opus = (
             SELECT CONCAT(
