@@ -448,7 +448,8 @@ def data_delete(res, res_id):
                 break
     else:
         abort(403) # forbidden
-    r_id = db.save(res, {"deleted": 1}, res_id)
+    #r_id = db.save(res, {"deleted": 1}, res_id)
+    db.delete(res, {"id": res_id})
     return Response("", status=200) # ok
 
 # static files

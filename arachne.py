@@ -64,14 +64,15 @@ class Arachne(object):
         """Removes a row from a given table.
 
             tbl: table-name
-            query: query to search for the rows. Can be dict or array
+            query:  Can be a dict (col-name/value) or string.
         """
         where_txt = ""
         values = []
         if len(query) > 0:
             where_txt, values = self.WHERE_to_str(query)
             where_txt = " WHERE " + where_txt
-        self.command(f"DELETE FROM {tbl}{where_txt};", values, True)
+            self.command(f"DELETE FROM {tbl}{where_txt};", values, True)
+
 
     def save(self, table, op, id = None, save_stat = True, return_row=False):
         """Saves new values into row. Returns id of row.
@@ -97,7 +98,7 @@ class Arachne(object):
         if id:
             # id is given
             cols_lst = []
-            for nr, col in enumerate(cols):
+            for col in cols:
                 cols_lst.append(col + " = %s")
             query = f"UPDATE {table} SET {', '.join(cols_lst)}" + " WHERE id = %s;"
             vals.append(id)
@@ -160,7 +161,7 @@ class Arachne(object):
     def search(self, tbl, query = {}, r_cols = "*", o_cols = [], limit=10001, offset=0):
         """ searches the database.
             tbl:    table or view to be searched.
-            query:  Could be a dict (col-name/value) or string.
+            query:  Can be a dict (col-name/value) or string.
             r_cols: list containing col-names to be returned.
             o_cols: list containing cols by which to order results. if col-name
                     has "-" in front, order is descending.
