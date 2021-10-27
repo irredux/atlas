@@ -33,7 +33,7 @@ class Arachne(object):
         self.__charset = db_cfg.get("charset", "")
     
     def call(self, command, values=None):
-        print("call:", command)
+        #print("call:", command)
         conn = connect(host=self.__host, user=self.__user,
                 password=self.__password, database=self.__database_name,
                 port=self.__port, unix_socket=self.__unix_socket,
@@ -106,17 +106,14 @@ class Arachne(object):
             # new entry
             placeholder = (", %s"*len(vals))[2:]
             query = f"INSERT INTO {table} ({', '.join(cols)}) VALUES({placeholder})"
-        html_vals = []
-        for val in vals:
-            if type(val) == str and val != "":
-                html_vals.append(html.escape(val, quote=False))
-            else:
-                html_vals.append(val)
-        r_id = self.command(query, values=html_vals, commit=True)
-
-        # save datetime of change
-        #if (table == "work" or table == "author") and save_stat == True:
-        #    self.save("stat", {table: datetime.now()}, 1)
+        #html_vals = [] # difficult to get to work on entries like "<aut>Abbo</aut>" when saved again! --- sanitize output is required!
+        # maybe use later: https://lxml.de/lxmlhtml.html#cleaning-up-html
+        #for val in vals:
+        #    if type(val) == str and val != "":
+        #        html_vals.append(html.escape(val, quote=False))
+        #    else:
+        #        html_vals.append(val)
+        r_id = self.command(query, values=vals, commit=True)
 
         # lastrowid returns  0 on "UPDATE"
         if id == None:
