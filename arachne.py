@@ -33,7 +33,6 @@ class Arachne(object):
         self.__charset = db_cfg.get("charset", "")
     
     def call(self, command, values=None):
-        #print("call:", command)
         conn = connect(host=self.__host, user=self.__user,
                 password=self.__password, database=self.__database_name,
                 port=self.__port, unix_socket=self.__unix_socket,
