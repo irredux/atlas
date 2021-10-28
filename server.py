@@ -568,6 +568,9 @@ def exec_on_server(res):
     if res == "opera_update" and "e_edit" in user["access"]:
         db.call("updateOperaLists")
         return Response("", status=200) # OK
+    if res == "statistics_update":
+        db.call("updateStatistics")
+        return Response("", status=200) # OK
     elif res == "mlw_preview" and "editor" in user["access"]:
         return create_mlw_file(request.json)
     else: return abort(404) # not found
