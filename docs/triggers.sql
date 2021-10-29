@@ -179,7 +179,7 @@ BEFORE UPDATE ON edition
 FOR EACH ROW
     BEGIN
         SET new.u_date = SYSDATE(6);
-        IF new.work_id != old.work_id THEN
+        IF new.work_id != old.work_id OR (old.work_id IS NULL AND new.work_id IS NOT NULL) OR (old.work_id IS NOT NULL AND new.work_id IS NULL) THEN
             SET new.opus = (SELECT opus FROM work WHERE work.id = new.work_id);
             SET new.ac_web = (SELECT ac_web FROM work WHERE work.id = new.work_id);
         END IF;
