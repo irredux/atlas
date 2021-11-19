@@ -583,11 +583,11 @@ def imgToText(filename):
 def convertZettel(zettelLimit):
     zettelLst = db.search("zettel", {"ocr_text": "NULL"}, ["id", "letter", "img_folder"], limit=zettelLimit)
     for zettel in zettelLst:
-        text = imgToText(dir_path+f"/zettel/{zettel['letter']}/{zettel['img_folder']}/{zettel['id']}.jpg")
-        db.save("zettel", {"ocr_text": text}, zettel["id"])
+        if zettel["img_folder"]!=None:
+            text = imgToText(dir_path+f"/zettel/{zettel['letter']}/{zettel['img_folder']}/{zettel['id']}.jpg")
+            db.save("zettel", {"ocr_text": text}, zettel["id"])
     
 if __name__ == '__main__':
-    converZettelThread = threading.Thread(target=convertZettel, args=(1000,))
+    converZettelThread = threading.Thread(target=convertZettel, args=(50000,))
     converZettelThread.start()
-    print("server started!")
     server.start()

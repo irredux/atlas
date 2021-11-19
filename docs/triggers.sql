@@ -598,7 +598,9 @@ CREATE OR REPLACE TRIGGER zettel_update
 BEFORE UPDATE ON zettel
 FOR EACH ROW
     BEGIN
-        SET new.u_date = SYSDATE(6);
+        IF !(old.ocr_text IS NULL AND new.ocr_text IS NOT NULL) THEN
+            SET new.u_date = SYSDATE(6);
+        END IF;
         IF new.lemma_id != old.lemma_id OR (old.lemma_id IS NULL AND new.lemma_id IS NOT NULL) OR (old.lemma_id IS NOT NULL AND new.lemma_id IS NULL) THEN
             SET new.lemma = (SELECT lemma FROM lemma WHERE new.lemma_id = lemma.id);
             SET new.lemma_nr = (SELECT lemma_nr FROM lemma WHERE new.lemma_id = lemma.id);
