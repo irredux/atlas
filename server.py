@@ -19,8 +19,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from binascii import hexlify
-
-from flask.templating import render_template
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInfoDispatcher
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from configparser import ConfigParser
@@ -29,9 +27,12 @@ from flask import abort, Flask, request, send_file, Response, session, redirect
 from hashlib import pbkdf2_hmac
 import json
 from os import path, urandom, mkdir
+from PIL import Image
+import pytesseract
 from shutil import rmtree
 from sys import argv
 import subprocess
+import threading
 from uuid import uuid4
 
 from arachne import Arachne
@@ -575,4 +576,18 @@ def exec_on_server(res):
         return create_mlw_file(request.json)
     else: return abort(404) # not found
 
-if __name__ == '__main__': server.start()
+def imgToText(filename):
+    text = pytesseract.image_to_string(Image.open(filename).convert("L"))
+    return text
+
+def convertZettel(zettelLimit):
+    zettelLst = db.search("zettel", {"ocr_text": "NULL"}, ["id", "letter", "img_folder"], limit=zettelLimit)
+    for zettel in zettelLst:
+        text = imgToText(dir_path+f"/zettel/{zettel['letter']}/{zettel['img_folder']}/{zettel['id']}.jpg")
+        db.save("zettel", {"ocr_text": text}, zettel["id"])
+    
+if __name__ == '__main__':
+    converZettelThread = threading.Thread(target=convertZettel, args=(1000,))
+    converZettelThread.start()
+    print("server started!")
+    server.start()
