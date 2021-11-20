@@ -190,6 +190,7 @@ class Arachne(object):
         else:
             order_txt = ""
         sql_search = f"SELECT {r_cols} FROM {tbl}{where_txt}{order_txt} LIMIT {limit} OFFSET {offset};"
+        #print(sql_search)
         return_lst = self.command(sql_search, values)
 
         # clean HTML tags and return results
