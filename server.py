@@ -584,9 +584,8 @@ def convertZettel(zettelLimit):
     job_id = db.save("ocr_jobs", {"source": "zettel", "total": zettelLimit, "count": 0})
     loop_count = 0
     total_count = 0
-    zettelLst = db.search("zettel", {"ocr_text": "NULL"}, ["id", "letter", "img_folder"], limit=zettelLimit)
+    zettelLst = db.search("zettel", {"ocr_text": "NULL"}, ["id", "letter", "img_folder", "sibling"], limit=zettelLimit)
     for zettel in zettelLst:
-        db.save("ocr_jobs", {"source": zettel["id"]}, job_id)
         loop_count += 1
         total_count += 1
         if zettel["img_folder"]!=None and (zettel["sibling"]==None or zettel["sibling"]==zettel["id"]):
