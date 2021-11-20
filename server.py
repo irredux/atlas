@@ -581,11 +581,20 @@ def imgToText(filename):
     return text
 
 def convertZettel(zettelLimit):
+    job_id = db.save("ocr_jobs", {"source": "zettel", "total": zettelLimit, "count": 0})
+    loop_count = 0
+    total_count = 0
     zettelLst = db.search("zettel", {"ocr_text": "NULL"}, ["id", "letter", "img_folder"], limit=zettelLimit)
     for zettel in zettelLst:
+        loop_count += 1
+        total_count += 1
         if zettel["img_folder"]!=None and (zettel["sibling"]==None or zettel["sibling"]==zettel["id"]):
             text = imgToText(dir_path+f"/zettel/{zettel['letter']}/{zettel['img_folder']}/{zettel['id']}.jpg")
             db.save("zettel", {"ocr_text": text}, zettel["id"])
+        if loop_count > 300:
+            loop_count = 0
+            db.save("ocr_jobs", {"count": total_count}, job_id)
+    db.save("ocr_jobs", {"count": total_count, "finished": 1}, job_id)
 
 if __name__ == '__main__':
     converZettelThread = threading.Thread(target=convertZettel, args=(50000,))
