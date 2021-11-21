@@ -1,4 +1,24 @@
 DELIMITER //
+CREATE OR REPLACE TRIGGER ocr_jobs_create
+BEFORE INSERT ON ocr_jobs
+FOR EACH ROW
+    BEGIN
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
+    END; //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE TRIGGER ocr_jobs_update
+BEFORE UPDATE ON ocr_jobs 
+FOR EACH ROW
+    BEGIN
+        SET new.u_date = SYSDATE(6);
+    END; //
+DELIMITER ;
+
+/* ***************************************************** */
+DELIMITER //
 CREATE OR REPLACE TRIGGER seklit_create
 BEFORE INSERT ON seklit
 FOR EACH ROW
