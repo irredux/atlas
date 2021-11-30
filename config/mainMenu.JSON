@@ -1,10 +1,4 @@
 {
-    "Verzeichnisse": {
-        "access": "*",
-        "items": [
-            {"caption": "Ressourcen", "onClick": "library", "access": "e_edit"}
-        ]
-    },
     "Editor": {
         "access": "editor",
         "items": [

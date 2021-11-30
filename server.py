@@ -58,8 +58,8 @@ app = Flask(__name__)
 secret_key = urandom(24)
 secret_key = hexlify(secret_key)
 app.config["SECRET_KEY"] = secret_key
-#from flask_cors import CORS # only for testing react apps locally!
-#CORS(app)
+from flask_cors import CORS # only for testing react apps locally!
+CORS(app)
 server_cfg = cfg["connection"]
 server = WSGIServer((server_cfg.get('host'), int(server_cfg.get('port'))), WSGIPathInfoDispatcher({"/": app}))
 
@@ -597,6 +597,6 @@ def convertZettel(zettelLimit):
     db.save("ocr_jobs", {"count": total_count, "finished": 1}, job_id)
 
 if __name__ == '__main__':
-    converZettelThread = threading.Thread(target=convertZettel, args=(50000,))
-    converZettelThread.start()
+    #converZettelThread = threading.Thread(target=convertZettel, args=(50000,))
+    #converZettelThread.start()
     server.start()
