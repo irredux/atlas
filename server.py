@@ -589,10 +589,11 @@ def exec_on_server(res):
             if path.isdir(path.join(faszikel_dir, sub_dir)):
                 # found sub directory
                 pdf = False
-                for file in listdir(path.join(faszikel_dir, "tex", sub_dir)):
-                    if file.endswith(".pdf"):
-                        pdf = f"{sub_dir}/{file}"
-                        break
+                if(path.exists(path.join(faszikel_dir, sub_dir, "tex"))):
+                    for file in listdir(path.join(faszikel_dir, sub_dir, "tex")):
+                        if file.endswith(".pdf"):
+                            pdf = f"{sub_dir}/{file}"
+                            break
                 return_list.append({"name": sub_dir, "pdf": pdf})
         return json.dumps(return_list)
     else: return abort(404) # not found
