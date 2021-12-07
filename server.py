@@ -459,7 +459,7 @@ def data_delete(res, res_id):
 def faszikel_export(dir_name, file_name):
     user = auth(request.headers.get("Authorization"))
     if "faszikel" in user["access"]:
-        return send_file(faszikel_dir+f"/{dir_name}/{file_name}")
+        return send_file(faszikel_dir+f"/{dir_name}/tex/{file_name}")
     else:
         abort(401) # unauthorized
 
@@ -589,7 +589,7 @@ def exec_on_server(res):
             if path.isdir(path.join(faszikel_dir, sub_dir)):
                 # found sub directory
                 pdf = False
-                for file in listdir(path.join(faszikel_dir, sub_dir)):
+                for file in listdir(path.join(faszikel_dir, "tex", sub_dir)):
                     if file.endswith(".pdf"):
                         pdf = f"{sub_dir}/{file}"
                         break
