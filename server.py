@@ -26,7 +26,7 @@ from datetime import datetime, timedelta
 from flask import abort, Flask, request, send_file, Response, session, redirect
 from hashlib import pbkdf2_hmac
 import json
-from os import path, urandom, mkdir
+from os import path, urandom, mkdir, listdir
 from PIL import Image
 import pytesseract
 from shutil import rmtree
@@ -38,6 +38,7 @@ from uuid import uuid4
 from arachne import Arachne
 
 dir_path = path.dirname(path.abspath(__file__))
+faszikel_dir = "/local/ovc/MLW/export/processing/"
 
 #load cfg
 if len(argv) > 1: cfg_path = argv[1]
@@ -454,6 +455,14 @@ def data_delete(res, res_id):
     return Response("", status=200) # ok
 
 # static files
+@app.route("/file/faszikel/<dir_name>/<file_name>/")
+def faszikel_export(dir_name, file_name):
+    user = auth(request.headers.get("Authorization"))
+    if "faszikel" in user["access"]:
+        return send_file(faszikel_dir+f"/{dir_name}/{file_name}")
+    else:
+        abort(401) # unauthorized
+
 @app.route("/file/scan", methods=["POST"])
 def scan_import():
     # upload scan imgs
@@ -574,6 +583,18 @@ def exec_on_server(res):
         return Response("", status=200) # OK
     elif res == "mlw_preview" and "editor" in user["access"]:
         return create_mlw_file(request.json)
+    elif res == "get_faszikel_jobs" and "faszikel" in user["access"]:
+        return_list = []
+        for sub_dir in listdir(faszikel_dir):
+            if path.isdir(path.join(faszikel_dir, sub_dir)):
+                # found sub directory
+                pdf = False
+                for file in listdir(path.join(faszikel_dir, sub_dir)):
+                    if file.endswith(".pdf"):
+                        pdf = f"{sub_dir}/{file}"
+                        break
+                return_list.append({"name": sub_dir, "pdf": pdf})
+        return json.dumps(return_list)
     else: return abort(404) # not found
 
 def imgToText(filename):
