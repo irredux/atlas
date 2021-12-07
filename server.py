@@ -586,7 +586,7 @@ def exec_on_server(res):
     elif res == "get_faszikel_jobs" and "faszikel" in user["access"]:
         return_list = []
         for sub_dir in listdir(faszikel_dir):
-            if path.isdir(path.join(faszikel_dir, sub_dir)):
+            if path.isdir(path.join(faszikel_dir, sub_dir)) and sub_dir != "last":
                 # found sub directory
                 pdf = False
                 if(path.exists(path.join(faszikel_dir, sub_dir, "tex"))):
