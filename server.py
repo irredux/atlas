@@ -38,7 +38,7 @@ from uuid import uuid4
 from arachne import Arachne
 
 dir_path = path.dirname(path.abspath(__file__))
-faszikel_dir = "/local/ovc/MLW/export/processing/"
+faszikel_dir = path.dirname("/local/ovc/MLW/export/processing/")
 
 #load cfg
 if len(argv) > 1: cfg_path = argv[1]
