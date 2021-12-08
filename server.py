@@ -29,7 +29,7 @@ import json
 from os import path, urandom, mkdir, listdir
 from PIL import Image
 import pytesseract
-from shutil import rmtree
+from shutil import rmtree, make_archive
 from sys import argv
 import subprocess
 import threading
@@ -459,7 +459,13 @@ def data_delete(res, res_id):
 def faszikel_export(dir_name, file_name):
     user = auth(request.headers.get("Authorization"))
     if "faszikel" in user["access"]:
-        return send_file(faszikel_dir+f"/{dir_name}/tex/{file_name}")
+        if file_name == "log":
+            return send_file(faszikel_dir+f"/{dir_name}/tex/mlw.context.log")
+        elif file_name == "zip":
+            make_archive("artciles", "zip", path.join(faszikel_dir, dir_name, "tex/articles"))
+            return send_file(faszikel_dir+f"/{dir_name}/tex/articles.zip")
+        else:
+            return send_file(faszikel_dir+f"/{dir_name}/tex/{file_name}")
     else:
         abort(401) # unauthorized
 
@@ -589,12 +595,14 @@ def exec_on_server(res):
             if path.isdir(path.join(faszikel_dir, sub_dir)) and sub_dir != "last":
                 # found sub directory
                 pdf = False
+                log = False
                 if(path.exists(path.join(faszikel_dir, sub_dir, "tex"))):
                     for file in listdir(path.join(faszikel_dir, sub_dir, "tex")):
                         if file.endswith(".pdf"):
                             pdf = f"{sub_dir}/{file}"
-                            break
-                return_list.append({"name": sub_dir, "pdf": pdf})
+                        elif file.endswith(".log"):
+                            log = True
+                return_list.append({"date": sub_dir, "name": pdf, "log": log})
         return json.dumps(return_list)
     else: return abort(404) # not found
 
