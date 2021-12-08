@@ -599,7 +599,7 @@ def exec_on_server(res):
                 if(path.exists(path.join(faszikel_dir, sub_dir, "tex"))):
                     for file in listdir(path.join(faszikel_dir, sub_dir, "tex")):
                         if file.endswith(".pdf"):
-                            pdf = f"{sub_dir}/{file}"
+                            pdf = file
                         elif file.endswith(".log"):
                             log = True
                 return_list.append({"date": sub_dir, "name": pdf, "log": log})
