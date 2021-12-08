@@ -24,7 +24,7 @@ from cheroot.ssl.builtin import BuiltinSSLAdapter
 from configparser import ConfigParser
 from datetime import datetime, timedelta
 from flask import abort, Flask, request, send_file, Response, session, redirect
-from hashlib import pbkdf2_hmac
+from hashlib import new, pbkdf2_hmac
 import json
 from os import path, urandom, mkdir, listdir
 from PIL import Image
@@ -462,8 +462,11 @@ def faszikel_export(dir_name, file_name):
         if file_name == "log":
             return send_file(faszikel_dir+f"/{dir_name}/tex/mlw.context.log")
         elif file_name == "zip":
-            make_archive("artciles", "zip", path.join(faszikel_dir, dir_name, "tex/articles"))
-            return send_file(faszikel_dir+f"/{dir_name}/tex/articles.zip")
+            new_file = path.join(dir_path,"temp/artciles.zip")
+            new_path = path.join(dir_path,"temp/artciles")
+            #if path.exists(new_file): rmtree(new_file)
+            make_archive(new_path, "zip", path.join(faszikel_dir, dir_name, "tex/articles"))
+            return send_file(new_file)
         else:
             return send_file(faszikel_dir+f"/{dir_name}/tex/{file_name}")
     else:
