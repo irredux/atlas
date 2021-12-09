@@ -59,8 +59,8 @@ app = Flask(__name__)
 secret_key = urandom(24)
 secret_key = hexlify(secret_key)
 app.config["SECRET_KEY"] = secret_key
-#from flask_cors import CORS # only for testing react apps locally!
-#CORS(app)
+from flask_cors import CORS # only for testing react apps locally!
+CORS(app)
 server_cfg = cfg["connection"]
 server = WSGIServer((server_cfg.get('host'), int(server_cfg.get('port'))), WSGIPathInfoDispatcher({"/": app}))
 
