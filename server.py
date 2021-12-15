@@ -646,7 +646,7 @@ def autoSetZettelType():
     data = pandas.DataFrame(zettelData)
     X = data[["ocr_length", "letter_length", "word_length"]]
 
-    logisticRegr = load(f"{dir_path}/content/models/typeModel_2021_12_14.joblib")
+    logisticRegr = load(f"{dir_path}/content/models/typeModel_2021_12_15.joblib")
     y = logisticRegr.predict(X)
     for nr, zettel in enumerate(zettelData):
         db.save("zettel", {"type": y[nr], "auto": 1}, zettel["id"])
