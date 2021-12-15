@@ -975,4 +975,4 @@ if __name__ == '__main__':
     autoSetZettelType()
     #import_mgh()
     print("starting server...")
-    server.start()
+    #server.start()
