@@ -973,7 +973,7 @@ def import_mgh():
 if __name__ == '__main__':
     #converZettelThread = threading.Thread(target=convertZettel, args=(50000,))
     #converZettelThread.start()
-    autoSetZettelType()
+    #autoSetZettelType()
     #import_mgh()
     #print("starting server...")
-    #server.start()
+    server.start()
