@@ -635,8 +635,7 @@ def convertZettel(zettelLimit):
     db.save("ocr_jobs", {"count": total_count, "finished": 1}, job_id)
 
 def autoSetZettelType():
-    zettelLst = db.command(f"SELECT id, type, ocr_text FROM zettel WHERE (type = 0 OR type IS NULL) AND ocr_text IS NOT NULL AND ocr_text !=''")
-    print("total found:", len(zettelLst))
+    zettelLst = db.command(f"SELECT id, type, ocr_text FROM zettel WHERE (type = 0 OR type IS NULL) AND ocr_text IS NOT NULL AND ocr_text !='' LIMIT 1000")
     zettelData = []
     for zettel in zettelLst:
         if zettel["type"] == 0 or zettel["type"] == None:
@@ -644,7 +643,6 @@ def autoSetZettelType():
             zettel["letter_length"] = len(re.findall("[a-z]", zettel["ocr_text"], re.IGNORECASE))
             zettel["word_length"] = len(re.findall("[a-z][a-z]+", zettel["ocr_text"], re.IGNORECASE))
             zettelData.append(zettel)
-    print("found:", len(zettelData))
     data = pandas.DataFrame(zettelData)
     X = data[["ocr_length", "letter_length", "word_length"]]
 
