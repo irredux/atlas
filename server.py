@@ -649,7 +649,7 @@ def autoSetZettelType():
     logisticRegr = load(f"{dir_path}/content/models/typeModel_2021_12_15.joblib")
     y = logisticRegr.predict(X)
     for nr, zettel in enumerate(zettelData):
-        db.save("zettel", {"type": int(y[nr]), "auto": 1}, zettel["id"])
+        db.save("zettel", {"type": int(f"{y[nr]}"), "auto": 1}, zettel["id"])
 
 def get_MGH_img(first_page, first_page_number, number_of_pages, basic_url, res_path):
     file_path = f"{dir_path}/content/scans{res_path}"
