@@ -636,6 +636,7 @@ def convertZettel(zettelLimit):
 
 def autoSetZettelType():
     zettelLst = db.command(f"SELECT id, type, ocr_text FROM zettel WHERE (type = 0 OR type IS NULL) AND ocr_text IS NOT NULL AND ocr_text !='' LIMIT 1000")
+    print("total zettel found:", len(zettelLst))
     zettelData = []
     for zettel in zettelLst:
         if zettel["type"] == 0 or zettel["type"] == None:
@@ -644,6 +645,7 @@ def autoSetZettelType():
             zettel["word_length"] = len(re.findall("[a-z][a-z]+", zettel["ocr_text"], re.IGNORECASE))
             zettelData.append(zettel)
     data = pandas.DataFrame(zettelData)
+    print("total used zettel:", len(zettelData))
     X = data[["ocr_length", "letter_length", "word_length"]]
 
     logisticRegr = load(f"{dir_path}/content/models/typeModel_2021_12_15.joblib")
