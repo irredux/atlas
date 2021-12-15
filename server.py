@@ -635,7 +635,7 @@ def convertZettel(zettelLimit):
     db.save("ocr_jobs", {"count": total_count, "finished": 1}, job_id)
 
 def autoSetZettelType():
-    zettelLst = db.command(f"SELECT id, type, ocr_text FROM zettel WHERE (type = 0 OR type IS NULL) AND ocr_text IS NOT NULL AND ocr_text !='' LIMIT 1000")
+    zettelLst = db.command(f"SELECT id, type, ocr_text FROM zettel WHERE (type = 0 OR type IS NULL) AND ocr_text IS NOT NULL AND ocr_text !=''")
     print("total zettel found:", len(zettelLst))
     zettelData = []
     for zettel in zettelLst:
@@ -651,7 +651,7 @@ def autoSetZettelType():
     logisticRegr = load(f"{dir_path}/content/models/typeModel_2021_12_15.joblib")
     y = logisticRegr.predict(X)
     for nr, zettel in enumerate(zettelData):
-        db.save("zettel", {"type": int(f"{y[nr]}"), "auto": 1}, zettel["id"])
+        db.save("zettel", {"type": int(y[nr]), "auto": 1}, zettel["id"])
 
 def get_MGH_img(first_page, first_page_number, number_of_pages, basic_url, res_path):
     file_path = f"{dir_path}/content/scans{res_path}"
