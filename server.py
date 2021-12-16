@@ -802,15 +802,12 @@ def import_mgh3():
             {"img_number": 157, "page_number": 149, "count": 2},
             {"img_number": 1, "page_number": 9000, "count": 2}
         ])
+    
+
+
+
+    
     # B. Schmeidler, Adam von Bremen, Hamburgische Kirchengesch. (MG Script. rer. Germ.). 1917.
-    setup_MGH_ressource( # ADAM gest. 1–280
-        "https://www.dmgh.de/mgh_ss_rer_germ_2/img/300/mgh_ss_rer_germ_2_",
-        "/A/ADAM gest. (ed. Schmeidler)/",
-        2073,
-        [
-            {"img_number": 68, "page_number": 1, "count": 280},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
     setup_MGH_ressource( # ADAM gest. epil. 281–83
         "https://www.dmgh.de/mgh_ss_rer_germ_2/img/300/mgh_ss_rer_germ_2_",
         "/A/ADAM gest. (epil.) (ed. Schmeidler)/",
@@ -1096,47 +1093,6 @@ def import_mgh3():
             {"img_number": 1, "page_number": 9000, "count": 2}
         ])
 
-def import_mgh(): 
-    setup_MGH_ressource( # O. Holder-Egger MG Script. XV (1887)
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/M/MG Script. XV (1887, ed. Holder-Egger)/",
-        2074,
-        [
-            {"img_number": 8, "page_number": 1, "count": 574},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # B. Schmeidler, Adam von Bremen, Hamburgische Kirchengesch. (MG Script. rer. Germ.). 1917.
-        "https://www.dmgh.de/mgh_ss_rer_germ_2/img/300/mgh_ss_rer_germ_2_",
-        "/M/MG Script rer. Germ. (1917, ed. Schmeidler)/",
-        2073,
-        [
-            {"img_number": 68, "page_number": 1, "count": 353},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # F. Kurze, Reginonis ... chronicon (MG Script. rer. Germ.). 1890. p. 154-79
-        "https://www.dmgh.de/mgh_ss_rer_germ_50/img/300/mgh_ss_rer_germ_50_",
-        "/M/MG Script. rer. Germ. (1890, ed. Kurze)/",
-        2071,
-        [
-            {"img_number": 20, "page_number": 1, "count": 196},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # P. v. Winterfeld MG Poet. IV (1899)
-        "https://www.dmgh.de/mgh_poetae_4_1/img/300/mgh_poetae_4_1_",
-        "/M/MG Script. rer. Germ. (1890, ed. v. Winterfeld)/",
-        2067,
-        [
-            {"img_number": 9, "page_number": 1, "count": 444},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # K. Strecker MG Poet. IV (1923)
-        "https://www.dmgh.de/mgh_poetae_4_23/img/300/mgh_poetae_4_23_",
-        "/M/MG Poet IV (1923, ed. Strecker)/",
-        2078,
-        [
-            {"img_number": 11, "page_number": 445, "count": 733},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
 if __name__ == '__main__':
     #converZettelThread = threading.Thread(target=convertZettel, args=(50000,))
     #converZettelThread.start()
