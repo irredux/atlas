@@ -1141,6 +1141,6 @@ if __name__ == '__main__':
     #converZettelThread = threading.Thread(target=convertZettel, args=(50000,))
     #converZettelThread.start()
     #autoSetZettelType()
-    import_mgh()
+    #import_mgh()
     #print("starting server...")
-    #server.start()
+    server.start()
