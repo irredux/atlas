@@ -50,14 +50,13 @@ def setup_MGH_ressource(basic_url, ressource_path, pages_lst):
         get_MGH_img(pages["img_number"], pages["page_number"], pages["count"], basic_url, ressource_path)
 if __name__ == '__main__':
     pass
-    #setup_MGH_ressource( # K. Strecker MG Poet. IV (1923)
-    #    "https://www.dmgh.de/mgh_poetae_4_23/img/300/mgh_poetae_4_23_",
-    #    "/M/MG Poet IV (1923, ed. Strecker)/",
-    #    [
-    #        {"img_number": 11, "page_number": 445, "count": 456},
-    #        {"img_number": 471, "page_number": 901, "count": 276},
-    #        {"img_number": 1, "page_number": 9000, "count": 2}
-    #    ])
+    setup_MGH_ressource( # F. Güterbock (MG Script. rer. Germ. N. S. VII)
+        "https://www.dmgh.de/mgh_ss_rer_germ_n_s_7/img/300/mgh_ss_rer_germ_n_s_7_",
+        "/M/MG Script. rer. Germ. N. S. VII (1930, ed. Güterbock)/",
+        [
+            {"img_number": 46, "page_number": 1, "count": 218},
+            {"img_number": 1, "page_number": 9000, "count": 2}
+        ])
 
 
 def import_mgh2():
