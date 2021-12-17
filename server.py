@@ -692,65 +692,6 @@ def import_mgh2():
         ])
     
 def import_mgh3():
-    # O. Holder-Egger MG Script. XV (1887)
-    setup_MGH_ressource( # ERMENR. Sval. 153–63
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/E/ERMENR. Sval. (ed. Holder-Egger)/",
-        2369,
-        [
-            {"img_number": 161, "page_number": 153, "count": 11},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # FOLCUIN. vita Folcuin. 424–30
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/F/FOLCUIN. vita Folcuin. (ed. Holder-Egger)/",
-        2380,
-        [
-            {"img_number": 432, "page_number": 424, "count": 7},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # HUGEB. Willib. 86–106
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/H/HUGEB. Willib. (ed. Holder-Egger)/",
-        2531,
-        [
-            {"img_number": 94, "page_number": 86, "count": 21},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # LIUTG. Greg. 66–79
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/L/LIUTG. Greg. (ed. Holder-Egger)/",
-        2587,
-        [
-            {"img_number": 73, "page_number": 66, "count": 14},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # LUP. FERR. Wigb. 37–43
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/L/LUP. FERR. Wigb. (ed. Holder-Egger)/",
-        2595,
-        [
-            {"img_number": 44, "page_number": 37, "count": 7},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # MEGINH. BLEID. Ferr. 149–50
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/M/MEGINH. BLEID. Ferr. (ed. Holder-Egger)/",
-        2603,
-        [
-            {"img_number": 157, "page_number": 149, "count": 2},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # ODBERT. Frid. 344–56
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/L/LUP. FERR. Wigb. (ed. Holder-Egger)/",
-        2603,
-        [
-            {"img_number": 157, "page_number": 149, "count": 2},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    
-
     # /M/MG Script. rer. Germ. (1890, ed. v. Winterfeld)/
     # P. v. Winterfeld MG Poet. IV (1899)
     setup_MGH_ressource( # ARBO SANGERM. bell. 77–122

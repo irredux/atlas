@@ -48,23 +48,12 @@ def setup_MGH_ressource(basic_url, ressource_path, pages_lst):
     # download new imgs
     for pages in pages_lst:
         get_MGH_img(pages["img_number"], pages["page_number"], pages["count"], basic_url, ressource_path)
-def import_mgh(): 
+if __name__ == '__main__':
     setup_MGH_ressource( # K. Strecker MG Poet. IV (1923)
         "https://www.dmgh.de/mgh_poetae_4_23/img/300/mgh_poetae_4_23_",
         "/M/MG Poet IV (1923, ed. Strecker)/",
-        2078,
         [
-            {"img_number": 11, "page_number": 445, "count": 733},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-if __name__ == '__main__':
-    setup_MGH_ressource( # P. v. Winterfeld MG Poet. IV (1899)
-        "https://www.dmgh.de/mgh_poetae_4_1/img/300/mgh_poetae_4_1_",
-        "/M/MG Script. rer. Germ. (1890, ed. v. Winterfeld)/",
-        [
-            {"img_number": 9, "page_number": 1, "count": 165},
-            {"img_number": 174, "page_number": 165, "count": 1},
-            {"img_number": 175, "page_number": 165, "count": 1},
-            {"img_number": 176, "page_number": 166, "count": 279},
+            {"img_number": 11, "page_number": 445, "count": 456},
+            {"img_number": 471, "page_number": 901, "count": 276},
             {"img_number": 1, "page_number": 9000, "count": 2}
         ])
