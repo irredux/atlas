@@ -693,22 +693,6 @@ def import_mgh2():
     
 def import_mgh3():
     # O. Holder-Egger MG Script. XV (1887)
-    setup_MGH_ressource( # ADREV. Bened. 478–97
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/A/ADREV. Bened. (ed. Holder-Egger)/",
-        2074,
-        [
-            {"img_number": 486, "page_number": 478, "count": 20},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # BOVO SITH. Bert. 525–34
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/B/BOVO SITH. Bert. (ed. Holder-Egger)/",
-        2892,
-        [
-            {"img_number": 533, "page_number": 525, "count": 10},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
     setup_MGH_ressource( # ERMENR. Sval. 153–63
         "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
         "/E/ERMENR. Sval. (ed. Holder-Egger)/",

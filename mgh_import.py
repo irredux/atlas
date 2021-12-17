@@ -49,30 +49,6 @@ def setup_MGH_ressource(basic_url, ressource_path, pages_lst):
     for pages in pages_lst:
         get_MGH_img(pages["img_number"], pages["page_number"], pages["count"], basic_url, ressource_path)
 def import_mgh(): 
-    setup_MGH_ressource( # B. Schmeidler, Adam von Bremen, Hamburgische Kirchengesch. (MG Script. rer. Germ.). 1917.
-        "https://www.dmgh.de/mgh_ss_rer_germ_2/img/300/mgh_ss_rer_germ_2_",
-        "/M/MG Script rer. Germ. (1917, ed. Schmeidler)/",
-        2073,
-        [
-            {"img_number": 68, "page_number": 1, "count": 353},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # F. Kurze, Reginonis ... chronicon (MG Script. rer. Germ.). 1890. p. 154-79
-        "https://www.dmgh.de/mgh_ss_rer_germ_50/img/300/mgh_ss_rer_germ_50_",
-        "/M/MG Script. rer. Germ. (1890, ed. Kurze)/",
-        2071,
-        [
-            {"img_number": 20, "page_number": 1, "count": 196},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
-    setup_MGH_ressource( # P. v. Winterfeld MG Poet. IV (1899)
-        "https://www.dmgh.de/mgh_poetae_4_1/img/300/mgh_poetae_4_1_",
-        "/M/MG Script. rer. Germ. (1890, ed. v. Winterfeld)/",
-        2067,
-        [
-            {"img_number": 9, "page_number": 1, "count": 444},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
     setup_MGH_ressource( # K. Strecker MG Poet. IV (1923)
         "https://www.dmgh.de/mgh_poetae_4_23/img/300/mgh_poetae_4_23_",
         "/M/MG Poet IV (1923, ed. Strecker)/",
@@ -82,11 +58,13 @@ def import_mgh():
             {"img_number": 1, "page_number": 9000, "count": 2}
         ])
 if __name__ == '__main__':
-    setup_MGH_ressource( # O. Holder-Egger MG Script. XV (1887)
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/M/MG Script. XV (1887, ed. Holder-Egger)/",
+    setup_MGH_ressource( # P. v. Winterfeld MG Poet. IV (1899)
+        "https://www.dmgh.de/mgh_poetae_4_1/img/300/mgh_poetae_4_1_",
+        "/M/MG Script. rer. Germ. (1890, ed. v. Winterfeld)/",
         [
-            {"img_number": 8, "page_number": 1, "count": 82},
-            {"img_number": 91, "page_number": 83, "count": 489},
+            {"img_number": 9, "page_number": 1, "count": 165},
+            {"img_number": 174, "page_number": 165, "count": 1},
+            {"img_number": 175, "page_number": 165, "count": 1},
+            {"img_number": 176, "page_number": 166, "count": 279},
             {"img_number": 1, "page_number": 9000, "count": 2}
         ])
