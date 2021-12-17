@@ -39,35 +39,16 @@ def get_MGH_img(first_page, first_page_number, number_of_pages, basic_url, res_p
                 "path": res_path,
                 "mgh": basic_url+f"{page:05d}.jpg"
                 })
+def setup_MGH_ressource(basic_url, ressource_path, pages_lst):
+    # remove old scan-entries from database
+    old_scan_lst = db.search("scan", {"path": ressource_path}, ["id"])
+    for old_scan in old_scan_lst:
+        db.delete("scan", {"id": old_scan["id"]})
 
-def setup_MGH_ressource(basic_url, ressource_path, edition_id, pages_lst):
-    # check if img_path exists in db??
-    # download imgs
+    # download new imgs
     for pages in pages_lst:
         get_MGH_img(pages["img_number"], pages["page_number"], pages["count"], basic_url, ressource_path)
-    # create new ressource based on old informations
-    old_res = db.search("edition", {"id": edition_id})
-    new_res = old_res[0]
-    new_res["path"] = ressource_path
-    new_res["url"] = None
-    new_res["bsb"] = None
-    del new_res["id"]
-
-    new_res_id = db.save("edition", new_res, edition_id)
-    # add imgs to new edition
-    new_imgs = db.search("scan", {"path": ressource_path}, ["id"])
-    for new_img in new_imgs:
-        db.save("scan_lnk", {"edition_id": new_res_id, "scan_id": new_img["id"]})
-
 def import_mgh(): 
-    setup_MGH_ressource( # O. Holder-Egger MG Script. XV (1887)
-        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
-        "/M/MG Script. XV (1887, ed. Holder-Egger)/",
-        2074,
-        [
-            {"img_number": 8, "page_number": 1, "count": 574},
-            {"img_number": 1, "page_number": 9000, "count": 2}
-        ])
     setup_MGH_ressource( # B. Schmeidler, Adam von Bremen, Hamburgische Kirchengesch. (MG Script. rer. Germ.). 1917.
         "https://www.dmgh.de/mgh_ss_rer_germ_2/img/300/mgh_ss_rer_germ_2_",
         "/M/MG Script rer. Germ. (1917, ed. Schmeidler)/",
@@ -101,4 +82,11 @@ def import_mgh():
             {"img_number": 1, "page_number": 9000, "count": 2}
         ])
 if __name__ == '__main__':
-    import_mgh()
+    setup_MGH_ressource( # O. Holder-Egger MG Script. XV (1887)
+        "https://www.dmgh.de/mgh_ss_15_1/img/300/mgh_ss_15_1_",
+        "/M/MG Script. XV (1887, ed. Holder-Egger)/",
+        [
+            {"img_number": 8, "page_number": 1, "count": 82},
+            {"img_number": 91, "page_number": 83, "count": 489},
+            {"img_number": 1, "page_number": 9000, "count": 2}
+        ])
