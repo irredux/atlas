@@ -29,13 +29,13 @@ def get_MGH_img(url, page_name, res_path):
     re = requests.get(url, stream=True, verify=False)
     if re.status_code == 200:
         re.raw.decode_content = True
-        with open(f"{file_path}{page_name:04d}.jpg", "wb") as f:
+        with open(f"{file_path}{page_name.zfill(4)}.jpg", "wb") as f:
             copyfileobj(re.raw, f)
-        jpg = Image.open(f"{file_path}{page_name:04d}.jpg")
-        jpg.save(f"{file_path}{page_name:04d}.png")
-        remove(f"{file_path}{page_name:04d}.jpg")
+        jpg = Image.open(f"{file_path}{page_name.zfill(4)}.jpg")
+        jpg.save(f"{file_path}{page_name.zfill(4)}.png")
+        remove(f"{file_path}{page_name.zfill(4)}.jpg")
         db.save("scan", {
-            "filename": f"{page_name:04d}",
+            "filename": f"{page_name.zfill(4)}",
             "path": res_path,
             "mgh": url
             })
