@@ -46,7 +46,7 @@ def setup_MGH_ressource(basic_url, ressource_path):
         db.delete("scan", {"id": old_scan["id"]})
     # get new pages
     edition_name = basic_url.split("/")[-2]
-    re = requests.get(f"{basic_url}book.js")
+    re = requests.get(f"{basic_url}book.js", verify=False)
     start_index = re.text.find("var pages = ")
     end_index = re.text.find("\n", start_index)
     index = json.loads(re.text[start_index+12:end_index-1])
@@ -54,5 +54,5 @@ def setup_MGH_ressource(basic_url, ressource_path):
         get_MGH_img(f"{basic_url}img/300/{edition_name}_{nr:05d}.jpg", page,ressource_path)
 
 if __name__ == '__main__':
-    #setup_MGH_ressource("https://www.dmgh.de/mgh_poetae_1/", "/M/MG Poet. I (1881, ed. Dümmler)/")
     setup_MGH_ressource("https://www.dmgh.de/mgh_ss_25/", "/M/MG Script. XXV (1880, ed. Heller)/")
+    #setup_MGH_ressource("https://www.dmgh.de/mgh_poetae_1/", "/M/MG Poet. I (1881, ed. Dümmler)/")
