@@ -611,9 +611,7 @@ def exec_on_server(res):
                         elif file.endswith(".log"):
                             log = True
                 return_list.append({"date": sub_dir, "name": pdf, "log": log})
-        def sort_lst(item):
-            return item["date"]
-        return_list(key=sort_lst)
+        return_list.sort(key=lambda item: item["date"])
         return json.dumps(return_list[:100])
     else: return abort(404) # not found
 
