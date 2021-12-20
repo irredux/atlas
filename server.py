@@ -467,8 +467,8 @@ def faszikel_export(dir_name, file_name):
         if file_name == "log":
             return send_file(faszikel_dir+f"/{dir_name}/tex/mlw.context.log")
         elif file_name == "zip":
-            new_file = path.join(dir_path,"temp/artciles.zip")
-            new_path = path.join(dir_path,"temp/artciles")
+            new_file = path.join(dir_path,"temp/articles.zip")
+            new_path = path.join(dir_path,"temp/articles")
             #if path.exists(new_file): rmtree(new_file)
             make_archive(new_path, "zip", path.join(faszikel_dir, dir_name, "tex/articles"))
             return send_file(new_file)
