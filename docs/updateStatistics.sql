@@ -31,14 +31,16 @@ BEGIN
         /*   created in year   */
         SET data = JSON_ARRAY(
             (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=2020),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=2021)
+            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=2021),
+            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=2022)
         );
         INSERT INTO statistics (name, data) VALUES ("zettel_created", data);
 
         /*   changed in year   */
         SET data = JSON_ARRAY(
             (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=2020),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=2021)
+            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=2021),
+            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=2022)
         );
         INSERT INTO statistics (name, data) VALUES ("zettel_changed", data);
 
@@ -147,9 +149,10 @@ BEGIN
             UPDATE edition SET text_ok = NULL;
             UPDATE edition LEFT JOIN scan_lnk ON scan_lnk.edition_id = edition.id SET text_ok = 1 WHERE scan_lnk.full_text IS NOT NULL OR scan_lnk.full_text != "";
             SET data = JSON_ARRAY(
-                (SELECT COUNT(*) FROM work WHERE (SELECT COUNT(*) FROM edition WHERE edition.work_id = work.id AND edition.text_ok =1 AND (edition.ressource = 0 OR edition.ressource = 3)) > 0),
-                (SELECT COUNT(*) FROM work WHERE (SELECT COUNT(*) FROM edition WHERE edition.work_id = work.id AND edition.text_ok IS NULL AND (edition.ressource = 0 OR edition.ressource = 3)) > 0),
-                (SELECT COUNT(*) FROM work WHERE (SELECT COUNT(*) FROM edition WHERE edition.work_id = work.id AND (edition.ressource = 0 OR edition.ressource = 3)) = 0)
+                (SELECT COUNT(*) FROM work WHERE work.in_use = 1 AND (SELECT COUNT(*) FROM edition WHERE edition.work_id = work.id AND edition.text_ok =1 AND (edition.ressource = 0 OR edition.ressource = 3)) > 0),
+                (SELECT COUNT(*) FROM work WHERE work.in_use = 1 AND (SELECT COUNT(*) FROM edition WHERE edition.work_id = work.id AND edition.text_ok IS NULL AND (edition.ressource = 0 OR edition.ressource = 3)) > 0),
+                (SELECT COUNT(*) FROM work WHERE work.in_use = 1 AND (SELECT COUNT(*) FROM edition WHERE edition.work_id = work.id AND (edition.ressource = 0 OR edition.ressource = 3)) = 0),
+                (SELECT COUNT(*) FROM work WHERE work.in_use = 0 OR work.in_use IS NULL)
             );
             INSERT INTO statistics (name, data) VALUES ("ressource_work", data);
 END; //
