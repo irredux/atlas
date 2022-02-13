@@ -510,7 +510,6 @@ def scan_import():
         return Response(json.dumps(r_lst), status=201) # created
 
     else: abort(401) # unauthorized
-    
 
 @app.route("/file/zettel", methods=["POST"])
 def zettel_import():
@@ -532,6 +531,7 @@ def zettel_import():
         max_files = 1000
         if srv_set.doublesided == True: max_files = 500
         c_path = ""
+        first_id = 0
         new_id = 0
         c_loop = 0
         f_lst = request.files.getlist("files")
@@ -548,6 +548,8 @@ def zettel_import():
                 if u_type != "0":
                     save_dict["type"] = u_type
                 new_id = db.save("zettel", save_dict)
+                if first_id == 0: first_id = new_id
+
                 db.save("zettel", {
                     "img_folder": f"{(new_id-1)//max_files}",
                     "img_path": f"/zettel/{u_letter}/{(new_id-1)//max_files}/{new_id}"
@@ -562,7 +564,7 @@ def zettel_import():
             else:
                 f.save(c_path + f"{new_id}v.jpg")
                 recto = True
-        return Response("", status=201) # created
+        return Response(f"[{first_id},{new_id}]", status=201) # created
     else: abort(400) # bad request
 
 @app.route("/zettel/<letter>/<dir_nr>/<img>")
