@@ -21,7 +21,7 @@ limitations under the License.
 from binascii import hexlify
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInfoDispatcher
 from cheroot.ssl.builtin import BuiltinSSLAdapter
-from configparser import ConfigParser
+from configparser import ConfigParser, NoOptionError
 from datetime import datetime, timedelta
 from flask import abort, Flask, request, send_file, Response, session, redirect
 from hashlib import new, pbkdf2_hmac
@@ -330,8 +330,16 @@ def user_update(id):
             "last_name": n_last_name}, id)
         return Response("", status=200) # OK
     elif (n_password != None and o_password != None and
-            id == user["id"] and self.pw_check(user["password"], o_password)):
+            id == user["id"] and pw_check(user["password"], o_password)):
         db.save("user", {"password": pw_set(n_password)}, id)
+        return Response("", status=200) # OK
+    else: abort(404)
+
+@app.route("/data/user/<int:id>", methods=["DELETE"])
+def user_delete(id):
+    user = auth(request.headers.get("Authorization"))
+    if "admin" in user["access"]:
+        db.delete("user", {"id": id})
         return Response("", status=200) # OK
     else: abort(404)
 
@@ -594,7 +602,7 @@ def exec_on_server(res):
     if res == "opera_update" and "e_edit" in user["access"]:
         db.call("updateOperaLists")
         return Response("", status=200) # OK
-    if res == "statistics_update":
+    elif res == "statistics_update":
         db.call("updateStatistics")
         return Response("", status=200) # OK
     elif res == "mlw_preview" and "editor" in user["access"]:
@@ -615,6 +623,17 @@ def exec_on_server(res):
                 return_list.append({"date": sub_dir, "name": pdf, "log": log})
         return_list.sort(key=lambda item: item["date"], reverse=True)
         return json.dumps(return_list[:100])
+    elif res == "ocr_job" and "ocr_jobs" in user["access"]:
+        #check if ocr_job is already running.
+        noOcrJob = True
+        currentJob = db.search("ocr_jobs", {"finished": "NULL"}, ["id", "u_date"])
+        for j in currentJob:
+            if timedelta(hours=0, minutes=30) >= datetime.now()-j["u_date"]: noOcrJob = False
+        if noOcrJob:
+            converZettelThread = threading.Thread(target=convertZettel, args=(50000,))
+            converZettelThread.start()
+            return Response("", status=200) # OK
+        else: return abort(409) # Conflict: job already running!
     else: return abort(404) # not found
 
 def imgToText(filename):
@@ -625,39 +644,38 @@ def convertZettel(zettelLimit):
     loop_count = 0
     total_count = 0
     zettelLst = db.search("zettel", {"ocr_text": "NULL"}, ["id", "letter", "img_folder", "sibling"], limit=zettelLimit)
-    job_id = db.save("ocr_jobs", {"source": "zettel", "total": len(zettelLst), "count": 0})
-    for zettel in zettelLst:
-        loop_count += 1
-        total_count += 1
-        if zettel["img_folder"]!=None and (zettel["sibling"]==None or zettel["sibling"]==zettel["id"]):
-            text = imgToText(dir_path+f"/zettel/{zettel['letter']}/{zettel['img_folder']}/{zettel['id']}.jpg")
-            db.save("zettel", {"ocr_text": text}, zettel["id"])
-        if loop_count > 200:
-            loop_count = 0
-            db.save("ocr_jobs", {"count": total_count}, job_id)
-    db.save("ocr_jobs", {"count": total_count, "finished": 1}, job_id)
+    if len(zettelLst) > 0:
+        job_id = db.save("ocr_jobs", {"source": "zettel", "total": len(zettelLst), "count": 0})
+        for zettel in zettelLst:
+            loop_count += 1
+            total_count += 1
+            if zettel["img_folder"]!=None and (zettel["sibling"]==None or zettel["sibling"]==zettel["id"]):
+                if path.exists(dir_path+f"/zettel/{zettel['letter']}/{zettel['img_folder']}/{zettel['id']}.jpg"):
+                    text = imgToText(dir_path+f"/zettel/{zettel['letter']}/{zettel['img_folder']}/{zettel['id']}.jpg")
+                else: text = ""
+            else: text = ""
+            db.save("zettel", {"ocr_text": text, "ocr_length": len(text)}, zettel["id"])
+            if loop_count > 200:
+                loop_count = 0
+                db.save("ocr_jobs", {"count": total_count}, job_id)
+        autoSetZettelType() # set zettel-type of I/E-zettel
+        db.save("ocr_jobs", {"count": total_count, "finished": 1}, job_id)
 
 def autoSetZettelType():
-    zettelLst = db.command(f"SELECT id, type, ocr_text FROM zettel WHERE (type = 0 OR type IS NULL) AND ocr_text IS NOT NULL AND ocr_text !=''")
-    print("total zettel found:", len(zettelLst))
+    zettelLst = db.command(f"SELECT id, type, ocr_text, ocr_length FROM zettel WHERE (type = 0 OR type IS NULL) AND ocr_text IS NOT NULL AND ocr_text !=''")
     zettelData = []
-    for zettel in zettelLst:
-        if zettel["type"] == 0 or zettel["type"] == None:
-            zettel["ocr_length"] = len(zettel["ocr_text"])
+    if len(zettelLst)>0:
+        for zettel in zettelLst:
             zettel["letter_length"] = len(re.findall("[a-z]", zettel["ocr_text"], re.IGNORECASE))
             zettel["word_length"] = len(re.findall("[a-z][a-z]+", zettel["ocr_text"], re.IGNORECASE))
             zettelData.append(zettel)
-    data = pandas.DataFrame(zettelData)
-    print("total used zettel:", len(zettelData))
-    X = data[["ocr_length", "letter_length", "word_length"]]
+        data = pandas.DataFrame(zettelData)
+        X = data[["ocr_length", "letter_length", "word_length"]]
 
-    logisticRegr = load(f"{dir_path}/content/models/typeModel_2021_12_15.joblib")
-    y = logisticRegr.predict(X)
-    for nr, zettel in enumerate(zettelData):
-        db.save("zettel", {"type": int(y[nr]), "auto": 1}, zettel["id"])
+        logisticRegr = load(f"{dir_path}/content/models/typeModel_2021_12_15.joblib")
+        y = logisticRegr.predict(X)
+        for nr, zettel in enumerate(zettelData):
+            db.save("zettel", {"type": int(y[nr]), "auto": 1}, zettel["id"])
 
 if __name__ == '__main__':
-    #converZettelThread = threading.Thread(target=convertZettel, args=(50000,))
-    #converZettelThread.start()
-    #autoSetZettelType()
     server.start()
