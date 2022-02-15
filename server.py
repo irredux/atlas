@@ -184,14 +184,11 @@ def pw_set(pw_raw):
 @app.route("/react/index.html") # legacy reroute; can be removed in next version
 @app.route("/")
 def login():
-    return send_file(dir_path+"/static/react/db/index.html")
+    return send_file(dir_path+"/static/db/index.html")
     #return send_file(dir_path+"/static/html/login.html")
-@app.route("/site")
-def site():
-    return send_file(dir_path+"/static/html/site.html")
 @app.route("/site/viewer/<resId>") # legacy reroute; can be removed in next version
 def viewer(resId):
-    return redirect(f"/static/react/viewer/index.html?edition={resId}")
+    return redirect(f"/static/viewer/index.html?edition={resId}")
 
 # session
 @app.route("/session", methods=["POST"])
@@ -582,13 +579,7 @@ def f_zettel(letter, dir_nr, img): # NOT SAVE!!!!!!!! NEEDS AUTH
 
 @app.route("/file/<f_type>/<res>")
 def file_read(f_type, res):
-    if f_type == "css": # old version
-        return send_file(dir_path+"/static/css/"+res)
-    elif f_type == "js": # old version
-        return send_file(dir_path+"/static/js/"+res)
-    elif f_type == "webfonts": # old version
-        return send_file(dir_path+"/static/webfonts/"+res)
-    elif f_type == "scan":
+    if f_type == "scan":
         user = auth(request.headers.get("Authorization"))
         if "library" in user["access"]:
             page = db.search("scan", {"id": res}, ["path", "filename"])[0]
