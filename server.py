@@ -25,22 +25,17 @@ from configparser import ConfigParser, NoOptionError
 from datetime import datetime, timedelta
 from flask import abort, Flask, request, send_file, Response, session, redirect
 from hashlib import new, pbkdf2_hmac
-from joblib import load
 import json
 from os import listdir, mkdir, path, remove, urandom
-import pandas
-from PIL import Image
-import pytesseract
-import re
 import requests
 from shutil import copyfileobj, make_archive, rmtree
-from sklearn.linear_model import LogisticRegression
 from sys import argv
 import subprocess
 import threading
 from uuid import uuid4
 
 from arachne import Arachne
+from archimedes import Archimedes
 
 dir_path = path.dirname(path.abspath(__file__))
 faszikel_dir = path.dirname("/local/ovc/MLW/export/processing/")
@@ -58,6 +53,7 @@ full_update = "2021-05-31 09:54:00" # local client-sided database
 search_cols = f"{dir_path}{cfg['default_path']['search_columns']}"
 access_config = f"{dir_path}{cfg['default_path']['access_config']}"
 db = Arachne(cfg['database'])
+auto = Archimedes(db, dir_path)
 
 # set server
 app = Flask(__name__)
@@ -572,7 +568,10 @@ def zettel_import():
 @app.route("/zettel/<letter>/<dir_nr>/<img>")
 def f_zettel(letter, dir_nr, img): # NOT SAVE!!!!!!!! NEEDS AUTH
     #self.auth()
-    return send_file(dir_path+f"/zettel/{letter}/{dir_nr}/"+img)
+    if cfg["connection"]["host"] == "localhost":
+        return redirect(f"https://dienste.badw.de:9999/zettel/{letter}/{dir_nr}/{img}", code=302)
+    else:
+        return send_file(dir_path+f"/zettel/{letter}/{dir_nr}/"+img)
 
 @app.route("/file/<f_type>/<res>")
 def file_read(f_type, res):
@@ -618,52 +617,11 @@ def exec_on_server(res):
         for j in currentJob:
             if timedelta(hours=0, minutes=30) >= datetime.now()-j["u_date"]: noOcrJob = False
         if noOcrJob:
-            converZettelThread = threading.Thread(target=convertZettel, args=(50000,))
+            converZettelThread = threading.Thread(target=auto.convertZettel, args=(50000,))
             converZettelThread.start()
             return Response("", status=200) # OK
         else: return abort(409) # Conflict: job already running!
     else: return abort(404) # not found
-
-def imgToText(filename):
-    text = pytesseract.image_to_string(Image.open(filename).convert("L"))
-    return text
-
-def convertZettel(zettelLimit):
-    loop_count = 0
-    total_count = 0
-    zettelLst = db.search("zettel", {"ocr_text": "NULL"}, ["id", "letter", "img_folder", "sibling"], limit=zettelLimit)
-    if len(zettelLst) > 0:
-        job_id = db.save("ocr_jobs", {"source": "zettel", "total": len(zettelLst), "count": 0})
-        for zettel in zettelLst:
-            loop_count += 1
-            total_count += 1
-            if zettel["img_folder"]!=None and (zettel["sibling"]==None or zettel["sibling"]==zettel["id"]):
-                if path.exists(dir_path+f"/zettel/{zettel['letter']}/{zettel['img_folder']}/{zettel['id']}.jpg"):
-                    text = imgToText(dir_path+f"/zettel/{zettel['letter']}/{zettel['img_folder']}/{zettel['id']}.jpg")
-                else: text = ""
-            else: text = ""
-            db.save("zettel", {"ocr_text": text, "ocr_length": len(text)}, zettel["id"])
-            if loop_count > 200:
-                loop_count = 0
-                db.save("ocr_jobs", {"count": total_count}, job_id)
-        autoSetZettelType() # set zettel-type of I/E-zettel
-        db.save("ocr_jobs", {"count": total_count, "finished": 1}, job_id)
-
-def autoSetZettelType():
-    zettelLst = db.command(f"SELECT id, type, ocr_text, ocr_length FROM zettel WHERE (type = 0 OR type IS NULL) AND ocr_text IS NOT NULL AND ocr_text !=''")
-    zettelData = []
-    if len(zettelLst)>0:
-        for zettel in zettelLst:
-            zettel["letter_length"] = len(re.findall("[a-z]", zettel["ocr_text"], re.IGNORECASE))
-            zettel["word_length"] = len(re.findall("[a-z][a-z]+", zettel["ocr_text"], re.IGNORECASE))
-            zettelData.append(zettel)
-        data = pandas.DataFrame(zettelData)
-        X = data[["ocr_length", "letter_length", "word_length"]]
-
-        logisticRegr = load(f"{dir_path}/content/models/typeModel_2021_12_15.joblib")
-        y = logisticRegr.predict(X)
-        for nr, zettel in enumerate(zettelData):
-            db.save("zettel", {"type": int(y[nr]), "auto": 1}, zettel["id"])
 
 if __name__ == '__main__':
     server.start()
