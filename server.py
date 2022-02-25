@@ -374,6 +374,7 @@ def data_read(res, res_id=None):
         qCount = request.args.get("count", None)
         qSelect = request.args.get("select", None)
         qOrder = request.args.get("order", None)
+        qGroup = request.args.get("group", None)
 
         json_query = json.loads(jQuery)
         q_lst = []
@@ -404,6 +405,8 @@ def data_read(res, res_id=None):
         offset_txt = ""
         if qOffset!=None: offset_txt = f" OFFSET {qOffset}"
         order_txt = ""
+        if qGroup!=None:
+            order_txt = f" GROUP BY {qGroup}"
         if qOrder!=None:
             qOrder = json.loads(qOrder)
             order_txt = f" ORDER BY {', '.join(qOrder)}"
