@@ -60,8 +60,10 @@ app = Flask(__name__)
 secret_key = urandom(24)
 secret_key = hexlify(secret_key)
 app.config["SECRET_KEY"] = secret_key
-#from flask_cors import CORS # only for testing react apps locally!
-#CORS(app)
+try:
+    from flask_cors import CORS # only for testing react apps locally!
+except ImportError: print("CORS module not found! No CORS functions available.")
+else: CORS(app)
 server_cfg = cfg["connection"]
 server = WSGIServer((server_cfg.get('host'), int(server_cfg.get('port'))), WSGIPathInfoDispatcher({"/": app}))
 
@@ -627,4 +629,5 @@ def exec_on_server(res):
     else: return abort(404) # not found
 
 if __name__ == '__main__':
+    auto.setWork()
     server.start()
