@@ -224,7 +224,7 @@ class Archimedes(object):
 
     def convertZettel(self, zettelLimit):
         self.ocr_and_type(zettelLimit)
-        #self.setWork()
+        self.setWork()
 
     def ocr_and_type(self, zettelLimit):
         loop_count = 0
