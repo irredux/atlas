@@ -635,5 +635,4 @@ def exec_on_server(res):
     else: return abort(404) # not found
 
 if __name__ == '__main__':
-    auto.setWork()
     server.start()
