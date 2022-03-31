@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/static/argos/static/css/main.51a460bc.css",
-    "main.js": "/static/argos/static/js/main.4292204b.js",
+    "main.js": "/static/argos/static/js/main.0b475872.js",
     "index.html": "/static/argos/index.html",
     "main.51a460bc.css.map": "/static/argos/static/css/main.51a460bc.css.map",
-    "main.4292204b.js.map": "/static/argos/static/js/main.4292204b.js.map"
+    "main.0b475872.js.map": "/static/argos/static/js/main.0b475872.js.map"
   },
   "entrypoints": [
     "static/css/main.51a460bc.css",
-    "static/js/main.4292204b.js"
+    "static/js/main.0b475872.js"
   ]
 }

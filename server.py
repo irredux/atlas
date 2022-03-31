@@ -21,14 +21,14 @@ limitations under the License.
 from binascii import hexlify
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInfoDispatcher
 from cheroot.ssl.builtin import BuiltinSSLAdapter
-from configparser import ConfigParser, NoOptionError
+from configparser import ConfigParser
 from datetime import datetime, timedelta
 from flask import abort, Flask, request, send_file, Response, session, redirect
-from hashlib import new, pbkdf2_hmac
+from hashlib import pbkdf2_hmac
 import json
-from os import listdir, mkdir, path, remove, urandom
-import requests
-from shutil import copyfileobj, make_archive, rmtree
+from os import listdir, mkdir, path, urandom
+from PIL import Image
+from shutil import make_archive, rmtree
 from sys import argv
 import subprocess
 import threading
@@ -497,6 +497,7 @@ def scan_import():
         # save imgs
         f_lst = request.files.getlist("files")
         r_lst = []
+        aspect_ratio = None
         for f in f_lst:
             if path.exists(newPath + f.filename) == False:
                 # create entry in db
@@ -508,6 +509,11 @@ def scan_import():
                 db.save("scan_lnk", {"scan_id": new_id, "edition_id": edition_id})
                 # save file
                 f.save(newPath + f.filename)
+                if not aspect_ratio:
+                    img = Image.open(f"{dir_path}/content/scans{save_dict['path']}{save_dict['filename']}.png")
+                    w,h = img.size
+                    aspect_ratio = str(1/h*w)[:5]
+                    db.save("edition", {"aspect_ratio": aspect_ratio}, edition_id)
             else:
                 r_lst.append(f.filename)
         return Response(json.dumps(r_lst), status=201) # created
