@@ -17,6 +17,8 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+Version: 1.1 - 13.4.2022
 """
 from binascii import hexlify
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher as WSGIPathInfoDispatcher
@@ -264,8 +266,9 @@ def info_read(res):
     return json.dumps({"max_date": max_date, "length": length, "describe": describe}, default=str)
 
 # data
-@app.route("/data_batch/<res>", methods=["POST", "PATCH", "DELETE"])
+@app.route("/data_batch/<res>", methods=["GET", "POST", "DELETE"]) # PATCH?
 def data_batch(res):
+    # block if res == user?
     data = request.json
     if request.method == "POST":
         for d in data:
@@ -344,6 +347,8 @@ def data_create(res, inData=None):
             if inData == None: inData = request.json
             if permission.get("restricted", "") == "user_id":
                 inData["user_id"] = user["id"]
+            #elif permission.get("restricted", "") == "shared_id": #  cannot use shared_id when creating new entries!
+                #inData["shared_id"] = user["id"]
             break
     else:
         abort(403) # forbidden
@@ -352,7 +357,7 @@ def data_create(res, inData=None):
 
 @app.route("/data/<res>", methods=["GET"])
 @app.route("/data/<res>/<int:res_id>", methods=["GET"])
-def data_read(res, res_id=None):
+def data_read(res, res_id=None, in_query=None):
     user = auth(request.headers.get("Authorization"))
     if res not in srv_set.accessREAD.keys(): abort(404) # not found
     r_cols = ""
@@ -364,11 +369,19 @@ def data_read(res, res_id=None):
                 if res != "user": user_id = f" user_id = %s AND"
                 else: user_id = f" id = %s AND"
                 v_cols.append(user['id'])
+            elif permission.get("restricted", "") == "shared_id":
+                if res != "user": user_id = f" (user_id = %s OR shared_id = %s) AND"
+                else: abort(403) # forbidden
+                v_cols.append(user['id'])
+                v_cols.append(user['id'])
             r_cols = permission["r_cols"]
             break
     else:
         abort(403) # forbidden
-    jQuery = request.args.get("query", None) # query in json format: [{c: col, o: operator, v: value}, ...]
+
+    if in_query: jQuery = in_query
+    else: jQuery = request.args.get("query", None) # query in json format: [{c: col, o: operator, v: value}, ...]
+
     if jQuery != None:
         # search with query
         qLimit = request.args.get("limit", None)
@@ -390,6 +403,8 @@ def data_read(res, res_id=None):
                 if type(q["v"]) is str and q["v"].find("*")>-1:
                     q["o"] = "LIKE"
                     q["v"] = q["v"].replace("*", "%")
+                elif type(q["v"]) is list:
+                    q["o"] = "IN"
                 q_lst.append(f"{q['c']} {q['o']} %s")
                 v_cols.append(q["v"])
         q_txt = " AND ".join(q_lst)
@@ -438,6 +453,12 @@ def data_update(res, res_id, inData=None):
             if permission.get("restricted", "") == "user_id":
                 if user["id"] == db.search(res, {"id": res_id}, ["user_id"])[0]["user_id"]:
                     break
+            elif permission.get("restricted", "") == "shared_id":
+                if (
+                    user["id"] == db.search(res, {"id": res_id}, ["user_id"])[0]["user_id"] or
+                    user["id"] == db.search(res, {"id": res_id}, ["shared_id"])[0]["shared_id"]
+                ):
+                    break
             else:
                 break
     else:
@@ -453,6 +474,12 @@ def data_delete(res, res_id):
         if permission["access"] in user["access"]:
             if permission.get("restricted", "") == "user_id":
                 if user["id"] == db.search(res, {"id": res_id}, ["user_id"])[0]["user_id"]:
+                    break
+            elif permission.get("restricted", "") == "shared_id":
+                if (
+                    user["id"] == db.search(res, {"id": res_id}, ["user_id"])[0]["user_id"] or 
+                    user["id"] == db.search(res, {"id": res_id}, ["shared_id"])[0]["shared_id"]
+                ):
                     break
             else:
                 break
