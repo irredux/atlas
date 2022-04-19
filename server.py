@@ -659,7 +659,19 @@ def exec_on_server(res):
             converZettelThread.start()
             return Response("", status=200) # OK
         else: return abort(409) # Conflict: job already running!
+    elif res == "ocr_job_scans" and "ocr_jobs" in user["access"]:
+        #check if ocr_job is already running.
+        noOcrJob = True
+        currentJob = db.search("ocr_jobs", {"finished": "NULL"}, ["id", "u_date"])
+        for j in currentJob:
+            if timedelta(hours=0, minutes=30) >= datetime.now()-j["u_date"]: noOcrJob = False
+        if noOcrJob:
+            converZettelThread = threading.Thread(target=auto.ocr_scan, args=(50000,))
+            converZettelThread.start()
+            return Response("", status=200) # OK
+        else: return abort(409) # Conflict: job already running!
     else: return abort(404) # not found
 
 if __name__ == '__main__':
+    #auto.ocr_scan(249886)
     server.start()

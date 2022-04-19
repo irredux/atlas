@@ -225,6 +225,25 @@ class Archimedes(object):
     def convertZettel(self, zettelLimit):
         self.ocr_and_type(zettelLimit)
         self.setWork()
+    def ocr_scan(self, scanLimit):
+        loop_count = 0
+        total_count = 0
+        scanLst = self.db.search("scan", {"full_text": "NULL"}, ["id", "filename", "path", "body_matter"], limit=scanLimit)
+        if len(scanLst) > 0:
+            job_id = self.db.save("ocr_jobs", {"source": "Scan OCR", "total": len(scanLst), "count": 0})
+            for scan in scanLst:
+                loop_count += 1
+                total_count += 1
+                if scan["body_matter"]==1:
+                    if path.exists(self.dir_path+f"/content/scans{scan['path']}{scan['filename']}.png"):
+                        text = self._imgToText(self.dir_path+f"/content/scans{scan['path']}{scan['filename']}.png")
+                    else: text = ""
+                else: text = ""
+                self.db.save("scan", {"ocr_auto": text, "ocr_auto_length": len(text)}, scan["id"])
+                if loop_count > 100:
+                    loop_count = 0
+                    self.db.save("ocr_jobs", {"count": total_count}, job_id)
+            self.db.save("ocr_jobs", {"count": total_count, "finished": 1}, job_id)
 
     def ocr_and_type(self, zettelLimit):
         loop_count = 0
