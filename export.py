@@ -15,7 +15,7 @@ class Exporter(object):
         zettel_margin = 50
         bg_color = (255, 255, 255)
         txt_color = (24,24,24)
-        font = ImageFont.truetype("Arial.ttf", 50)
+        font = ImageFont.truetype(f"{self.path}/content/fonts/Georgia.ttf", 50)
         for z in zettel_lst:
             if z["img_path"]:
                 new_img = Image.open(f"{self.path}{z['img_path']}.jpg")
