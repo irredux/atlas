@@ -35,9 +35,10 @@ from sys import argv
 import subprocess
 import threading
 from uuid import uuid4
-
+from pathlib import Path
 from arachne import Arachne
 from archimedes import Archimedes
+from export import Exporter
 
 dir_path = path.dirname(path.abspath(__file__))
 faszikel_dir = path.dirname("/local/ovc/MLW/export/processing/")
@@ -56,6 +57,7 @@ search_cols = f"{dir_path}{cfg['default_path']['search_columns']}"
 access_config = f"{dir_path}{cfg['default_path']['access_config']}"
 db = Arachne(cfg['database'])
 auto = Archimedes(db, dir_path)
+exporter = Exporter(db, dir_path)
 
 # set server
 app = Flask(__name__)
@@ -357,7 +359,7 @@ def data_create(res, inData=None):
 
 @app.route("/data/<res>", methods=["GET"])
 @app.route("/data/<res>/<int:res_id>", methods=["GET"])
-def data_read(res, res_id=None, in_query=None):
+def data_read(res, res_id=None, in_query=None, return_lst=False):
     user = auth(request.headers.get("Authorization"))
     if res not in srv_set.accessREAD.keys(): abort(404) # not found
     r_cols = ""
@@ -430,18 +432,35 @@ def data_read(res, res_id=None, in_query=None):
         sql = f"SELECT {r_cols} FROM {res} {w_txt}{order_txt}{limit_txt}{offset_txt}"
         #print(sql, v_cols)
         results = db.command(sql, v_cols)
-        return Response(json.dumps(results, default=str), mimetype="application/json")
+        if return_lst:
+            return results
+        else:
+            return Response(json.dumps(results, default=str), mimetype="application/json")
     elif res_id == None:
         # sync with local db
         u_date = request.args.get("u_date", "2020-01-01 01:00:00")
         v_cols.append(u_date)
         results = db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} u_date > %s ORDER BY u_date ASC LIMIT 10000", v_cols)
-        return Response(json.dumps(results, default=str), mimetype="application/json")
+        if return_lst:
+            return results
+        else:
+            return Response(json.dumps(results, default=str), mimetype="application/json")
     else:
         # search with dataset id
         v_cols.append(res_id)
         results = db.command(f"SELECT {r_cols} FROM {res} WHERE{user_id} id = %s", v_cols)
-        return Response(json.dumps(results, default=str), mimetype="application/json")
+        if return_lst:
+            return results
+        else:
+            return Response(json.dumps(results, default=str), mimetype="application/json")
+
+
+@app.route("/export/<res>", methods=["GET"])
+@app.route("/export/<res>/<int:res_id>", methods=["GET"])
+def data_export(res, res_id=None, in_query=None):
+    export_lst = data_read(res, res_id, in_query, return_lst=True)
+    pdfFileName = exporter.create_pdf_from_zettel(export_lst)
+    return Response(pdfFileName)
 
 @app.route("/data/<res>/<int:res_id>", methods=["PATCH"])
 def data_update(res, res_id, inData=None):
@@ -673,5 +692,5 @@ def exec_on_server(res):
     else: return abort(404) # not found
 
 if __name__ == '__main__':
-    #auto.ocr_scan(249886)
+    for item in Path(dir_path+"/static/temp").glob("*.*"): item.unlink() #cleanup temp folder
     server.start()

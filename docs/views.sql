@@ -19,3 +19,25 @@ CREATE OR REPLACE VIEW scan_opera_view AS
 	WHERE s.full_text IS NOT NULL AND o.id IS NOT NULL
 	ORDER BY o.work_id ASC
 ;
+
+CREATE OR REPLACE VIEW fulltext_search_view AS
+	SELECT
+		s.filename AS page,
+		s.full_text AS full_text,
+		s.scan_id AS scan_id,
+		e.label AS label,
+		e.id AS edition_id,
+		w.opus AS opus,
+		w.id AS work_id
+	FROM scan_lnk s
+	LEFT JOIN edition e ON e.id = s.edition_id
+	LEFT JOIN work w ON e.work_id = w.id
+	WHERE
+		w.id IS NOT NULL AND
+		s.full_text IS NOT NULL AND
+		s.full_text != ""
+;
+
+
+SHOW INDEX_STATISTICS;
+CREATE INDEX IF NOT EXISTS edition_work ON edition (work_id);
