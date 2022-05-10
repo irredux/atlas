@@ -39,6 +39,7 @@ from pathlib import Path
 from arachne import Arachne
 from archimedes import Archimedes
 from export import Exporter
+import logging
 
 dir_path = path.dirname(path.abspath(__file__))
 faszikel_dir = path.dirname("/local/ovc/MLW/export/processing/")
@@ -102,6 +103,8 @@ class Server_Settings:
         if server_cfg.get("doublesided") == "True": self.doublesided = True
         else: self.doublesided = False
 srv_set = Server_Settings()
+
+logging.basicConfig(filename=dir_path + "/dmlw.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
 # ################################################################
 # -I- assorted functions
@@ -692,5 +695,6 @@ def exec_on_server(res):
     else: return abort(404) # not found
 
 if __name__ == '__main__':
+    logger=logging.getLogger(__name__)
     for item in Path(dir_path+"/static/temp").glob("*.*"): item.unlink() #cleanup temp folder
     server.start()
