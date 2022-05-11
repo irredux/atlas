@@ -31,7 +31,7 @@ import json
 from os import listdir, mkdir, path, urandom
 from PIL import Image
 from shutil import make_archive, rmtree
-from sys import argv
+from sys import argv, stderr, stdout
 import subprocess
 import threading
 from uuid import uuid4
@@ -43,6 +43,34 @@ import logging
 
 dir_path = path.dirname(path.abspath(__file__))
 faszikel_dir = path.dirname("/local/ovc/MLW/export/processing/")
+
+# logging: redirect stdout and stderr to logfile!
+class StreamToLogger(object):
+    """
+    Fake file-like stream object that redirects writes to a logger instance.
+    """
+    def __init__(self, logger, level):
+       self.logger = logger
+       self.level = level
+       self.linebuf = ''
+
+    def write(self, buf):
+       for line in buf.rstrip().splitlines():
+          self.logger.log(self.level, line.rstrip())
+
+    def flush(self):
+        pass
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
+    filename=dir_path + "/dmlw.log",
+    filemode='a'
+)
+logger = logging.getLogger(__name__)
+stdout = StreamToLogger(logger,logging.INFO)
+stderr = StreamToLogger(logger,logging.ERROR)
+
 
 #load cfg
 if len(argv) > 1: cfg_path = argv[1]
@@ -103,8 +131,6 @@ class Server_Settings:
         if server_cfg.get("doublesided") == "True": self.doublesided = True
         else: self.doublesided = False
 srv_set = Server_Settings()
-
-logging.basicConfig(filename=dir_path + "/dmlw.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
 # ################################################################
 # -I- assorted functions
@@ -695,6 +721,5 @@ def exec_on_server(res):
     else: return abort(404) # not found
 
 if __name__ == '__main__':
-    logger=logging.getLogger(__name__)
     for item in Path(dir_path+"/static/temp").glob("*.*"): item.unlink() #cleanup temp folder
     server.start()
