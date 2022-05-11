@@ -230,7 +230,8 @@ class Archimedes(object):
         total_count = 0
         scanLst = self.db.search("scan", {"full_text": "NULL", "ocr_auto": "NULL"}, ["id", "filename", "path", "body_matter"], limit=scanLimit)
         if len(scanLst) > 0:
-            if local==False: job_id = self.db.save("ocr_jobs", {"source": "Scan OCR", "total": len(scanLst), "count": 0})
+            if local: print(f"total found: {len(scanLst)}")
+            else:job_id = self.db.save("ocr_jobs", {"source": "Scan OCR", "total": len(scanLst), "count": 0})
             for scan in scanLst:
                 loop_count += 1
                 total_count += 1
