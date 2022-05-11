@@ -19,4 +19,4 @@ cfg.read(cfg_path)
 db = Arachne(cfg['database'])
 auto = Archimedes(db, dir_path)
 
-auto.ocr_scan(1000)
+auto.ocr_scan(1000, True)

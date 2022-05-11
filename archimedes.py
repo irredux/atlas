@@ -225,7 +225,7 @@ class Archimedes(object):
     def convertZettel(self, zettelLimit):
         self.ocr_and_type(zettelLimit)
         self.setWork()
-    def ocr_scan(self, scanLimit):
+    def ocr_scan(self, scanLimit, verbose=False):
         loop_count = 0
         total_count = 0
         scanLst = self.db.search("scan", {"full_text": "NULL"}, ["id", "filename", "path", "body_matter"], limit=scanLimit)
@@ -235,6 +235,7 @@ class Archimedes(object):
                 loop_count += 1
                 total_count += 1
                 if scan["body_matter"]==1:
+                    if verbose: print(f"{loop_count}: /content/scans{scan['path']}{scan['filename']}.png")
                     if path.exists(self.dir_path+f"/content/scans{scan['path']}{scan['filename']}.png"):
                         text = self._imgToText(self.dir_path+f"/content/scans{scan['path']}{scan['filename']}.png")
                     else: text = ""
