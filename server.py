@@ -714,7 +714,7 @@ def exec_on_server(res):
         for j in currentJob:
             if timedelta(hours=0, minutes=30) >= datetime.now()-j["u_date"]: noOcrJob = False
         if noOcrJob:
-            converZettelThread = threading.Thread(target=auto.ocr_scan, args=(50000,))
+            converZettelThread = threading.Thread(target=auto.ocr_scan, args=(5000,))
             converZettelThread.start()
             return Response("", status=200) # OK
         else: return abort(409) # Conflict: job already running!

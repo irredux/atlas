@@ -244,7 +244,7 @@ class Archimedes(object):
                     if local: print(f"{loop_count}: not body")
                     text = ""
                 self.db.save("scan", {"ocr_auto": text, "ocr_auto_length": len(text)}, scan["id"])
-                if loop_count > 100:
+                if loop_count > 20:
                     loop_count = 0
                     if local==False: self.db.save("ocr_jobs", {"count": total_count}, job_id)
             if local==False: self.db.save("ocr_jobs", {"count": total_count, "finished": 1}, job_id)
