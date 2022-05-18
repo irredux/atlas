@@ -1,0 +1,17 @@
+.DS_Store
+.vscode/
+check_dmlw.py
+config/accessCREATE.JSON
+config/accessDELETE.JSON
+config/accessREAD.JSON
+config/accessUPDATE.JSON
+config/localhost.ini
+content/.DS_Store
+content/scans/
+dmlw.log
+exampl.log
+out.log
+restart_dmlw.py
+static/.DS_Store
+uptime.log
+zettel/
