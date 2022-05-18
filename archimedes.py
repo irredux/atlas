@@ -236,12 +236,12 @@ class Archimedes(object):
                 loop_count += 1
                 total_count += 1
                 if scan["body_matter"]==1:
-                    if local: print(f"{loop_count}: /content/scans{scan['path']}{scan['filename']}.png")
+                    if local: print(f"{total_count}: /content/scans{scan['path']}{scan['filename']}.png")
                     if path.exists(self.dir_path+f"/content/scans{scan['path']}{scan['filename']}.png"):
                         text = self._imgToText(self.dir_path+f"/content/scans{scan['path']}{scan['filename']}.png")
                     else: text = ""
                 else:
-                    if local: print(f"{loop_count}: not body")
+                    if local: print(f"{total_count}: not body")
                     text = ""
                 self.db.save("scan", {"ocr_auto": text, "ocr_auto_length": len(text)}, scan["id"])
                 if loop_count > 20:
