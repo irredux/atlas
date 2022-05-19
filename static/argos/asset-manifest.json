@@ -1,18 +1,18 @@
 {
   "files": {
     "main.css": "/static/argos/static/css/main.693fd050.css",
-    "main.js": "/static/argos/static/js/main.f2daea17.js",
-    "static/js/488.9395577a.chunk.js": "/static/argos/static/js/488.9395577a.chunk.js",
-    "static/js/828.581a0633.chunk.js": "/static/argos/static/js/828.581a0633.chunk.js",
+    "main.js": "/static/argos/static/js/main.a022b72c.js",
+    "static/js/488.ea4cffbb.chunk.js": "/static/argos/static/js/488.ea4cffbb.chunk.js",
+    "static/js/828.47718c98.chunk.js": "/static/argos/static/js/828.47718c98.chunk.js",
     "static/js/229.e98d76c7.chunk.js": "/static/argos/static/js/229.e98d76c7.chunk.js",
     "static/js/21.d33f8ddc.chunk.js": "/static/argos/static/js/21.d33f8ddc.chunk.js",
     "static/js/681.812db551.chunk.js": "/static/argos/static/js/681.812db551.chunk.js",
     "static/js/460.23cac043.chunk.js": "/static/argos/static/js/460.23cac043.chunk.js",
     "index.html": "/static/argos/index.html",
     "main.693fd050.css.map": "/static/argos/static/css/main.693fd050.css.map",
-    "main.f2daea17.js.map": "/static/argos/static/js/main.f2daea17.js.map",
-    "488.9395577a.chunk.js.map": "/static/argos/static/js/488.9395577a.chunk.js.map",
-    "828.581a0633.chunk.js.map": "/static/argos/static/js/828.581a0633.chunk.js.map",
+    "main.a022b72c.js.map": "/static/argos/static/js/main.a022b72c.js.map",
+    "488.ea4cffbb.chunk.js.map": "/static/argos/static/js/488.ea4cffbb.chunk.js.map",
+    "828.47718c98.chunk.js.map": "/static/argos/static/js/828.47718c98.chunk.js.map",
     "229.e98d76c7.chunk.js.map": "/static/argos/static/js/229.e98d76c7.chunk.js.map",
     "21.d33f8ddc.chunk.js.map": "/static/argos/static/js/21.d33f8ddc.chunk.js.map",
     "681.812db551.chunk.js.map": "/static/argos/static/js/681.812db551.chunk.js.map",
@@ -20,6 +20,6 @@
   },
   "entrypoints": [
     "static/css/main.693fd050.css",
-    "static/js/main.f2daea17.js"
+    "static/js/main.a022b72c.js"
   ]
 }
