@@ -24,6 +24,7 @@ CREATE OR REPLACE VIEW fulltext_search_view AS
 	SELECT
 		s.filename AS page,
 		s.full_text AS full_text,
+		s.auto_text AS auto_text,
 		s.scan_id AS scan_id,
 		e.label AS label,
 		e.id AS edition_id,

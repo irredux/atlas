@@ -370,7 +370,8 @@ FOR EACH ROW
         SET new.u_date = SYSDATE(6);
         IF new.scan_id IS NOT NULL THEN
             SET new.filename = (SELECT filename FROM scan WHERE scan.id=new.scan_id);
-            SET new.full_text = (SELECT full_text FROM scan WHERE scan.id=new.scan_id);
+            SET new.full_text = (SELECT IF(full_text IS NOT NULL, full_text, ocr_auto) FROM scan WHERE scan.id=new.scan_id);
+            SET new.auto_text = (SELECT IF(full_text IS NULL AND ocr_auto IS NOT NULL, 1, 0) FROM scan WHERE scan.id=new.scan_id);
         END IF;
     END; //
 DELIMITER ;
@@ -382,10 +383,12 @@ FOR EACH ROW
     BEGIN
         SET new.u_date = SYSDATE(6);
         SET new.filename = (SELECT filename FROM scan WHERE scan.id=new.scan_id);
-        SET new.full_text = (SELECT full_text FROM scan WHERE scan.id=new.scan_id);
+        SET new.full_text = (SELECT IF(full_text IS NOT NULL, full_text, ocr_auto) FROM scan WHERE scan.id=new.scan_id);
+        SET new.auto_text = (SELECT IF(full_text IS NULL AND ocr_auto IS NOT NULL, 1, 0) FROM scan WHERE scan.id=new.scan_id);
         IF new.scan_id IS NOT NULL THEN
             SET new.filename = (SELECT filename FROM scan WHERE scan.id=new.scan_id);
-            SET new.full_text = (SELECT full_text FROM scan WHERE scan.id=new.scan_id);
+            SET new.full_text = (SELECT IF(full_text IS NOT NULL, full_text, ocr_auto) FROM scan WHERE scan.id=new.scan_id);
+            SET new.auto_text = (SELECT IF(full_text IS NULL AND ocr_auto IS NOT NULL, 1, 0) FROM scan WHERE scan.id=new.scan_id);
         END IF;
     END; //
 DELIMITER ;
