@@ -28,7 +28,7 @@ CREATE OR REPLACE VIEW fulltext_search_view AS
 		s.scan_id AS scan_id,
 		e.label AS label,
 		e.id AS edition_id,
-		w.opus AS opus,
+		w.ac_web AS ac_web,
 		w.id AS work_id
 	FROM scan_lnk s
 	LEFT JOIN edition e ON e.id = s.edition_id
