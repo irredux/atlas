@@ -214,10 +214,10 @@ def pw_set(pw_raw):
 # ################################################################
 @app.route("/react/index.html") # legacy reroute; can be removed in next version
 @app.route("/")
-def login(): return send_file(dir_path+"/static/db/index.html")
+def login(): return send_file(dir_path+"/static/index.html")
 #@app.route("/site/viewer/<resId>") # legacy reroute; can be removed in next version
 @app.route("/site/argos/<resId>")
-def argos(resId): return redirect(f"/static/argos/index.html?site=edition&id={resId}")
+def argos(resId): return redirect(f"/static/index.html?app=argos&site=edition&id={resId}")
 
 # session
 @app.route("/session", methods=["POST"])
