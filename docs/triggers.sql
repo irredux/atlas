@@ -687,6 +687,87 @@ DELIMITER ;
 /* ***************************************************** */
 
 DELIMITER //
+CREATE OR REPLACE TRIGGER sections_create
+BEFORE INSERT ON sections 
+FOR EACH ROW
+    BEGIN
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
+        UPDATE project
+        SET project.deleted = project.deleted
+        WHERE project.id = new.project_id;
+    END; //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE TRIGGER sections_update
+BEFORE UPDATE ON sections 
+FOR EACH ROW
+    BEGIN
+        SET new.u_date = SYSDATE(6);
+        UPDATE project
+        SET project.deleted = project.deleted
+        WHERE project.id = new.project_id;
+    END; //
+DELIMITER ;
+
+
+/* ***************************************************** */
+
+DELIMITER //
+CREATE OR REPLACE TRIGGER tags_create
+BEFORE INSERT ON tags 
+FOR EACH ROW
+    BEGIN
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
+        UPDATE project
+        SET project.deleted = project.deleted
+        WHERE project.id = new.project_id;
+    END; //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE TRIGGER tags_update
+BEFORE UPDATE ON tags 
+FOR EACH ROW
+    BEGIN
+        SET new.u_date = SYSDATE(6);
+        UPDATE project
+        SET project.deleted = project.deleted
+        WHERE project.id = new.project_id;
+    END; //
+DELIMITER ;
+/* ***************************************************** */
+
+DELIMITER //
+CREATE OR REPLACE TRIGGER tag_lnks_create
+BEFORE INSERT ON tag_lnks 
+FOR EACH ROW
+    BEGIN
+        SET new.c_date = SYSDATE(6);
+        SET new.u_date = SYSDATE(6);
+        UPDATE project
+        SET project.deleted = project.deleted
+        WHERE project.id = new.project_id;
+    END; //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE TRIGGER tag_lnks_update
+BEFORE UPDATE ON tag_lnks 
+FOR EACH ROW
+    BEGIN
+        SET new.u_date = SYSDATE(6);
+        UPDATE project
+        SET project.deleted = project.deleted
+        WHERE project.id = new.project_id;
+    END; //
+DELIMITER ;
+
+/* ***************************************************** */
+
+DELIMITER //
 CREATE OR REPLACE TRIGGER zettel_lnk_create
 BEFORE INSERT ON zettel_lnk
 FOR EACH ROW
