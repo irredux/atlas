@@ -45,64 +45,141 @@ BEGIN
 
         /* created current year */
         SET data = JSON_ARRAY(
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="01"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="02"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="03"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="04"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="05"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="06"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="07"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="08"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="09"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="10"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="11"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="12")
+            JSON_ARRAY(
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="01"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="02"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="03"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="04"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="05"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="06"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="07"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="08"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="09"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="10"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="11"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=current_year AND MID(c_date, 6, 2)="12")
+            ),
+            JSON_ARRAY(
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="01"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="02"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="03"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="04"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="05"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="06"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="07"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="08"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="09"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="10"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="11"),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="12")
+            )
         );
-        INSERT INTO statistics (name, data) VALUES ("zettel_created_current", data);
-
-        /* changed current year */
-        SET data = JSON_ARRAY(
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="01"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="02"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="03"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="04"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="05"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="06"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="07"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="08"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="09"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="10"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="11"),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=current_year AND MID(u_date, 6, 2)="12")
-        );
-        INSERT INTO statistics (name, data) VALUES ("zettel_changed_current", data);
+        INSERT INTO statistics (name, data) VALUES ("zettel_created_changed_current", data);
 
         /*   letters   */
             SET data = JSON_ARRAY(
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="a"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="b"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="c"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="d"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="e"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="f"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="g"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="h"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="i"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="k"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="l"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="m"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="n"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="o"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="p"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="q"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="r"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="s"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="t"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="u"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="v"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="x"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="y"),
-                (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="z")
+                JSON_ARRAY( -- verzettelt
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="a" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="b" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="c" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="d" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="e" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="f" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="g" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="h" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="i" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="k" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="l" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="m" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="n" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="o" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="p" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="q" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="r" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="s" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="t" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="u" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="v" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="x" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="y" AND type=1),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="z" AND type=1)
+                ),
+                JSON_ARRAY( -- exzerpt
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="a" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="b" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="c" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="d" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="e" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="f" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="g" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="h" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="i" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="k" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="l" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="m" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="n" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="o" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="p" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="q" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="r" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="s" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="t" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="u" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="x" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="y" AND type=2),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="z" AND type=2)
+                ),
+                JSON_ARRAY( -- index
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="a" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="b" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="c" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="d" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="e" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="f" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="g" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="h" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="i" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="k" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="l" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="m" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="n" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="o" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="p" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="q" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="r" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="s" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="t" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="u" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="x" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="y" AND type=3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="z" AND type=3)
+                ),
+                JSON_ARRAY( -- rest
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="a" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="b" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="c" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="d" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="e" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="f" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="g" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="h" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="i" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="k" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="l" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="m" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="n" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="o" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="p" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="q" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="r" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="s" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="t" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="u" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="x" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="y" AND type>3),
+                    (SELECT COUNT(*) FROM zettel WHERE LEFT(lemma, 1)="z" AND type>3)
+                )
+                
             );
             INSERT INTO statistics (name, data) VALUES ("zettel_letter", data);
     
@@ -154,6 +231,14 @@ BEGIN
                 (SELECT COUNT(*) FROM work WHERE work.in_use = 0 OR work.in_use IS NULL)
             );
             INSERT INTO statistics (name, data) VALUES ("ressource_work", data);
+
+            SET data = JSON_ARRAY(
+                (SELECT COUNT(*) FROM scan WHERE body_matter=1 AND full_text IS NOT NULL),
+                (SELECT COUNT(*) FROM scan WHERE body_matter=1 AND ocr_auto IS NOT NULL AND full_text IS NULL),
+                (SELECT COUNT(*) FROM scan WHERE body_matter=1 AND ocr_auto IS NULL AND full_text IS NULL),
+                (SELECT COUNT(*) FROM scan WHERE body_matter=0)
+                );
+            INSERT INTO statistics (name, data) VALUES ("ressource_scans", data);
 END; //
 DELIMITER ;
 CALL updateStatistics();
