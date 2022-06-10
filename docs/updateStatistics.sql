@@ -30,19 +30,18 @@ BEGIN
 
         /*   created in year   */
         SET data = JSON_ARRAY(
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=2020),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=2021),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=2022)
+            JSON_ARRAY(
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=2020),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=2021),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(c_date, 4)=2022)
+            ),
+            JSON_ARRAY(
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=2020),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=2021),
+                (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=2022)
+            )
         );
-        INSERT INTO statistics (name, data) VALUES ("zettel_created", data);
-
-        /*   changed in year   */
-        SET data = JSON_ARRAY(
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=2020),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=2021),
-            (SELECT COUNT(*) FROM zettel WHERE LEFT(u_date, 4)=2022)
-        );
-        INSERT INTO statistics (name, data) VALUES ("zettel_changed", data);
+        INSERT INTO statistics (name, data) VALUES ("zettel_created_changed", data);
 
         /* created current year */
         SET data = JSON_ARRAY(
