@@ -432,7 +432,7 @@ def data_read(res, res_id=None, in_query=None, return_lst=False):
             elif q["v"] == "NULL" and q["o"] == "!=":
                 q_lst.append(f"{q['c']} IS NOT NULL")
             else:
-                if type(q["v"]) is str and q["v"].find("*")>-1:
+                if type(q["v"]) is str and q["o"] != "REGEXP" and q["v"].find("*")>-1:
                     q["o"] = "LIKE"
                     q["v"] = q["v"].replace("*", "%")
                 elif type(q["v"]) is list:
