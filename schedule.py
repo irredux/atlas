@@ -19,4 +19,4 @@ db.call("updateStatistics")
 
 # ocr and ML
 auto.convertZettel(50000)
-auto.ocr_scan(5000, false)
+auto.ocr_scan(5000, False)
