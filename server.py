@@ -84,6 +84,8 @@ if cfg["server"]["host"] == "localhost":
     from flask_cors import CORS # only for testing react apps locally!
     CORS(app)
 server = WSGIServer((cfg["server"]["host"], int(cfg["server"]["port"])), WSGIPathInfoDispatcher({"/": app}))
+
+print(cfg["server"]["https"], cfg["server"]["certfile"], cfg["server"]["keyfile"], cfg["server"]["chainfile"])
 if cfg["server"]["https"] == "True": server.ssl_adapter = BuiltinSSLAdapter(cfg["server"]["certfile"], cfg["server"]["keyfile"], cfg["server"]["chainfile"])
 
 # session parameters
