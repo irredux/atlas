@@ -22,7 +22,7 @@ from archimedes import Archimedes
 from export import Exporter
 from scripts.mlw.server import exec_mlw
 
-
+############################## server setup
 dir_path = path.dirname(path.abspath(__file__))
 faszikel_dir = path.dirname("/local/ovc/MLW/export/processing/")
 
@@ -90,11 +90,7 @@ if cfg["server"]["https"] == "True": server.ssl_adapter = BuiltinSSLAdapter(cfg[
 cfg["server"]["session_hours"] = 4
 cfg["server"]["session_minutes"] = 0
 
-#         # doublesided zettel
-#         if cfg["server"]["doublesided"] == "True": self.doublesided = True
-#         else: self.doublesided = False
-
-## assorted functions
+############################## assorted functions
 def auth(project, c_session):
     access = ["auth"]
     logout = False
@@ -162,7 +158,7 @@ def pw_set(pw_raw):
     key = hexlify(key)
     return (salt+key).decode("ascii")
 
-## routes
+############################## routes
 @app.route("/")
 @app.route("/<string:project>")
 @app.route("/<string:project>/<string:app>")
@@ -452,12 +448,11 @@ def data_export(project, res, res_id=None, in_query=None):
     pdfFileName = exporter.create_pdf_from_zettel(export_lst)
     return Response(pdfFileName)
 
-
 ############## UNTESTED ROUTES!
 # static files
 @app.route("/<string:project>/zettel/<letter>/<dir_nr>/<img>")
 def f_zettel(project, letter, dir_nr, img): # NOT SAVE!!!!!!!! NEEDS AUTH
-    #self.auth()
+    user = auth(project, request.headers.get("Authorization"))
     if cfg["server"]["host"] == "localhost":
         return redirect(f"https://dienste.badw.de:9999/zettel/{letter}/{dir_nr}/{img}", code=302)
     else:
@@ -471,6 +466,22 @@ def file_read(project, res, res_id):
             return send_file(dir_path + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
         else: abort(401)
     else: abort(404)
+@app.route("/<string:project>/file/faszikel/<dir_name>/<file_name>/") # online mlw -> move to scripts.mlw.server?
+def faszikel_export(project, dir_name, file_name):
+    user = auth(project, request.headers.get("Authorization"))
+    if "faszikel" in user["access"]:
+        if file_name == "log":
+            return send_file(faszikel_dir+f"/{dir_name}/tex/mlw.context.log")
+        elif file_name == "zip":
+            new_file = path.join(dir_path,"temp/articles.zip")
+            new_path = path.join(dir_path,"temp/articles")
+            #if path.exists(new_file): rmtree(new_file)
+            make_archive(new_path, "zip", path.join(faszikel_dir, dir_name, "tex/articles"))
+            return send_file(new_file)
+        else:
+            return send_file(faszikel_dir+f"/{dir_name}/tex/{file_name}")
+    else:
+        abort(401) # unauthorized
 
 # functions
 @app.route("/<string:project>/exec/<res>", methods=["GET", "POST"])
@@ -488,30 +499,7 @@ if __name__ == '__main__':
     for item in Path(dir_path+"/static/temp").glob("*.*"): item.unlink() #cleanup temp folder
     server.start()
 
-
-
-
-
-
-
 ###### TO BE CHANGED IN NEW VERSION
-@app.route("/<string:project>/file/faszikel/<dir_name>/<file_name>/")
-def faszikel_export(project, dir_name, file_name):
-    user = auth(request.headers.get("Authorization"))
-    if "faszikel" in user["access"]:
-        if file_name == "log":
-            return send_file(faszikel_dir+f"/{dir_name}/tex/mlw.context.log")
-        elif file_name == "zip":
-            new_file = path.join(dir_path,"temp/articles.zip")
-            new_path = path.join(dir_path,"temp/articles")
-            #if path.exists(new_file): rmtree(new_file)
-            make_archive(new_path, "zip", path.join(faszikel_dir, dir_name, "tex/articles"))
-            return send_file(new_file)
-        else:
-            return send_file(faszikel_dir+f"/{dir_name}/tex/{file_name}")
-    else:
-        abort(401) # unauthorized
-
 # import
 @app.route("/<string:project>/file/scan", methods=["POST"])
 def scan_import(project):
