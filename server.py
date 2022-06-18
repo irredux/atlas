@@ -53,12 +53,10 @@ faszikel_dir = path.dirname("/local/ovc/MLW/export/processing/")
 # stderr = StreamToLogger(logger,logging.ERROR)
 
 #load cfg
-print("hello")
 cfg_file_name = argv[1] if len(argv) > 1 else dir_path+"/config/localhost.json"
 with open(cfg_file_name, "r") as cfg_file: cfg = json.load(cfg_file)
 with open(dir_path+"/config/access.json", "r") as access_file: access_cfg = json.load(access_file)
 
-print("now")
 # setup projects
 for project in cfg["projects"]:
     cfg["projects"][project]["db"] = Arachne(cfg["projects"][project]["database"])
@@ -77,7 +75,6 @@ for project in cfg["projects"]:
         "delete": access_cfg[project]["delete"].keys()
     }
 
-print("here we are")
 # setup server
 app = Flask(__name__)
 secret_key = urandom(24)
@@ -89,6 +86,9 @@ if cfg["server"]["host"] == "localhost":
 server = WSGIServer((cfg["server"]["host"], int(cfg["server"]["port"])), WSGIPathInfoDispatcher({"/": app}))
 
 print("https:", cfg["server"]["https"])
+print("certfile:", cfg["server"]["certfile"])
+print("keyfile:", cfg["server"]["keyfile"])
+print("chainfile:", cfg["server"]["chainfile"])
 if cfg["server"]["https"] == "True": server.ssl_adapter = BuiltinSSLAdapter(cfg["server"]["certfile"], cfg["server"]["keyfile"], cfg["server"]["chainfile"])
 
 # session parameters
