@@ -19,3 +19,4 @@ uptime.log
 zettel/
 update.py
 tests/login_data.json
+docs/lemmatizer
