@@ -95,16 +95,13 @@ cfg["server"]["session_minutes"] = 0
 def auth(project, c_session):
     access = ["auth"]
     logout = False
-
     if session.get("session", None) == None:
         if c_session == "" or c_session == None: abort(401) # unauthorized
-        c_session = c_session[7:]
+        c_session = c_session[8:-1]
     else:
         c_session = session.get("session", None)
-
     usr_i = cfg["projects"][project]["db"].search("user", {"session": c_session}, ["id", "first_name",
         "last_name", "email", "session_last_active", "access", "settings", "password"])
-
     if len(usr_i) == 1:
         u_last = usr_i[0].get("session_last_active")
         u_access = set(json.loads(usr_i[0].get("access")))
