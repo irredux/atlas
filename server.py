@@ -7,18 +7,21 @@ from datetime import datetime, timedelta
 from flask import abort, Flask, request, send_file, Response, session, redirect
 from hashlib import pbkdf2_hmac
 import json
+import logging
 from os import listdir, mkdir, path, urandom
+from pathlib import Path
 from PIL import Image
 from shutil import make_archive, rmtree
 from sys import argv, stderr, stdout
 import subprocess
 import threading
 from uuid import uuid4
-from pathlib import Path
+
 from arachne import Arachne
 from archimedes import Archimedes
 from export import Exporter
-import logging
+from scripts.mlw.server import exec_mlw
+
 
 dir_path = path.dirname(path.abspath(__file__))
 faszikel_dir = path.dirname("/local/ovc/MLW/export/processing/")
@@ -53,6 +56,7 @@ stderr = StreamToLogger(logger,logging.ERROR)
 cfg_file_name = argv[1] if len(argv) > 1 else dir_path+"/config/localhost.json"
 with open(cfg_file_name, "r") as cfg_file: cfg = json.load(cfg_file)
 with open(dir_path+"/config/access.json", "r") as access_file: access_cfg = json.load(access_file)
+
 # setup projects
 for project in cfg["projects"]:
     cfg["projects"][project]["db"] = Arachne(cfg["projects"][project]["database"])
@@ -89,9 +93,8 @@ cfg["server"]["session_minutes"] = 0
 #         # doublesided zettel
 #         if cfg["server"]["doublesided"] == "True": self.doublesided = True
 #         else: self.doublesided = False
-# ################################################################
-# -I- assorted functions
-# ################################################################
+
+## assorted functions
 def auth(project, c_session):
     access = ["auth"]
     logout = False
@@ -159,12 +162,11 @@ def pw_set(pw_raw):
     key = hexlify(key)
     return (salt+key).decode("ascii")
 
-# ################################################################
-# -II- routes
-# ################################################################
+## routes
 @app.route("/")
 @app.route("/<string:project>")
-def login(project="mlw"): return redirect(f"/static/index.html?project={project}")
+@app.route("/<string:project>/<string:app>")
+def login(project="mlw", app="db"): return redirect(f"/static/index.html?project={project}&app={app}")
 @app.route("/<string:project>/argos/<resId>")
 def argos(resId,project): return redirect(f"/static/index.html?project={project}&app=argos&site=edition&id={resId}")
 
@@ -450,11 +452,66 @@ def data_export(project, res, res_id=None, in_query=None):
     pdfFileName = exporter.create_pdf_from_zettel(export_lst)
     return Response(pdfFileName)
 
+
+############## UNTESTED ROUTES!
+# static files
+@app.route("/<string:project>/zettel/<letter>/<dir_nr>/<img>")
+def f_zettel(project, letter, dir_nr, img): # NOT SAVE!!!!!!!! NEEDS AUTH
+    #self.auth()
+    if cfg["server"]["host"] == "localhost":
+        return redirect(f"https://dienste.badw.de:9999/zettel/{letter}/{dir_nr}/{img}", code=302)
+    else:
+        return send_file(dir_path+f"/{cfg['projects'][project]['zettel_dir']}/{letter}/{dir_nr}/"+img)
+@app.route("/<string:project>/file/<res>/<res_id>")
+def file_read(project, res, res_id):
+    if res == "scan":
+        user = auth(project, request.headers.get("Authorization"))
+        if "library" in user["access"]:
+            page = cfg["projects"][project]["db"].search("scan", {"id": res_id}, ["path", "filename"])[0]
+            return send_file(dir_path + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
+        else: abort(401)
+    else: abort(404)
+
+# functions
+@app.route("/<string:project>/exec/<res>", methods=["GET", "POST"])
+def exec_on_server(project, res):
+    user = auth(project, request.headers.get("Authorization"))
+    if project=="mlw":
+        return exec_mlw(res, user, cfg["projects"]["mlw"]["db"])
+    elif project=="dom":
+        pass
+    elif project=="tll":
+        pass
+    else: abort(404)
+
 if __name__ == '__main__':
     for item in Path(dir_path+"/static/temp").glob("*.*"): item.unlink() #cleanup temp folder
     server.start()
 
-############## UNTESTED ROUTES!
+
+
+
+
+
+
+###### TO BE CHANGED IN NEW VERSION
+@app.route("/<string:project>/file/faszikel/<dir_name>/<file_name>/")
+def faszikel_export(project, dir_name, file_name):
+    user = auth(request.headers.get("Authorization"))
+    if "faszikel" in user["access"]:
+        if file_name == "log":
+            return send_file(faszikel_dir+f"/{dir_name}/tex/mlw.context.log")
+        elif file_name == "zip":
+            new_file = path.join(dir_path,"temp/articles.zip")
+            new_path = path.join(dir_path,"temp/articles")
+            #if path.exists(new_file): rmtree(new_file)
+            make_archive(new_path, "zip", path.join(faszikel_dir, dir_name, "tex/articles"))
+            return send_file(new_file)
+        else:
+            return send_file(faszikel_dir+f"/{dir_name}/tex/{file_name}")
+    else:
+        abort(401) # unauthorized
+
 # import
 @app.route("/<string:project>/file/scan", methods=["POST"])
 def scan_import(project):
@@ -550,88 +607,3 @@ def zettel_import(project):
                 recto = True
         return Response(f"[{first_id},{new_id}]", status=201) # created
     else: abort(400) # bad request
-
-# static files
-@app.route("/<string:project>/file/faszikel/<dir_name>/<file_name>/")
-def faszikel_export(project, dir_name, file_name):
-    user = auth(request.headers.get("Authorization"))
-    if "faszikel" in user["access"]:
-        if file_name == "log":
-            return send_file(faszikel_dir+f"/{dir_name}/tex/mlw.context.log")
-        elif file_name == "zip":
-            new_file = path.join(dir_path,"temp/articles.zip")
-            new_path = path.join(dir_path,"temp/articles")
-            #if path.exists(new_file): rmtree(new_file)
-            make_archive(new_path, "zip", path.join(faszikel_dir, dir_name, "tex/articles"))
-            return send_file(new_file)
-        else:
-            return send_file(faszikel_dir+f"/{dir_name}/tex/{file_name}")
-    else:
-        abort(401) # unauthorized
-@app.route("/<string:project>/zettel/<letter>/<dir_nr>/<img>")
-def f_zettel(project, letter, dir_nr, img): # NOT SAVE!!!!!!!! NEEDS AUTH
-    #self.auth()
-    if cfg["connection"]["host"] == "localhost":
-        return redirect(f"https://dienste.badw.de:9999/zettel/{letter}/{dir_nr}/{img}", code=302)
-    else:
-        return send_file(dir_path+f"/zettel/{letter}/{dir_nr}/"+img)
-@app.route("/<string:project>/file/<f_type>/<res>")
-def file_read(project, f_type, res):
-    if f_type == "scan":
-        user = auth(request.headers.get("Authorization"))
-        if "library" in user["access"]:
-            page = db.search("scan", {"id": res}, ["path", "filename"])[0]
-            return send_file(dir_path + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
-        else: abort(401)
-
-# functions
-@app.route("/<string:project>/exec/<res>", methods=["GET", "POST"])
-def exec_on_server(project, res):
-    user = auth(request.headers.get("Authorization"))
-    if res == "opera_update" and "e_edit" in user["access"]:
-        db.call("updateOperaLists")
-        return Response("", status=200) # OK
-    elif res == "statistics_update":
-        db.call("updateStatistics")
-        return Response("", status=200) # OK
-    elif res == "mlw_preview" and "editor" in user["access"]:
-        return create_mlw_file(request.json)
-    elif res == "get_faszikel_jobs" and "faszikel" in user["access"]:
-        return_list = []
-        for sub_dir in listdir(faszikel_dir):
-            if path.isdir(path.join(faszikel_dir, sub_dir)) and sub_dir != "last":
-                # found sub directory
-                pdf = False
-                log = False
-                if(path.exists(path.join(faszikel_dir, sub_dir, "tex"))):
-                    for file in listdir(path.join(faszikel_dir, sub_dir, "tex")):
-                        if file.endswith(".pdf"):
-                            pdf = file
-                        elif file.endswith(".log"):
-                            log = True
-                return_list.append({"date": sub_dir, "name": pdf, "log": log})
-        return_list.sort(key=lambda item: item["date"], reverse=True)
-        return json.dumps(return_list[:100])
-    elif res == "ocr_job" and "ocr_jobs" in user["access"]:
-        #check if ocr_job is already running.
-        noOcrJob = True
-        currentJob = db.search("ocr_jobs", {"finished": "NULL"}, ["id", "u_date"])
-        for j in currentJob:
-            if timedelta(hours=0, minutes=30) >= datetime.now()-j["u_date"]: noOcrJob = False
-        if noOcrJob:
-            converZettelThread = threading.Thread(target=auto.convertZettel, args=(50000,))
-            converZettelThread.start()
-            return Response("", status=200) # OK
-        else: return abort(409) # Conflict: job already running!
-    elif res == "ocr_job_scans" and "ocr_jobs" in user["access"]:
-        #check if ocr_job is already running.
-        noOcrJob = True
-        currentJob = db.search("ocr_jobs", {"finished": "NULL"}, ["id", "u_date"])
-        for j in currentJob:
-            if timedelta(hours=0, minutes=30) >= datetime.now()-j["u_date"]: noOcrJob = False
-        if noOcrJob:
-            converZettelThread = threading.Thread(target=auto.ocr_scan, args=(5000,))
-            converZettelThread.start()
-            return Response("", status=200) # OK
-        else: return abort(409) # Conflict: job already running!
-    else: return abort(404) # not found
