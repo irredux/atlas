@@ -85,16 +85,7 @@ if cfg["server"]["host"] == "localhost":
     CORS(app)
 server = WSGIServer((cfg["server"]["host"], int(cfg["server"]["port"])), WSGIPathInfoDispatcher({"/": app}))
 
-if cfg["server"]["https"] == "True":
-    print("https:", cfg["server"]["https"])
-    print("certfile:", cfg["server"]["certfile"])
-    print("keyfile:", cfg["server"]["keyfile"])
-    print("chainfile:", cfg["server"]["chainfile"])
-    server.ssl_adapter = BuiltinSSLAdapter(
-        certificate=cfg["server"]["certfile"],
-        private_key=cfg["server"]["keyfile"],
-        certificate_chain=cfg["server"]["chainfile"]
-    )
+if cfg["server"]["https"] == True: server.ssl_adapter = BuiltinSSLAdapter(cfg["server"]["certfile"], cfg["server"]["keyfile"], cfg["server"]["chainfile"])
 
 # session parameters
 cfg["server"]["session_hours"] = 4
