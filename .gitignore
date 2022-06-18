@@ -6,6 +6,8 @@ config/accessDELETE.JSON
 config/accessREAD.JSON
 config/accessUPDATE.JSON
 config/localhost.ini
+config/localhost.json
+config/access.json
 content/.DS_Store
 content/scans/
 dmlw.log
@@ -16,3 +18,4 @@ static/.DS_Store
 uptime.log
 zettel/
 update.py
+tests/login_data.json
