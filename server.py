@@ -457,7 +457,7 @@ def f_zettel(project, letter, dir_nr, img): # NOT SAVE!!!!!!!! NEEDS AUTH
     if cfg["server"]["host"] == "localhost":
         return redirect(f"https://dienste.badw.de:9999/zettel/{letter}/{dir_nr}/{img}", code=302)
     else:
-        return send_file(dir_path+f"/{cfg['projects'][project]['zettel_dir']}/{letter}/{dir_nr}/"+img)
+        return send_file(f"{cfg['projects'][project]['zettel_dir']}/{letter}/{dir_nr}/"+img)
 @app.route("/<string:project>/file/<res>/<res_id>")
 def file_read(project, res, res_id):
     if res == "scan":
