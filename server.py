@@ -27,30 +27,30 @@ dir_path = path.dirname(path.abspath(__file__))
 faszikel_dir = path.dirname("/local/ovc/MLW/export/processing/")
 
 # load logger: redirect stdout and stderr to logfile!
-# class StreamToLogger(object):
-#     """
-#     Fake file-like stream object that redirects writes to a logger instance.
-#     """
-#     def __init__(self, logger, level):
-#        self.logger = logger
-#        self.level = level
-#        self.linebuf = ''
+class StreamToLogger(object):
+    """
+    Fake file-like stream object that redirects writes to a logger instance.
+    """
+    def __init__(self, logger, level):
+       self.logger = logger
+       self.level = level
+       self.linebuf = ''
 
-#     def write(self, buf):
-#        for line in buf.rstrip().splitlines():
-#           self.logger.log(self.level, line.rstrip())
+    def write(self, buf):
+       for line in buf.rstrip().splitlines():
+          self.logger.log(self.level, line.rstrip())
 
-#     def flush(self):
-#         pass
-# logging.basicConfig(
-#     level=logging.DEBUG,
-#     format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
-#     filename=dir_path + "/dmlw.log",
-#     filemode='a'
-# )
-# logger = logging.getLogger(__name__)
-# stdout = StreamToLogger(logger,logging.INFO)
-# stderr = StreamToLogger(logger,logging.ERROR)
+    def flush(self):
+        pass
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
+    filename=dir_path + "/dmlw.log",
+    filemode='a'
+)
+logger = logging.getLogger(__name__)
+stdout = StreamToLogger(logger,logging.INFO)
+stderr = StreamToLogger(logger,logging.ERROR)
 
 #load cfg
 cfg_file_name = argv[1] if len(argv) > 1 else dir_path+"/config/localhost.json"
