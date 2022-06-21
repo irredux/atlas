@@ -8,7 +8,7 @@ Mit dem Modul wird der Zugriff auf den dMLW-Server vereinfacht. Die Daten werden
 from arachne import Arachne
 
 arachne = Arachne("email", "passwort", "host", ["work"])
-print(arachne.work.search("*", ["ac_vsc"]))
+print(arachne.work.get({"id": 1}, ["ac_vsc"]))
 arachne.close()
 ```
 
@@ -26,9 +26,6 @@ Bereits beim Erstellen des Objekts wird eine Session auf dem Server reserviert u
 
 ### Arachne.close()
 Beendet die aktuelle Session und löscht das Token auf dem Server.
-
-### Arachne.tables()
-Gibt eine Liste mit den aktuell auf dem Server verfügbaren Tabellen zurück. Das Arachne-Objekt hat eventuell nicht auf alle Zugriff, je nachdem wie es initialisiert wurde.
 
 
 ### Arachne.*Tabellenname*.delete('ID')

@@ -21,3 +21,5 @@ update.py
 tests/login_data.json
 docs/lemmatizer
 docs/tll
+docs/mlw
+arachnePy/credentials.py
