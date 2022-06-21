@@ -3,8 +3,6 @@ import json
 import requests
 import urllib.parse
 
-from credentials import user_credentials
-
 class ArachneTable(object):
     def __init__(self, tblName, url, token):
         self.tblName = tblName
