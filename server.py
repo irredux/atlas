@@ -21,6 +21,8 @@ from arachne import Arachne
 from archimedes import Archimedes
 from export import Exporter
 from scripts.mlw.server import exec_mlw
+from scripts.tll.server import exec_tll
+from scripts.dom.server import exec_dom
 
 ############################## server setup
 dir_path = path.dirname(path.abspath(__file__))
@@ -490,9 +492,9 @@ def exec_on_server(project, res):
     if project=="mlw":
         return exec_mlw(res, user, cfg["projects"]["mlw"]["db"])
     elif project=="dom":
-        pass
+        return exec_dom(res, user, cfg["projects"]["mlw"]["db"])
     elif project=="tll":
-        pass
+        return exec_tll(res, user, cfg["projects"]["tll"]["db"])
     else: abort(404)
 
 if __name__ == '__main__':
