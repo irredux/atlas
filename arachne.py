@@ -31,7 +31,6 @@ class Arachne(object):
         self.__port = int(db_cfg["port"])
         self.__unix_socket = db_cfg.get("unix_socket", "")
         self.__charset = db_cfg.get("charset", "")
-    
     def call(self, command, values=None):
         conn = connect(host=self.__host, user=self.__user,
                 password=self.__password, database=self.__database_name,
@@ -41,7 +40,6 @@ class Arachne(object):
         if values: re = cur.callproc(command, values)
         else: re = cur.callproc(command)
         return re
-
     def command(self, statement, values = [], commit = False):
         conn = connect(host=self.__host, user=self.__user,
                 password=self.__password, database=self.__database_name,
@@ -59,7 +57,6 @@ class Arachne(object):
         cur.close()
         conn.close()
         return r_value
-
     def delete(self, tbl, query):
         """Removes a row from a given table.
 
@@ -72,8 +69,6 @@ class Arachne(object):
             where_txt, values = self.WHERE_to_str(query)
             where_txt = " WHERE " + where_txt
             self.command(f"DELETE FROM {tbl}{where_txt};", values, True)
-
-
     def save(self, table, op, id = None, save_stat = True, return_row=False):
         """Saves new values into row. Returns id of row.
 
@@ -124,7 +119,6 @@ class Arachne(object):
             return self.search(table, {"id": return_id})
         else:
             return return_id
-
     def clean(self, i_lst):
         o_lst = []
         for lst in i_lst:
@@ -141,7 +135,6 @@ class Arachne(object):
 
             o_lst.append(o_dict)
         return o_lst
-
     def simple_html(self, i_txt):
         allowed_dict = {"&lt;br /&gt;": "<br />",
                 "&lt;sup&gt;": "<sup>", "&lt;/sup&gt;": "</sup>",
@@ -157,7 +150,6 @@ class Arachne(object):
         for key, val in allowed_dict.items():
             i_txt = i_txt.replace(key, val)
         return i_txt
-
     def search(self, tbl, query = {}, r_cols = "*", o_cols = [], limit=10001, offset=0):
         """ searches the database.
             tbl:    table or view to be searched.
@@ -195,7 +187,6 @@ class Arachne(object):
 
         # clean HTML tags and return results
         return self.clean(return_lst)
-
     def WHERE_to_str(self, query, first = True):
         where_txt = ""
         vals = []

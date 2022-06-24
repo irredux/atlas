@@ -409,7 +409,7 @@ def data_delete(project, res, res_id):
             else: break
     else: abort(403) # forbidden
     cfg["projects"][project]["db"].delete(res, {"id": res_id})
-    return Response("", status=200) # ok
+    return Response(str(res_id), status=200) # ok
 
 # batch
 @app.route("/<string:project>/data_batch/<res>", methods=["POST", "DELETE"]) # PATCH? ///  GET?
