@@ -17,9 +17,9 @@ db = Arachne(cfg["projects"]["mlw"]["database"])
 auto = Archimedes(db, dir_path)
 
 # refresh database
-db.call("updateOperaLists")
-db.call("updateStatistics")
+#db.call("updateOperaLists")
+#db.call("updateStatistics")
 
 # ocr and ML
-auto.convertZettel(50000)
+#auto.convertZettel(50000)
 auto.ocr_scan(5000, False)
