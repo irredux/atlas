@@ -15,13 +15,13 @@ def client():
 def test_reroutes(client):
 	re = client.get("/")
 	assert re.status_code == 302
-	assert re.headers[2][1] == "http://localhost/static/index.html?project=mlw"
+	assert re.headers[2][1] == "http://localhost/static/index.html?project=mlw&app=db"
 	re = client.get("/dom")
 	assert re.status_code == 302
-	assert re.headers[2][1] == "http://localhost/static/index.html?project=dom"
+	assert re.headers[2][1] == "http://localhost/static/index.html?project=dom&app=db"
 	re = client.get("/tll")
 	assert re.status_code == 302
-	assert re.headers[2][1] == "http://localhost/static/index.html?project=tll"
+	assert re.headers[2][1] == "http://localhost/static/index.html?project=tll&app=db"
 	re = client.get("/mlw/argos/1")
 	assert re.status_code == 302
 	assert re.headers[2][1] == "http://localhost/static/index.html?project=mlw&app=argos&site=edition&id=1"

@@ -8,7 +8,7 @@ from flask import abort, Flask, request, send_file, Response, session, redirect
 from hashlib import pbkdf2_hmac
 import json
 import logging
-from os import listdir, mkdir, path, urandom
+from os import listdir, mkdir, makedirs, path, urandom
 from pathlib import Path
 from PIL import Image
 from shutil import make_archive, rmtree
@@ -497,26 +497,20 @@ def exec_on_server(project, res):
         return exec_tll(res, user, cfg["projects"]["tll"]["db"])
     else: abort(404)
 
-if __name__ == '__main__':
-    for item in Path(dir_path+"/static/temp").glob("*.*"): item.unlink() #cleanup temp folder
-    print("starting server...")
-    server.start()
-
-###### TO BE CHANGED IN NEW VERSION
 # import
 @app.route("/<string:project>/file/scan", methods=["POST"])
 def scan_import(project):
     # upload scan imgs
-    user = auth(request.headers.get("Authorization"))
+    user = auth(project, request.headers.get("Authorization"))
     if "e_edit" in user["access"]:
         # check if path exists
         edition_id = request.form.get("edition_id", None)
         path_lst = request.form.get("path", "").strip("/").split("/")
-        if edition_id==None or len(path_lst)!=2 or path.exists(dir_path+f"/content/scans/{path_lst[0]}/")==False:
+        if edition_id==None or len(path_lst)!=2:# or path.exists(f"{cfg['projects'][project]['scans_dir']}/{path_lst[0]}/")==False:
             abort(400)
         dbPath = f"/{path_lst[0]}/{path_lst[1]}/"
-        newPath = dir_path+"/content/scans"+dbPath
-        if path.exists(newPath) == False: mkdir(newPath)
+        newPath = cfg['projects'][project]['scans_dir']+dbPath
+        if path.exists(newPath) == False: makedirs(newPath)
 
         # save imgs
         f_lst = request.files.getlist("files")
@@ -526,42 +520,37 @@ def scan_import(project):
             if path.exists(newPath + f.filename) == False:
                 # create entry in db
                 save_dict = {
-                    "filename": f.filename[:4], # better: secure_filename(f.filename) // from werkzeug.utils import secure_filename
+                    "filename": f.filename[:4], # better: secure_filename(f.filename) // from werkzeug.utils import secure_filename
                     "path": dbPath
                 }
-                new_id = db.save("scan", save_dict)
-                db.save("scan_lnk", {"scan_id": new_id, "edition_id": edition_id})
+                new_id = cfg["projects"][project]["db"].save("scan", save_dict)
+                cfg["projects"][project]["db"].save("scan_lnk", {"scan_id": new_id, "edition_id": edition_id})
                 # save file
                 f.save(newPath + f.filename)
                 if not aspect_ratio:
-                    img = Image.open(f"{dir_path}/content/scans{save_dict['path']}{save_dict['filename']}.png")
+                    img = Image.open(f"{cfg['projects'][project]['scans_dir']}{save_dict['path']}{save_dict['filename']}.png")
                     w,h = img.size
                     aspect_ratio = str(1/h*w)[:5]
-                    db.save("edition", {"aspect_ratio": aspect_ratio}, edition_id)
+                    cfg["projects"][project]["db"].save("edition", {"aspect_ratio": aspect_ratio}, edition_id)
             else:
                 r_lst.append(f.filename)
         return Response(json.dumps(r_lst), status=201, mimetype="application/json") # created
-
     else: abort(401) # unauthorized
 @app.route("/<string:project>/file/zettel", methods=["POST"])
 def zettel_import(project):
     # uploading images for zettel-db
-    user = auth(request.headers.get("Authorization"))
+    user = auth(project, request.headers.get("Authorization"))
     u_letter = request.form.get("letter", "A")
     if len(u_letter) == 1 and u_letter.isalpha() and "z_add" in user["access"]:
         u_type = request.form.get("type", "0")
-        f_path = dir_path + "/zettel/"
-        if path.exists(f_path) == False: mkdir(f_path)
-        f_path += f"{u_letter}/"
-        if path.exists(f_path) == False: mkdir(f_path)
-
+        f_path = f"{cfg['projects'][project]['scans_dir']}/zettel/{u_letter}/"
+        if path.exists(f_path) == False: makedirs(f_path)
         c_user_id = user['id']
         if 'admin' in user['access'] and request.form.get("user_id_id", "") != "":
             c_user_id = request.form["user_id_id"]
 
         recto = True
-        max_files = 1000
-        if srv_set.doublesided == True: max_files = 500
+        max_files = 500 if cfg['projects'][project]["doublesided"] == True else 1000
         c_path = ""
         first_id = 0
         new_id = 0
@@ -571,18 +560,13 @@ def zettel_import(project):
             c_loop += 1
             if recto:
                 # create entry in db
-                save_dict = {
-                        "user_id": c_user_id,
-                        "letter": u_letter,
-                        "created_by": c_user_id,
-                        "in_use": True
-                        }
+                save_dict = { "user_id": c_user_id, "letter": u_letter, "created_by": c_user_id, "in_use": True }
                 if u_type != "0":
                     save_dict["type"] = u_type
-                new_id = db.save("zettel", save_dict)
+                new_id = cfg["projects"][project]["db"].save("zettel", save_dict)
                 if first_id == 0: first_id = new_id
 
-                db.save("zettel", {
+                cfg["projects"][project]["db"].save("zettel", {
                     "img_folder": f"{(new_id-1)//max_files}",
                     "img_path": f"/zettel/{u_letter}/{(new_id-1)//max_files}/{new_id}"
                     },
@@ -592,9 +576,14 @@ def zettel_import(project):
                 if path.exists(c_path) == False: mkdir(c_path)
                 # save the file
                 f.save(c_path + f"{new_id}.jpg")
-                if srv_set.doublesided: recto = False
+                if cfg['projects'][project]["doublesided"]: recto = False
             else:
                 f.save(c_path + f"{new_id}v.jpg")
                 recto = True
         return Response(f"[{first_id},{new_id}]", status=201) # created
     else: abort(400) # bad request
+
+if __name__ == '__main__':
+    for item in Path(dir_path+"/static/temp").glob("*.*"): item.unlink() #cleanup temp folder
+    print("starting server...")
+    server.start()

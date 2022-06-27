@@ -20,6 +20,7 @@ uptime.log
 zettel/
 update.py
 tests/login_data.json
+arachnePy/tests/login_data.json
 docs/lemmatizer
 docs/tll
 docs/mlw

@@ -1,8 +1,13 @@
 import pytest
 import requests
+import json
 
 from arachne import Arachne
-from credentials import user_credentials
+#from credentials import user_credentials
+
+#user_credentials = json.loads(open("credentials.json", "r").read())
+with open("./arachnePy/tests/login_data.json", "r") as login_file:
+    user_credentials = json.load(login_file)
 
 @pytest.fixture
 def conn():
