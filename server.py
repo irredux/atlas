@@ -520,7 +520,7 @@ def scan_import(project):
             if path.exists(newPath + f.filename) == False:
                 # create entry in db
                 save_dict = {
-                    "filename": f.filename[:4], # better: secure_filename(f.filename) // from werkzeug.utils import secure_filename
+                    "filename": f.filename[:-4], # better: secure_filename(f.filename) // from werkzeug.utils import secure_filename
                     "path": dbPath
                 }
                 new_id = cfg["projects"][project]["db"].save("scan", save_dict)
