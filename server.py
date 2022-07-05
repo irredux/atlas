@@ -11,6 +11,7 @@ import logging
 from os import listdir, mkdir, makedirs, path, urandom
 from pathlib import Path
 from PIL import Image
+import requests
 from shutil import make_archive, rmtree
 from sys import argv, stderr, stdout
 import subprocess
@@ -583,6 +584,15 @@ def zettel_import(project):
         return Response(f"[{first_id},{new_id}]", status=201) # created
     else: abort(400) # bad request
 
+# reroute
+@app.route("/geschichtsquellen/<string:type>", methods=["GET"])
+def reroute_geschichtsquellen(type):
+    if type=="autoren":
+        return open("./docs/mlw/geschichtsquellen_autoren.json", "r").read()
+    else:
+        #test = requests.get("http://geschichtsquellen.de/werk/data")
+        #return test.text
+        return open("./docs/mlw/geschichtsquellen_werke.json", "r").read()
 if __name__ == '__main__':
     for item in Path(dir_path+"/static/temp").glob("*.*"): item.unlink() #cleanup temp folder
     print("starting server...")
