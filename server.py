@@ -588,7 +588,7 @@ def zettel_import(project):
 @app.route("/<string:project>/geschichtsquellen/<string:type>", methods=["GET"])
 def reroute_geschichtsquellen(project, type):
     if type=="autoren":
-        re = requests.get("http://geschichtsquellen.de/autoren/data")
+        re = requests.get("http://geschichtsquellen.de/autor/data")
         return re.text
         #return open("./docs/mlw/geschichtsquellen_autoren.json", "r").read()
     else:
