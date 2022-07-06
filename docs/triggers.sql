@@ -81,6 +81,11 @@ BEFORE UPDATE ON author
 FOR EACH ROW
     BEGIN
         SET new.u_date = SYSDATE(6);
+        IF new.gq_id IS NOT NULL THEN
+            SET new.gq_author = (SELECT autor_lat FROM gq_autoren WHERE gq_id = new.gq_id);
+        ELSE
+            SET new.gq_author = NULL;
+        END IF;
     END; //
 DELIMITER ;
 
@@ -551,6 +556,11 @@ FOR EACH ROW
             edition.opus = new.opus,
             edition.ac_web = new.ac_web
         WHERE edition.work_id = new.id;
+        IF new.gq_id IS NOT NULL THEN
+            SET new.gq_work = (SELECT opus FROM gq_werke WHERE gq_id = new.gq_id);
+        ELSE
+            SET new.gq_work = NULL;
+        END IF;
     END; //
 DELIMITER ;
 
@@ -791,5 +801,26 @@ BEFORE UPDATE ON zettel_lnk
 FOR EACH ROW
     BEGIN
         SET new.u_date = SYSDATE(6);
+    END; //
+DELIMITER ;
+
+
+/* ***************************************************** */
+
+DELIMITER //
+CREATE OR REPLACE TRIGGER gq_werke_create
+BEFORE INSERT ON gq_werke
+FOR EACH ROW
+    BEGIN
+        SET new.opus = IF(new.gq_autor_id IS NOT NULL, CONCAT((SELECT autor_lat FROM gq_autoren WHERE gq_id = new.gq_autor_id), " ", new.werk_lat), new.werk_lat);
+    END; //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE TRIGGER gq_werke_update
+BEFORE UPDATE ON gq_werke
+FOR EACH ROW
+    BEGIN
+        SET new.opus = IF(new.gq_autor_id IS NOT NULL, CONCAT((SELECT autor_lat FROM gq_autoren WHERE gq_id = new.gq_autor_id), " ", new.werk_lat), new.werk_lat);
     END; //
 DELIMITER ;
