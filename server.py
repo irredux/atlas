@@ -544,7 +544,7 @@ def zettel_import(project):
     u_letter = request.form.get("letter", "A")
     if len(u_letter) == 1 and u_letter.isalpha() and "z_add" in user["access"]:
         u_type = request.form.get("type", "0")
-        f_path = f"{cfg['projects'][project]['scans_dir']}/zettel/{u_letter}/"
+        f_path = f"{cfg['projects'][project]['zettel_dir']}/zettel/{u_letter}/"
         if path.exists(f_path) == False: makedirs(f_path)
         c_user_id = user['id']
         if 'admin' in user['access'] and request.form.get("user_id_id", "") != "":
