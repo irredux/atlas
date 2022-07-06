@@ -585,8 +585,8 @@ def zettel_import(project):
     else: abort(400) # bad request
 
 # reroute
-@app.route("/geschichtsquellen/<string:type>", methods=["GET"])
-def reroute_geschichtsquellen(type):
+@app.route("/<string:project>/geschichtsquellen/<string:type>", methods=["GET"])
+def reroute_geschichtsquellen(project, type):
     if type=="autoren":
         re = requests.get("http://geschichtsquellen.de/autoren/data")
         return re.text
