@@ -172,7 +172,7 @@ def login(project=None, app=None, res=None):
     if project!=None: params.append(f"project={project}")
     if app!=None: params.append(f"app={app}")
     if app=="db":
-        params.append(f"site=${res}")
+        params.append(f"site={res}")
     elif app=="argos":
         params.append("site=edition")
         params.append(f"id={res}")
