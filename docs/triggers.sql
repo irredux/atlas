@@ -379,6 +379,9 @@ FOR EACH ROW
             SET new.auto_text = (SELECT IF(full_text IS NULL AND ocr_auto IS NOT NULL, 1, 0) FROM scan WHERE scan.id=new.scan_id);
             SET new.body_matter = (SELECT body_matter FROM scan WHERE scan.id=new.scan_id);
         END IF;
+        IF new.edition_id IS NOT NULL THEN
+            SET new.ac_web = (SELECT edition.ac_web FROM edition WHERE edition.id=new.edition_id);
+        END IF;
     END; //
 DELIMITER ;
 
@@ -397,6 +400,9 @@ FOR EACH ROW
             SET new.full_text = (SELECT IF(full_text IS NOT NULL, full_text, ocr_auto) FROM scan WHERE scan.id=new.scan_id);
             SET new.auto_text = (SELECT IF(full_text IS NULL AND ocr_auto IS NOT NULL, 1, 0) FROM scan WHERE scan.id=new.scan_id);
             SET new.body_matter = (SELECT body_matter FROM scan WHERE scan.id=new.scan_id);
+        END IF;
+        IF (old.edition_id IS NULL AND new.edition_id IS NOT NULL) OR (old.edition_id != new.edition_id) THEN
+            SET new.ac_web = (SELECT edition.ac_web FROM edition WHERE edition.id=new.edition_id);
         END IF;
     END; //
 DELIMITER ;

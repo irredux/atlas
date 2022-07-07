@@ -167,8 +167,14 @@ def pw_set(pw_raw):
 @app.route("/<string:project>")
 @app.route("/<string:project>/<string:app>")
 def login(project=None, app=None):
-    params = (f"?project={project}" if project!=None else "")+(f"&app={app}" if app!=None else "")
-    return redirect(f"/static/index.html{params}")
+    params = []
+    if project!=None: params.append(f"project={project}")
+    if app!=None: params.append(f"app={app}")
+    if len(params)>0:
+        params_txt = f"?{'&'.join(params)}"
+    else:
+        params_txt = ""
+    return redirect(f"/static/index.html{params_txt}")
 @app.route("/<string:project>/argos/<resId>")
 def argos(resId,project): return redirect(f"/static/index.html?project={project}&app=argos&site=edition&id={resId}")
 
