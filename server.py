@@ -163,6 +163,8 @@ def pw_set(pw_raw):
     return (salt+key).decode("ascii")
 
 ############################## routes
+@app.route("/<string:project>/argos/<int:resId>")
+def argos(resId,project): return redirect(f"/static/index.html?project={project}&app=argos&site=edition&id={resId}")
 @app.route("/")
 @app.route("/<string:project>")
 @app.route("/<string:project>/<string:app>")
@@ -175,9 +177,6 @@ def login(project=None, app=None):
     else:
         params_txt = ""
     return redirect(f"/static/index.html{params_txt}")
-@app.route("/<string:project>/argos/<resId>")
-def argos(resId,project): return redirect(f"/static/index.html?project={project}&app=argos&site=edition&id={resId}")
-
 # session
 @app.route("/<string:project>/session", methods=["POST"])
 def session_create(project):
