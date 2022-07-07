@@ -163,19 +163,19 @@ def pw_set(pw_raw):
     return (salt+key).decode("ascii")
 
 ############################## routes
-# @app.route("/<string:project>/argos/<int:resId>")
-# def argos(resId,project): return redirect(f"/static/index.html?project={project}&app=argos&site=edition&id={resId}")
 @app.route("/")
 @app.route("/<string:project>")
 @app.route("/<string:project>/<string:app>")
-@app.route("/<string:project>/<string:app>/<int:resId>")
-def login(project=None, app=None):
+@app.route("/<string:project>/<string:app>/<res>")
+def login(project=None, app=None, res=None):
     params = []
     if project!=None: params.append(f"project={project}")
     if app!=None: params.append(f"app={app}")
-    if app=="argos":
+    if app=="db":
+        params.append(f"site=${res}")
+    elif app=="argos":
         params.append("site=edition")
-        params.append(f"id={resId}")
+        params.append(f"id={res}")
     if len(params)>0:
         params_txt = f"?{'&'.join(params)}"
     else:
