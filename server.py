@@ -477,7 +477,8 @@ def file_read(project, res, res_id):
         user = auth(project, request.headers.get("Authorization"))
         if "library" in user["access"]:
             page = cfg["projects"][project]["db"].search("scan", {"id": res_id}, ["path", "filename"])[0]
-            return send_file(dir_path + "/content/scans/" + page["path"] + "/" + page["filename"]+".png")
+            return send_file(cfg['projects'][project]['scans_dir']+ page["path"] + page["filename"]+".png")
+            #return send_file(dir_path + "/content/scans" + page["path"] + page["filename"]+".png")
         else: abort(401)
     else: abort(404)
 @app.route("/<string:project>/file/faszikel/<dir_name>/<file_name>/") # online mlw -> move to scripts.mlw.server?
