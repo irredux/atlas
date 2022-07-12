@@ -142,5 +142,7 @@ BEGIN
     ;
     DROP TABLE scan_viewer_temp;
 
+    CREATE OR REPLACE TABLE scan_paths (id INT, path VARCHAR(2000), count INT);
+    INSERT INTO scan_paths (id, path, count) SELECT id, path, COUNT(id) FROM scan GROUP BY path ORDER BY path;
 END; //
 DELIMITER ;
