@@ -468,7 +468,7 @@ def data_export(project, res, res_id=None, in_query=None):
 def f_zettel(project, letter, dir_nr, img): # NOT SAVE!!!!!!!! NEEDS AUTH
     user = auth(project, request.headers.get("Authorization"))
     if cfg["server"]["host"] == "localhost":
-        return redirect(f"https://dienste.badw.de:9999/zettel/{letter}/{dir_nr}/{img}", code=302)
+        return redirect(f"https://dienste.badw.de:9999/{project}/zettel/{letter}/{dir_nr}/{img}", code=302)
     else:
         return send_file(f"{cfg['projects'][project]['zettel_dir']}/zettel/{letter}/{dir_nr}/{img}")
 @app.route("/<string:project>/file/<res>/<res_id>")
