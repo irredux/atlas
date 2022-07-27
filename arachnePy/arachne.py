@@ -58,7 +58,7 @@ class ArachneTable(object):
         if len(group)>0: params["group"] = json.dumps(group)
         #url = f"{self.__url}/{self.tblName}?query={json.dumps(query)}"
         url = f"{self.__url}/data/{self.tblName}?"+urllib.parse.urlencode(params)
-        print("url:", url)
+        #print("url:", url)
         re = requests.get(url, headers={"Authorization": f"Bearer {self.__token}"})
         if re.status_code == 200:
             return re.json()

@@ -1,4 +1,4 @@
-from flask import abort, Response
+from flask import abort, Response, request
 from datetime import datetime, timedelta
 import threading
 
@@ -7,8 +7,12 @@ def exec_tll(res, user, db):
         db.call("updateOperaLists")
         return Response("", status=200) # OK
     elif res == "statistics_update":
-        db.call("updateStatistics")
+        db.call("updateStatistics", ())
         return Response("", status=200) # OK
+    elif res == "SortIndex" and "o_edit" in user["access"]:
+        paras = request.json
+        db.call("changeSortNr", paras)
+        return Response("", status=200)
     elif res == "ocr_job" and "ocr_jobs" in user["access"]:
         #check if ocr_job is already running.
         noOcrJob = True
