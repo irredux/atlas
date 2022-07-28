@@ -22,4 +22,4 @@ auto = Archimedes(db, dir_path)
 
 # ocr and ML
 #auto.convertZettel(50000)
-auto.ocr_scan(200, False)
+auto.ocr_scan(10, False)
