@@ -248,7 +248,7 @@ class Archimedes(object):
                 if loop_count > 20:
                     loop_count = 0
                     if local==False: self.db.save("ocr_jobs", {"count": total_count}, job_id)
-                sleep(1)
+                sleep(5)
             if local==False: self.db.save("ocr_jobs", {"count": total_count, "finished": 1}, job_id)
 
     def ocr_and_type(self, zettelLimit):
