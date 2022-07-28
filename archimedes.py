@@ -3,6 +3,7 @@
 from fuzzysearch import find_near_matches
 from joblib import load
 from os import path
+from time import sleep
 import pandas
 from PIL import Image
 import pytesseract
@@ -247,6 +248,7 @@ class Archimedes(object):
                 if loop_count > 20:
                     loop_count = 0
                     if local==False: self.db.save("ocr_jobs", {"count": total_count}, job_id)
+                sleep(1)
             if local==False: self.db.save("ocr_jobs", {"count": total_count, "finished": 1}, job_id)
 
     def ocr_and_type(self, zettelLimit):
