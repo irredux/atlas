@@ -5,7 +5,7 @@ BEGIN
     /* 1. insert works on separat line */
     CREATE OR REPLACE TABLE opera_maiora_temp (id INT PRIMARY KEY AUTO_INCREMENT, author_id INT, work_id INT, date_display VARCHAR(200), abbr VARCHAR(200), full TEXT, search VARCHAR(300), bibliography TEXT, comment TEXT, editions_id JSON, editions_url JSON, editions_label JSON, author_sort VARCHAR(200), work_sort VARCHAR(200), gq_author_id INT, gq_work_id INT, viaf_id VARCHAR(30), same_line BOOL);
     INSERT INTO opera_maiora_temp
-    (work_id, date_display, abbr, full, bibliography, comment, author_sort, work_sort, search, gq_work_id, gq_author_id)
+    (work_id, date_display, abbr, full, bibliography, comment, author_sort, work_sort, search, gq_work_id)
         SELECT
             work.id,
             work.date_display,
@@ -27,8 +27,7 @@ BEGIN
             author.abbr_sort,
             work.abbr_sort,
             work.ac_web,
-            work.gq_id,
-            author.gq_id
+            work.gq_id
         FROM work
         LEFT JOIN author ON author.id = work.author_id
         WHERE is_maior = 1 AND work.abbr IS NOT NULL
