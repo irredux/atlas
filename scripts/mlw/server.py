@@ -60,9 +60,8 @@ def exec_mlw(res, user, db, dir_path):
 
 
 def create_mlw_file(i_data, dir_path):
-    sysPath.insert(1, "/Users/alexanderhaberlin/projects/dMLW/atlas-server/MLW-Software")
-
-    #sysPath.insert(1, Path(__file__).parents[2] / "MLW-Software")
+    #sysPath.insert(1, "/Users/alexanderhaberlin/projects/dMLW/atlas-server/MLW-Software")
+    sysPath.insert(1, Path(__file__).parents[2] / "MLW-Software")
     from MLWCompiler import verarbeite_mlw_artikel
     
     with open(dir_path + "/MLW-Software/input.mlw", "w") as i_file:
