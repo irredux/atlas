@@ -3,13 +3,11 @@ from datetime import datetime, timedelta
 import json
 from os import path
 from sys import path as sysPath
+from pathlib import Path
 from shutil import rmtree
 import subprocess
 import threading
 from time import sleep
-
-sysPath.insert(1, "/Users/alexanderhaberlin/projects/dMLW/atlas-server/MLW-Software")
-from MLWCompiler import verarbeite_mlw_artikel
 
 def exec_mlw(res, user, db, dir_path):
     if res == "opera_update" and "e_edit" in user["access"]:
@@ -62,6 +60,11 @@ def exec_mlw(res, user, db, dir_path):
 
 
 def create_mlw_file(i_data, dir_path):
+    sysPath.insert(1, "/Users/alexanderhaberlin/projects/dMLW/atlas-server/MLW-Software")
+
+    #sysPath.insert(1, Path(__file__).parents[2] / "MLW-Software")
+    from MLWCompiler import verarbeite_mlw_artikel
+    
     with open(dir_path + "/MLW-Software/input.mlw", "w") as i_file:
         i_file.write(i_data)
     re = verarbeite_mlw_artikel("input.mlw")
