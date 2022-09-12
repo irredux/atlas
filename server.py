@@ -14,7 +14,6 @@ from PIL import Image
 import requests
 from shutil import make_archive, rmtree
 from sys import argv, stderr, stdout
-import subprocess
 import threading
 from uuid import uuid4
 
@@ -124,21 +123,6 @@ def auth(project, c_session):
             abort(401) # unauthorized
     else:
         abort(401) # unauthorized
-def create_mlw_file(i_datas):
-    o_datas = []
-    for i_data in i_datas:
-        with open(dir_path + "/MLW-Software/input.mlw", "w") as i_file:
-            i_file.write(i_data)
-        if path.exists(dir_path + "/MLW-Software/Ausgabe"): rmtree(dir_path + "/MLW-Software/Ausgabe")
-        subprocess.run(
-                f"python3 {dir_path}/MLW-Software/MLWServer.py --port 9997 {dir_path}/MLW-Software/input.mlw",
-                shell=True)
-        o_data = {}
-        with open(dir_path + "/MLW-Software/Ausgabe/HTML-Vorschau/input.html", "r") as html_file:
-            o_data["html"] = html_file.read()
-        o_datas.append(o_data)
-    subprocess.run(f"python3 {dir_path}/MLW-Software/MLWServer.py --port 9997 --stopserver", shell=True)
-    return json.dumps(o_datas)
 def login_check(user, pw, project):
     user_login = cfg["projects"][project]["db"].search("user", {"email": user}, ["id", "password",
         "session", "access", "session_last_active"])
@@ -503,7 +487,7 @@ def faszikel_export(project, dir_name, file_name):
 def exec_on_server(project, res):
     user = auth(project, request.headers.get("Authorization"))
     if project=="mlw":
-        return exec_mlw(res, user, cfg["projects"]["mlw"]["db"])
+        return exec_mlw(res, user, cfg["projects"]["mlw"]["db"], dir_path)
     elif project=="dom":
         return exec_dom(res, user, cfg["projects"]["mlw"]["db"])
     elif project=="tll":

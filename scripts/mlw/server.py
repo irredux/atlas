@@ -1,8 +1,17 @@
 from flask import abort, Response, request
 from datetime import datetime, timedelta
+import json
+from os import path
+from sys import path as sysPath
+from shutil import rmtree
+import subprocess
 import threading
+from time import sleep
 
-def exec_mlw(res, user, db):
+sysPath.insert(1, "/Users/alexanderhaberlin/projects/dMLW/atlas-server/MLW-Software")
+from MLWCompiler import verarbeite_mlw_artikel
+
+def exec_mlw(res, user, db, dir_path):
     if res == "opera_update" and "e_edit" in user["access"]:
         db.call("updateOperaLists")
         return Response("", status=200) # OK
@@ -10,7 +19,7 @@ def exec_mlw(res, user, db):
         db.call("updateStatistics")
         return Response("", status=200) # OK
     elif res == "mlw_preview" and "editor" in user["access"]:
-        return create_mlw_file(request.json)
+        return create_mlw_file(request.json, dir_path)
     elif res == "get_faszikel_jobs" and "faszikel" in user["access"]:
         return_list = []
         for sub_dir in listdir(faszikel_dir):
@@ -50,3 +59,32 @@ def exec_mlw(res, user, db):
             return Response("", status=200) # OK
         else: return abort(409) # Conflict: job already running!
     else: return abort(404) # not found
+
+
+def create_mlw_file(i_data, dir_path):
+    with open(dir_path + "/MLW-Software/input.mlw", "w") as i_file:
+        i_file.write(i_data)
+    re = verarbeite_mlw_artikel("input.mlw")
+    with open(dir_path + "/MLW-Software/Ausgabe/HTML-Vorschau/input.html", "r") as html_file:
+        o_data = html_file.read()
+    return json.dumps(o_data)
+
+
+    # o_datas = []
+    # with open(dir_path + "/MLW-Software/input.mlw", "w") as i_file:
+    #     i_file.write(i_data)
+    # if path.exists(dir_path + "/MLW-Software/Ausgabe"): rmtree(dir_path + "/MLW-Software/Ausgabe")
+    # subprocess.run(
+    #         f"python3 {dir_path}/MLW-Software/MLWServer.py --port 9997",
+    #         shell=True)
+    # sleep(1)
+    # subprocess.run(
+    #         f"python3 {dir_path}/MLW-Software/MLWServer.py --port 9997 {dir_path}/MLW-Software/input.mlw",
+    #         shell=True)
+    # o_data = {}
+    # with open(dir_path + "/MLW-Software/Ausgabe/HTML-Vorschau/input.html", "r") as html_file:
+    #     o_data["html"] = html_file.read()
+    # o_datas.append(o_data)
+
+    #subprocess.run(f"python3 {dir_path}/MLW-Software/MLWServer.py --port 9997 --stopserver", shell=True)
+    #return json.dumps(o_datas)
