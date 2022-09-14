@@ -74,6 +74,6 @@ def create_mlw_file(i_data, dir_path):
     if Path(random_temp_path + "/Ausgabe/Fehlermeldungen_fuer_die_Autoren/input.txt").exists():
         with open(random_temp_path + "/Ausgabe/Fehlermeldungen_fuer_die_Autoren/input.txt") as error_file:
             o_data["error"] = error_file.read()
-        o_data["error"] = o_data["error"].replace(f"{random_temp_path}/input.mlw:", "")
+        o_data["error"] = o_data["error"].replace(f"{random_temp_path[random_temp_path.find('temp')-1:]}/input.mlw:", "")
     rmtree(random_temp_path)
     return json.dumps(o_data)
