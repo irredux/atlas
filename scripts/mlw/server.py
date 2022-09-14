@@ -66,9 +66,14 @@ def create_mlw_file(i_data, dir_path):
     with open(random_temp_path + "/input.mlw", "w") as i_file:
         i_file.write(i_data)
     verarbeite_mlw_artikel(random_temp_path +"/input.mlw")
-    o_data = {}
-    with open(random_temp_path + "/Ausgabe/HTML-Vorschau/input.html", "r") as html_file:
-        o_data["html"] = html_file.read()
-    #rmtree(random_temp_path)
-    o_data["html"] = o_data["html"].replace(f"{random_temp_path}/input.mlw:", "")
+    o_data = {"html": None, "error": None}
+    if Path(random_temp_path + "/Ausgabe/HTML-Vorschau/input.html").exists():
+        with open(random_temp_path + "/Ausgabe/HTML-Vorschau/input.html", "r") as html_file:
+            o_data["html"] = html_file.read()
+        o_data["html"] = o_data["html"].replace(f"{random_temp_path}/input.mlw:", "")
+    if Path(random_temp_path + "/Ausgabe/Fehlermeldungen_fuer_die_Autoren/input.txt").exists():
+        with open(random_temp_path + "/Ausgabe/Fehlermeldungen_fuer_die_Autoren/input.txt") as error_file:
+            o_data["error"] = error_file.read()
+        o_data["error"] = o_data["error"].replace(f"{random_temp_path}/input.mlw:", "")
+    rmtree(random_temp_path)
     return json.dumps(o_data)
