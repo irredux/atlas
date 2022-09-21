@@ -22,10 +22,7 @@ update.py
 tests/login_data.json
 arachnePy/tests/login_data.json
 arachnePy/upload_ocr_auto.py
-docs/lemmatizer
-docs/tll
-docs/mlw
-docs/
+docs
 MLW-Software/
 temp/
 content/dom
