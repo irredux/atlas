@@ -17,3 +17,5 @@ arachnePy/upload_ocr_auto.py
 docs/
 MLW-Software/
 temp/
+mgh_import.py
+benchmark
