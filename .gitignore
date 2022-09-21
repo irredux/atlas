@@ -4,9 +4,7 @@ arachnePy/credentials.py
 check_dmlw.py
 config/
 content/
-content/scans/
 dmlw.log
-exampl.log
 out.log
 docs/restart_dmlw.py
 static/.DS_Store
@@ -19,6 +17,3 @@ arachnePy/upload_ocr_auto.py
 docs/
 MLW-Software/
 temp/
-content/dom
-content/tll
-content/mlw
