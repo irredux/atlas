@@ -2,14 +2,8 @@
 .vscode/
 arachnePy/credentials.py
 check_dmlw.py
-config/accessCREATE.JSON
-config/accessDELETE.JSON
-config/accessREAD.JSON
-config/accessUPDATE.JSON
-config/localhost.ini
-config/localhost.json
-config/access.json
-content/.DS_Store
+config/
+content/
 content/scans/
 dmlw.log
 exampl.log
@@ -22,7 +16,7 @@ update.py
 tests/login_data.json
 arachnePy/tests/login_data.json
 arachnePy/upload_ocr_auto.py
-docs
+docs/
 MLW-Software/
 temp/
 content/dom
